@@ -25,4 +25,4 @@ while left < right:
 
 print(arr)
 
-print(a)
+print(arr.get)
