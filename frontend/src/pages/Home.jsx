@@ -1,13 +1,40 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
+// Move Particle class outside component to satisfy ESLint rules
+class Particle {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = (Math.random() - 0.5) * 0.5;
+    this.radius = Math.random() * 2;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (this.x < 0 || this.x > this.canvas.width) this.vx *= -1;
+    if (this.y < 0 || this.y > this.canvas.height) this.vy *= -1;
+  }
+
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.3)';
+    ctx.fill();
+  }
+}
+
 const Home = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -15,41 +42,16 @@ const Home = () => {
     const particles = [];
     const particleCount = 80;
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.radius = Math.random() * 2;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-      }
-
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(34, 211, 238, 0.3)';
-        ctx.fill();
-      }
-    }
-
     for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
+      particles.push(new Particle(canvas));
     }
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       particles.forEach((particle, i) => {
         particle.update();
-        particle.draw();
+        particle.draw(ctx);
 
         particles.slice(i + 1).forEach(otherParticle => {
           const dx = particle.x - otherParticle.x;
@@ -165,16 +167,16 @@ const Home = () => {
         />
 
         {/* Gradient Orbs */}
-        <div 
+        <div
           className="absolute top-20 -left-40 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse-slow"
           style={{ filter: 'blur(100px)' }}
         />
-        <div 
+        <div
           className="absolute bottom-20 -right-40 w-96 h-96 bg-blue-500/20 rounded-full animate-pulse-slow"
           style={{ filter: 'blur(100px)', animationDelay: '0.7s' }}
         />
 
-        
+
         {/* Hero Section */}
         <section className="relative z-10 px-6 pt-20 pb-32 lg:px-12">
           <div className="max-w-7xl mx-auto">
@@ -356,7 +358,7 @@ const Home = () => {
 
             <div className="relative">
               {/* Connection Line */}
-              <div 
+              <div
                 className="absolute left-8 top-12 bottom-12 w-0.5 bg-gradient-to-b from-cyan-500 via-blue-500 to-cyan-500 hidden md:block"
               />
 
@@ -374,7 +376,7 @@ const Home = () => {
                   { step: "10", title: "Finalization", desc: "Save complete state, decisions, and generate PDF" }
                 ].map((item, index) => (
                   <div key={index} className="relative flex items-start gap-6 group">
-                    <div 
+                    <div
                       className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg group-hover:scale-110 transition-transform duration-300 z-10"
                       style={{ boxShadow: '0 10px 40px -10px rgba(34, 211, 238, 0.5)' }}
                     >
@@ -398,19 +400,19 @@ const Home = () => {
         {/* CTA Section */}
         <section className="relative z-10 px-6 py-24 lg:px-12">
           <div className="max-w-4xl mx-auto">
-            <div 
+            <div
               className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-500 via-blue-600 to-cyan-600 p-12 md:p-16 shadow-2xl"
               style={{ boxShadow: '0 20px 60px -15px rgba(34, 211, 238, 0.5)' }}
             >
-              <div 
+              <div
                 className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full"
                 style={{ filter: 'blur(100px)' }}
               />
-              <div 
+              <div
                 className="absolute bottom-0 left-0 w-96 h-96 bg-blue-900/20 rounded-full"
                 style={{ filter: 'blur(100px)' }}
               />
-              
+
               <div className="relative text-center space-y-6">
                 <h2 className="text-4xl md:text-5xl font-black text-white">
                   Ready to Beat the ATS?
@@ -449,7 +451,7 @@ const Home = () => {
                 </div>
                 <span className="text-lg font-bold text-white">ResumeAgent</span>
               </div>
-              
+
               <div className="flex items-center gap-6 text-slate-400 text-sm">
                 <a href="#" className="hover:text-cyan-400 transition-colors duration-200">Privacy</a>
                 <a href="#" className="hover:text-cyan-400 transition-colors duration-200">Terms</a>

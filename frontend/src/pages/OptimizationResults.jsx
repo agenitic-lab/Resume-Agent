@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function OptimizationResults() {
     const navigate = useNavigate();
-    const { id } = useParams();
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
 
     // Mock data - replace with actual API data
@@ -107,8 +106,8 @@ John Doe`
                                     {resultsData.scoreProgression.map((score, index) => (
                                         <React.Fragment key={index}>
                                             <div className={`flex-1 py-3 px-4 rounded-lg text-center font-bold ${index === resultsData.scoreProgression.length - 1
-                                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                                                    : 'bg-slate-800 text-white'
+                                                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                                : 'bg-slate-800 text-white'
                                                 }`}>
                                                 {score}
                                             </div>
