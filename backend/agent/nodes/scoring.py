@@ -1,8 +1,7 @@
 from typing import Dict
-from ..state import ResumeAgentState
 
 
-def score_resume(state: ResumeAgentState) -> Dict:
+def score_resume(state: Dict) -> Dict:
     """
     ATS Scoring Node (AG-19)
 
