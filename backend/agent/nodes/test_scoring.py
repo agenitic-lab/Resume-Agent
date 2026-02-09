@@ -1,4 +1,24 @@
-from .scoring import score_resume
+import sys
+from pathlib import Path
+
+# Support both direct execution and module execution
+try:
+    from .scoring import score_resume
+except ImportError:
+    # Running directly - add parent directories to path
+    current_dir = Path(__file__).parent
+    agent_dir = current_dir.parent
+    backend_dir = agent_dir.parent
+    
+    # Add to sys.path if not already there
+    for path in [str(backend_dir), str(agent_dir.parent)]:
+        if path not in sys.path:
+            sys.path.insert(0, path)
+    
+    # Import state module first
+    from agent.state import ResumeAgentState
+    # Now import score_resume with absolute import
+    from agent.nodes.scoring import score_resume
 
 
 def test_ats_scoring_basic():
