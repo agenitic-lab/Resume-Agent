@@ -1,5 +1,5 @@
 from typing import Dict
-from scoring import score_resume
+from .scoring import score_resume
 
 def rescore_modified_resume(state: Dict) -> Dict:
     modified_resume = state.get("modified_resume")
