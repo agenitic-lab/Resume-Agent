@@ -58,8 +58,8 @@ def score_resume(state: Dict) -> Dict:
     }
 
     found_sections = 0
-    for keywords in sections.values():
-        if any(k in resume for k in keywords):
+    for keys in sections.values():
+        if any(k in resume for k in keys):
             found_sections += 1
 
     section_score = (found_sections / len(sections)) * 15
@@ -70,14 +70,22 @@ def score_resume(state: Dict) -> Dict:
         2
     )
 
-    return {
-        "ats_score_before": {
-            "score": total_score,
-            "breakdown": {
-                "keywords": round(keyword_score, 2),
-                "skills": round(skills_score, 2),
-                "format": round(format_score, 2),
-                "sections": round(section_score, 2),
-            }
+    # --- SCORE OBJECT ---
+    score_obj = {
+        "score": total_score,
+        "breakdown": {
+            "keywords": round(keyword_score, 2),
+            "skills": round(skills_score, 2),
+            "format": round(format_score, 2),
+            "sections": round(section_score, 2),
         }
+    }
+
+    # --- AG-27: SCORE HISTORY TRACKING ---
+    score_history = state.get("score_history", []) or []
+    score_history.append(score_obj)
+
+    return {
+        "ats_score_before": score_obj,
+        "score_history": score_history
     }

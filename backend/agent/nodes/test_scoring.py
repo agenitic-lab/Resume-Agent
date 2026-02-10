@@ -37,7 +37,8 @@ def test_ats_scoring_basic():
             "required_skills": ["Python", "FastAPI"],
             "preferred_skills": ["Docker"],
             "key_keywords": ["backend", "api"]
-        }
+        },
+        "score_history": []
     }
 
     result = score_resume(state)
