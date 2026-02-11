@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.connection import engine, Base
 from database.models.user import User
+from api.routes.pdf import router as pdf_router
+from api.routes.latex import router as latex_router
 
 app = FastAPI(
     title="Resume Agent API",
@@ -16,6 +18,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(pdf_router)
+app.include_router(latex_router)
 
 Base.metadata.create_all(bind=engine)
 
