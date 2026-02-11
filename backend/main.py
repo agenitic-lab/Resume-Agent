@@ -1,14 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database.connection import engine, Base
 from database.models.user import User
-<<<<<<< Updated upstream
 from api.routes.pdf import router as pdf_router
 from api.routes.latex import router as latex_router
-=======
 from api.routes.auth import router as auth_router
 
->>>>>>> Stashed changes
 
 app = FastAPI(
     title="Resume Agent API",
@@ -29,7 +25,6 @@ app.add_middleware(
 app.include_router(pdf_router)
 app.include_router(latex_router)
 
-Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def root():
