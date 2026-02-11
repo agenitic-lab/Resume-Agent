@@ -2,14 +2,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.connection import engine, Base
 from database.models.user import User
+<<<<<<< Updated upstream
 from api.routes.pdf import router as pdf_router
 from api.routes.latex import router as latex_router
+=======
+from api.routes.auth import router as auth_router
+
+>>>>>>> Stashed changes
 
 app = FastAPI(
     title="Resume Agent API",
     description="AI-powered resume optimization service",
     version="1.0.0"
 )
+
+app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,
