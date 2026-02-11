@@ -1,9 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.models.user import User
-from api.routes.pdf import router as pdf_router
-from api.routes.latex import router as latex_router
 from api.routes.auth import router as auth_router
+
+# Optional routers (may not have dependencies installed)
+try:
+    from api.routes.pdf import router as pdf_router
+    PDF_AVAILABLE = True
+except ImportError:
+    PDF_AVAILABLE = False
+
+try:
+    from api.routes.latex import router as latex_router
+    LATEX_AVAILABLE = True
+except ImportError:
+    LATEX_AVAILABLE = False
 
 
 app = FastAPI(
@@ -12,6 +23,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Auth router (always available)
 app.include_router(auth_router)
 
 app.add_middleware(
@@ -22,8 +34,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(pdf_router)
-app.include_router(latex_router)
+# Optional routers
+if PDF_AVAILABLE:
+    app.include_router(pdf_router)
+
+if LATEX_AVAILABLE:
+    app.include_router(latex_router)
+
 
 
 @app.get("/")
