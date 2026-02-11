@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from database.models.user import User
 from api.routes.auth import router as auth_router
 
-# Optional routers (may not have dependencies installed)
 try:
     from api.routes.pdf import router as pdf_router
     PDF_AVAILABLE = True
@@ -16,6 +15,12 @@ try:
 except ImportError:
     LATEX_AVAILABLE = False
 
+try:
+    from api.routes.agent import router as agent_router
+    AGENT_AVAILABLE = True
+except ImportError:
+    AGENT_AVAILABLE = False
+
 
 app = FastAPI(
     title="Resume Agent API",
@@ -23,7 +28,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Auth router (always available)
 app.include_router(auth_router)
 
 app.add_middleware(
@@ -34,13 +38,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional routers
 if PDF_AVAILABLE:
     app.include_router(pdf_router)
 
 if LATEX_AVAILABLE:
     app.include_router(latex_router)
 
+if AGENT_AVAILABLE:
+    app.include_router(agent_router)
 
 
 @app.get("/")
@@ -51,6 +56,7 @@ def root():
         "status": "running",
         "docs": "/docs"
     }
+
 
 @app.get("/health")
 def health():
