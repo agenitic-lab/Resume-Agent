@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.models.user import User
 from api.routes.auth import router as auth_router
+from api.routes.user import router as user_router
 
 # Optional routers (may not have dependencies installed)
 try:
@@ -23,8 +24,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Auth router (always available)
+# Core routers (always available)
 app.include_router(auth_router)
+app.include_router(user_router)
 
 app.add_middleware(
     CORSMiddleware,
