@@ -20,7 +20,7 @@ export default function NewOptimization() {
         if (currentStep === 4 && !optimizedLatex) {
             setCurrentStep(1);
         }
-    }, []);
+    }, [currentStep, optimizedLatex]);
 
     const steps = [
         { number: 1, name: 'Choose Input', icon: '📝' },
@@ -197,7 +197,7 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                     optimizedLatexCode = data.modified_resume;
                 }
             }
-        } catch (error) {
+        } catch {
             // falls back to sampleLatex on timeout or failure
         }
 
@@ -217,7 +217,7 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                 const url = window.URL.createObjectURL(blob);
                 setCompiledPdfUrl(url);
             }
-        } catch (error) {
+        } catch {
             // compilation failed, PDF preview will be empty
         } finally {
             setIsCompiling(false);
