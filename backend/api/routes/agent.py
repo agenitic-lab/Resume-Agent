@@ -1,72 +1,121 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from agent.workflow import run_optimization
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+
+"""
+Agent Routes
+
+Resume optimization endpoints.
+"""
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+import uuid
+from datetime import datetime
+import sys
+import os
+
+from database.connection import get_db
+from database.models import User
+from auth.dependencies import get_current_user
+from schemas.agent import OptimizeRequest, OptimizeResponse
+
+# Import agent workflow
+# Adjust path to import from agent directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+agent_dir = os.path.abspath(os.path.join(current_dir, "../../agent"))
+if agent_dir not in sys.path:
+    sys.path.append(agent_dir)
+
+try:
+    from workflow import run_optimization
+except ImportError:
+    # Fallback for testing/development if workflow not found
+    print("Warning: Could not import run_optimization from workflow")
+    def run_optimization(**kwargs):
+        raise NotImplementedError("Workflow module not available")
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
-class OptimizeRequest(BaseModel):
-    job_description: str
-    resume_text: str
-    user_id: str = "anonymous"
-
-
-class OptimizeResponse(BaseModel):
-    modified_resume: str
-    ats_score_before: float | None
-    ats_score_after: float | None
-    status: str
-
-
-_executor = None
-
-
-def get_executor():
-    global _executor
-    if _executor is None:
-        _executor = ThreadPoolExecutor(max_workers=2)
-    return _executor
-
-
-@router.post("/optimize", response_model=OptimizeResponse)
-async def optimize_resume(request: OptimizeRequest):
-    if not request.job_description.strip():
-        raise HTTPException(status_code=400, detail="Job description cannot be empty")
-
-    if not request.resume_text.strip():
-        raise HTTPException(status_code=400, detail="Resume text cannot be empty")
-
+@router.post("/run", response_model=OptimizeResponse)
+def run_agent_workflow(
+    request: OptimizeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Optimize a resume for a job description.
+    
+    Runs the LangGraph agent workflow and returns optimized results.
+    Protected endpoint - requires authentication.
+    """
     try:
-        loop = asyncio.get_event_loop()
-        result = await asyncio.wait_for(
-            loop.run_in_executor(
-                get_executor(),
-                run_optimization,
-                request.job_description,
-                request.resume_text,
-                request.user_id
-            ),
-            timeout=10.0
+        # Generate run ID
+        run_id = f"run-{uuid.uuid4()}"
+        
+        print(f"Starting optimization run: {run_id} for user {current_user.id}")
+        
+        # Run the agent workflow
+        result = run_optimization(
+            job_description=request.job_description,
+            resume=request.resume,
+            user_id=str(current_user.id),
+            run_id=run_id
         )
-
-        score_before = result.get("ats_score_before")
-        score_after = result.get("ats_score_after")
-
+        
+        print(f"Agent completed: {result['final_status']}")
+        
+        # NOTE: Database persistence (AG-37/AG-38) disabled as per user request.
+        # Results are returned directly without saving to agent_runs table.
+        
+        # Return response
         return OptimizeResponse(
-            modified_resume=result.get("modified_resume", ""),
-            ats_score_before=score_before.get("score") if isinstance(score_before, dict) else score_before,
-            ats_score_after=score_after.get("score") if isinstance(score_after, dict) else score_after,
-            status=result.get("final_status", "completed")
+            run_id=run_id,
+            user_id=str(current_user.id),
+            job_description=request.job_description,
+            original_resume=request.resume,
+            modified_resume=result["modified_resume"],
+            ats_score_before=result["ats_score_before"],
+            ats_score_after=result["ats_score_after"],
+            improvement_delta=result["improvement_delta"],
+            iteration_count=result["iteration_count"],
+            final_status=result["final_status"],
+            job_requirements=result.get("job_requirements"),
+            resume_analysis=result.get("resume_analysis"),
+            improvement_plan=result.get("improvement_plan")
         )
-    except asyncio.TimeoutError:
-        raise HTTPException(
-            status_code=504,
-            detail="Agent optimization timed out (10s limit)"
-        )
+        
     except Exception as e:
+        # Log error and return user-friendly message
+        print(f"Agent error: {str(e)}")
+        # In a real app, we might want to log this to Sentry or similar
         raise HTTPException(
-            status_code=500,
-            detail=f"Agent optimization failed: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Optimization failed: {str(e)}"
         )
+
+
+@router.get("/runs/{run_id}")
+def get_run(
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get details of a specific optimization run.
+    """
+    # AG-37 (Database Model) is pending, so we cannot fetch runs yet.
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Run history not yet implemented (requires AG-37)"
+    )
+
+
+@router.get("/runs")
+def get_user_runs(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = 10
+):
+    """
+    Get user's optimization run history.
+    """
+    # AG-37 (Database Model) is pending, so we cannot fetch runs yet.
+    return []
