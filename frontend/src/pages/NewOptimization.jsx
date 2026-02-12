@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Toast from '../components/Toast';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export default function NewOptimization() {
     const navigate = useNavigate();
@@ -14,6 +17,8 @@ export default function NewOptimization() {
     const [isDragging, setIsDragging] = useState(false);
     const [isExtracting, setIsExtracting] = useState(false);
     const [isCompiling, setIsCompiling] = useState(false);
+    const [toast, setToast] = useState(null);
+    const [copyButtonText, setCopyButtonText] = useState('Copy');
 
     // reset to step 1 if user refreshes mid-optimization
     useEffect(() => {
@@ -21,6 +26,15 @@ export default function NewOptimization() {
             setCurrentStep(1);
         }
     }, [currentStep, optimizedLatex]);
+
+    // cleanup blob URL on unmount or when compiledPdfUrl changes
+    useEffect(() => {
+        return () => {
+            if (compiledPdfUrl) {
+                window.URL.revokeObjectURL(compiledPdfUrl);
+            }
+        };
+    }, [compiledPdfUrl]);
 
     const steps = [
         { number: 1, name: 'Choose Input', icon: '📝' },
@@ -34,7 +48,7 @@ export default function NewOptimization() {
         if (!file) return;
 
         if (inputType === 'pdf' && file.type !== 'application/pdf') {
-            alert('Please upload a PDF file');
+            setToast({ message: 'Please upload a PDF file', type: 'error' });
             return;
         }
 
@@ -51,7 +65,7 @@ export default function NewOptimization() {
         formData.append('file', file);
 
         try {
-            const response = await fetch('http://localhost:8000/api/pdf/extract', {
+            const response = await fetch(`${API_BASE_URL}/api/pdf/extract`, {
                 method: 'POST',
                 body: formData,
             });
@@ -63,7 +77,7 @@ export default function NewOptimization() {
             const data = await response.json();
             setExtractedText(data.text);
         } catch (error) {
-            alert('Failed to extract text from PDF: ' + error.message);
+            setToast({ message: `Failed to extract text from PDF: ${error.message}`, type: 'error' });
         } finally {
             setIsExtracting(false);
         }
@@ -93,7 +107,7 @@ export default function NewOptimization() {
     const handleCompileLatex = async () => {
         setIsCompiling(true);
         try {
-            const response = await fetch('http://localhost:8000/api/latex/compile', {
+            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -114,7 +128,7 @@ export default function NewOptimization() {
             const url = window.URL.createObjectURL(blob);
             setCompiledPdfUrl(url);
         } catch (error) {
-            alert('Failed to compile LaTeX: ' + error.message);
+            setToast({ message: `Failed to compile LaTeX: ${error.message}`, type: 'error' });
         } finally {
             setIsCompiling(false);
         }
@@ -174,9 +188,9 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-            const response = await fetch('http://localhost:8000/api/agent/optimize', {
+            const response = await fetch(`${API_BASE_URL}/api/agent/optimize`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -204,7 +218,7 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
         setOptimizedLatex(optimizedLatexCode);
         setIsCompiling(true);
         try {
-            const response = await fetch('http://localhost:8000/api/latex/compile', {
+            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -527,14 +541,15 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                                                 <button
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(optimizedLatex);
-                                                        alert('LaTeX code copied to clipboard!');
+                                                        setCopyButtonText('Copied!');
+                                                        setTimeout(() => setCopyButtonText('Copy'), 2000);
                                                     }}
                                                     className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                     </svg>
-                                                    Copy
+                                                    {copyButtonText}
                                                 </button>
                                             </div>
                                             <textarea
@@ -630,6 +645,7 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                     )}
                 </div>
             </div>
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 }
