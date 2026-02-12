@@ -1,27 +1,60 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { register } from '../services/api';
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    fullName: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleGoogleSignup = () => {
-    // Placeholder for future Google OAuth integration
     console.log("Sign up with Google");
-    // Future implementation:
-    // window.location.href = `${API_URL}/auth/google/signup`;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log('Register with:', formData);
+
+    if (!formData.email || !formData.password || !formData.confirmPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      toast.error('Please enter a valid email');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await register(formData.email, formData.password);
+      toast.success('Account created successfully!');
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+    } catch (err) {
+      const errorMsg = err.message || 'Registration failed';
+      toast.error(errorMsg);
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -76,11 +109,11 @@ export default function Register() {
         {/* Left Side - Branding */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
           {/* Gradient Orbs */}
-          <div 
+          <div
             className="absolute top-20 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full"
             style={{ filter: 'blur(100px)' }}
           />
-          <div 
+          <div
             className="absolute bottom-20 -right-20 w-96 h-96 bg-blue-500/20 rounded-full"
             style={{ filter: 'blur(100px)' }}
           />
@@ -152,29 +185,6 @@ export default function Register() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Full Name Input */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      placeholder="John Doe"
-                      className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
                 {/* Email Input */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
