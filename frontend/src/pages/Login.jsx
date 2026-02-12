@@ -5,6 +5,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = () => {
     // Placeholder for future Google OAuth integration
@@ -13,10 +15,38 @@ export default function Login() {
     // window.location.href = `${API_URL}/auth/google`;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login with:', { email, password });
+    setError('');
+
+    // Client-side validation
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Handle login logic here
+      console.log('Login with:', { email, password });
+      // TODO: Add API integration when AG-34 is complete
+      // await login(email, password);
+      // navigate('/dashboard');
+
+      // Temporary success simulation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      alert('Login successful! (API integration coming in AG-34)');
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,11 +85,11 @@ export default function Login() {
         {/* Left Side - Branding */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
           {/* Gradient Orbs */}
-          <div 
+          <div
             className="absolute top-20 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full"
             style={{ filter: 'blur(100px)' }}
           />
-          <div 
+          <div
             className="absolute bottom-20 -right-20 w-96 h-96 bg-blue-500/20 rounded-full"
             style={{ filter: 'blur(100px)' }}
           />
@@ -132,6 +162,12 @@ export default function Login() {
                 </p>
               </div>
 
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email Input */}
                 <div>
@@ -150,6 +186,7 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
                       className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                      disabled={loading}
                       required
                     />
                   </div>
@@ -177,6 +214,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                       className="w-full pl-12 pr-12 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                      disabled={loading}
                       required
                     />
                     <button
@@ -201,12 +239,15 @@ export default function Login() {
                 {/* Sign In Button */}
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  <span>Sign In</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+                  {!loading && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  )}
                 </button>
 
                 {/* Divider */}
