@@ -4,7 +4,6 @@ from database.models.user import User
 from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
 
-# Optional routers (may not have dependencies installed)
 try:
     from api.routes.pdf import router as pdf_router
     PDF_AVAILABLE = True
@@ -17,6 +16,13 @@ try:
 except ImportError:
     LATEX_AVAILABLE = False
 
+try:
+    from api.routes.agent import router as agent_router
+    from api.routes.agent import get_executor
+    AGENT_AVAILABLE = True
+except ImportError:
+    AGENT_AVAILABLE = False
+
 
 app = FastAPI(
     title="Resume Agent API",
@@ -24,7 +30,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Core routers (always available)
 app.include_router(auth_router)
 app.include_router(user_router)
 
@@ -36,13 +41,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional routers
 if PDF_AVAILABLE:
     app.include_router(pdf_router)
 
 if LATEX_AVAILABLE:
     app.include_router(latex_router)
 
+if AGENT_AVAILABLE:
+    app.include_router(agent_router)
 
 
 @app.get("/")
@@ -54,6 +60,18 @@ def root():
         "docs": "/docs"
     }
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    if AGENT_AVAILABLE:
+        try:
+            executor = get_executor()
+            executor.shutdown(wait=True, cancel_futures=False)
+        except Exception:
+            pass
+
