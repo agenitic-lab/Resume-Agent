@@ -15,7 +15,7 @@ export default function NewOptimization() {
     const [isExtracting, setIsExtracting] = useState(false);
     const [isCompiling, setIsCompiling] = useState(false);
 
-    // Prevent infinite loading if user refreshes on Step 4
+    // reset to step 1 if user refreshes mid-optimization
     useEffect(() => {
         if (currentStep === 4 && !optimizedLatex) {
             setCurrentStep(1);
@@ -170,14 +170,12 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
 \\end{document}`;
 
         let optimizedLatexCode = sampleLatex;
-        
-        // Try to call real agent endpoint with 10s timeout
         try {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
-            
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
-            
+
             const response = await fetch('http://localhost:8000/api/agent/optimize', {
                 method: 'POST',
                 headers: {
@@ -197,25 +195,13 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                 const data = await response.json();
                 if (data.modified_resume && data.modified_resume.trim()) {
                     optimizedLatexCode = data.modified_resume;
-                    console.log('✅ Using real agent optimization');
-                } else {
-                    console.warn('⚠️ Agent returned empty result, using sample data');
                 }
-            } else {
-                console.warn('⚠️ Agent endpoint failed, using sample data');
             }
         } catch (error) {
-            if (error.name === 'AbortError') {
-                console.warn('⏱️ Agent timed out (10s), using sample data');
-            } else {
-                console.warn('⚠️ Agent not available, using sample data:', error.message);
-            }
+            // falls back to sampleLatex on timeout or failure
         }
 
-        // Set the optimized LaTeX (either from agent or sample)
         setOptimizedLatex(optimizedLatexCode);
-
-        // Compile the PDF
         setIsCompiling(true);
         try {
             const response = await fetch('http://localhost:8000/api/latex/compile', {
@@ -232,7 +218,7 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                 setCompiledPdfUrl(url);
             }
         } catch (error) {
-            console.error('Failed to compile PDF:', error);
+            // compilation failed, PDF preview will be empty
         } finally {
             setIsCompiling(false);
         }
