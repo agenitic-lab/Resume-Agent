@@ -19,7 +19,14 @@ def _sanitize_latex(latex: str) -> str:
         latex = latex.replace(typo, fix)
 
     if "\\documentclass" not in latex:
-        latex = "\\documentclass[11pt]{article}\n\\usepackage[margin=1in]{geometry}\n\\begin{document}\n" + latex
+        preamble = "\\documentclass[11pt]{article}\n"
+        # Only add geometry if not already present in a usepackage declaration
+        has_geometry = ("\\usepackage{geometry}" in latex or 
+                        ("\\usepackage[" in latex and "]{geometry}" in latex))
+        if not has_geometry:
+            preamble += "\\usepackage[margin=1in]{geometry}\n"
+        preamble += "\\begin{document}\n"
+        latex = preamble + latex
 
     if "\\end{document}" not in latex:
         latex += "\n\\end{document}"

@@ -20,7 +20,14 @@ class OptimizeResponse(BaseModel):
     status: str
 
 
-executor = ThreadPoolExecutor(max_workers=2)
+_executor = None
+
+
+def get_executor():
+    global _executor
+    if _executor is None:
+        _executor = ThreadPoolExecutor(max_workers=2)
+    return _executor
 
 
 @router.post("/optimize", response_model=OptimizeResponse)
@@ -35,7 +42,7 @@ async def optimize_resume(request: OptimizeRequest):
         loop = asyncio.get_event_loop()
         result = await asyncio.wait_for(
             loop.run_in_executor(
-                executor,
+                get_executor(),
                 run_optimization,
                 request.job_description,
                 request.resume_text,

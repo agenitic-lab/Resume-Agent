@@ -18,6 +18,7 @@ except ImportError:
 
 try:
     from api.routes.agent import router as agent_router
+    from api.routes.agent import get_executor
     AGENT_AVAILABLE = True
 except ImportError:
     AGENT_AVAILABLE = False
@@ -63,3 +64,14 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    if AGENT_AVAILABLE:
+        try:
+            executor = get_executor()
+            executor.shutdown(wait=True, cancel_futures=False)
+        except Exception:
+            pass
+
