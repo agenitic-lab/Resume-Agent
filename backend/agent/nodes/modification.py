@@ -20,7 +20,9 @@ def _sanitize_latex(latex: str) -> str:
 
     if "\\documentclass" not in latex:
         preamble = "\\documentclass[11pt]{article}\n"
-        if "\\usepackage" not in latex or "geometry" not in latex:
+        # Only add geometry if not already present in a usepackage declaration
+        has_geometry = "\\usepackage{geometry}" in latex or "\\usepackage[" in latex and "]{geometry}" in latex
+        if not has_geometry:
             preamble += "\\usepackage[margin=1in]{geometry}\n"
         preamble += "\\begin{document}\n"
         latex = preamble + latex

@@ -56,8 +56,8 @@ async def optimize_resume(request: OptimizeRequest):
 
         return OptimizeResponse(
             modified_resume=result.get("modified_resume", ""),
-            ats_score_before=score_before.get("score") if isinstance(score_before, dict) and score_before else score_before,
-            ats_score_after=score_after.get("score") if isinstance(score_after, dict) and score_after else score_after,
+            ats_score_before=score_before.get("score") if isinstance(score_before, dict) else score_before,
+            ats_score_after=score_after.get("score") if isinstance(score_after, dict) else score_after,
             status=result.get("final_status", "completed")
         )
     except asyncio.TimeoutError:
