@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Toast from '../components/Toast';
+import toast from 'react-hot-toast';
+import { compileLatex, getApiKeyStatus, getCachedApiKeyStatus, getToken, optimizeResumeStream } from '../services/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_URL = (import.meta.env.VITE_API_URL || '').trim();
+const NODE_LABELS = {
+    extract_requirements: 'Extracting role requirements',
+    analyze_resume: 'Analyzing your resume',
+    check_fit: 'Checking job-role fit',
+    score_initial: 'Scoring current resume',
+    plan_improvements: 'Planning improvements',
+    modify_resume: 'Rewriting resume content',
+    score_modified: 'Scoring optimized resume',
+};
 
 export default function NewOptimization() {
     const navigate = useNavigate();
+    const initialApiKeyStatus = getCachedApiKeyStatus();
     const [currentStep, setCurrentStep] = useState(1);
     const [inputType, setInputType] = useState(null);
     const [resumeFile, setResumeFile] = useState(null);
@@ -17,15 +28,20 @@ export default function NewOptimization() {
     const [isDragging, setIsDragging] = useState(false);
     const [isExtracting, setIsExtracting] = useState(false);
     const [isCompiling, setIsCompiling] = useState(false);
-    const [toast, setToast] = useState(null);
+    const [isOptimizing, setIsOptimizing] = useState(false);
+    const [hasApiKey, setHasApiKey] = useState(Boolean(initialApiKeyStatus?.has_api_key));
+    const [keyStatusLoaded, setKeyStatusLoaded] = useState(Boolean(initialApiKeyStatus));
     const [copyButtonText, setCopyButtonText] = useState('Copy');
+    const [optimizationResult, setOptimizationResult] = useState(null);
+    const [backendEvents, setBackendEvents] = useState([]);
+    const [runStartedAt, setRunStartedAt] = useState(null);
 
-    // reset to step 1 if user refreshes mid-optimization
+    // Only show results step if there's actual content or an active optimization
     useEffect(() => {
-        if (currentStep === 4 && !optimizedLatex) {
+        if (currentStep === 4 && !optimizedLatex && !isOptimizing && !optimizationResult) {
             setCurrentStep(1);
         }
-    }, [currentStep, optimizedLatex]);
+    }, [currentStep, optimizedLatex, isOptimizing, optimizationResult]);
 
     // cleanup blob URL on unmount or when compiledPdfUrl changes
     useEffect(() => {
@@ -35,6 +51,24 @@ export default function NewOptimization() {
             }
         };
     }, [compiledPdfUrl]);
+
+    useEffect(() => {
+        let active = true;
+        async function loadKeyStatus() {
+            try {
+                const status = await getApiKeyStatus();
+                if (active) setHasApiKey(Boolean(status.has_api_key));
+            } catch {
+                if (active) setHasApiKey(false);
+            } finally {
+                if (active) setKeyStatusLoaded(true);
+            }
+        }
+        loadKeyStatus();
+        return () => {
+            active = false;
+        };
+    }, []);
 
     const steps = [
         { number: 1, name: 'Choose Input', icon: '📝' },
@@ -48,7 +82,7 @@ export default function NewOptimization() {
         if (!file) return;
 
         if (inputType === 'pdf' && file.type !== 'application/pdf') {
-            setToast({ message: 'Please upload a PDF file', type: 'error' });
+            toast.error('Please upload a PDF file');
             return;
         }
 
@@ -64,9 +98,14 @@ export default function NewOptimization() {
         const formData = new FormData();
         formData.append('file', file);
 
+        const headers = {};
+        const token = getToken();
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         try {
-            const response = await fetch(`${API_BASE_URL}/api/pdf/extract`, {
+            const response = await fetch(`${API_URL}/api/pdf/extract`, {
                 method: 'POST',
+                headers,
                 body: formData,
             });
 
@@ -77,7 +116,7 @@ export default function NewOptimization() {
             const data = await response.json();
             setExtractedText(data.text);
         } catch (error) {
-            setToast({ message: `Failed to extract text from PDF: ${error.message}`, type: 'error' });
+            toast.error(`Failed to extract text from PDF: ${error.message}`);
         } finally {
             setIsExtracting(false);
         }
@@ -105,21 +144,9 @@ export default function NewOptimization() {
     };
 
     const handleCompileLatex = async () => {
-        setIsCompiling(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ latex_code: optimizedLatex }),
-            });
-
-            if (!response.ok) {
-                throw new Error('LaTeX compilation failed');
-            }
-
-            const blob = await response.blob();
+            setIsCompiling(true);
+            const blob = await compileLatex(optimizedLatex);
 
             if (compiledPdfUrl) {
                 window.URL.revokeObjectURL(compiledPdfUrl);
@@ -128,7 +155,7 @@ export default function NewOptimization() {
             const url = window.URL.createObjectURL(blob);
             setCompiledPdfUrl(url);
         } catch (error) {
-            setToast({ message: `Failed to compile LaTeX: ${error.message}`, type: 'error' });
+            toast.error(`Failed to compile LaTeX: ${error.message}`);
         } finally {
             setIsCompiling(false);
         }
@@ -154,85 +181,112 @@ export default function NewOptimization() {
         } else if (currentStep === 2 && canProceedStep2) {
             setCurrentStep(3);
         } else if (currentStep === 3 && canProceedStep3) {
+            if (!keyStatusLoaded) {
+                toast.error('Checking API key status. Please wait a moment.');
+                return;
+            }
+            if (!hasApiKey) {
+                toast.error('Set your API key in Settings before running optimization.');
+                return;
+            }
+            if (compiledPdfUrl) {
+                window.URL.revokeObjectURL(compiledPdfUrl);
+                setCompiledPdfUrl(null);
+            }
+            setOptimizedLatex('');
+            setOptimizationResult(null);
+            setBackendEvents([]);
+            setRunStartedAt(new Date());
+            setIsOptimizing(true);
             setCurrentStep(4);
-            simulateAgentOptimization();
+            runOptimization();
         }
     };
 
-    const simulateAgentOptimization = async () => {
-        const sampleLatex = `\\documentclass{article}
-\\usepackage[margin=1in]{geometry}
-\\usepackage{enumitem}
-\\begin{document}
-
-\\section*{John Doe}
-\\textbf{Email:} john.doe@example.com | \\textbf{Phone:} (555) 123-4567
-
-\\section*{Professional Summary}
-Experienced software engineer with 5+ years in full-stack development.
-
-\\section*{Experience}
-\\textbf{Senior Software Engineer} | Tech Company | 2020 - Present
-\\begin{itemize}[nosep]
-    \\item Led development of microservices architecture
-    \\item Improved system performance by 40\\%
-\\end{itemize}
-
-\\section*{Skills}
-Python, JavaScript, React, Node.js, Docker, Kubernetes
-
-\\end{document}`;
-
-        let optimizedLatexCode = sampleLatex;
+    const runOptimization = async () => {
+        let optimizedLatexCode = '';
         try {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
+            const data = await optimizeResumeStream(jobDescription, resumeContent, (evt) => {
+                const eventTime = evt?.data?.timestamp
+                    ? new Date(evt.data.timestamp).toLocaleTimeString()
+                    : new Date().toLocaleTimeString();
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-            const response = await fetch(`${API_BASE_URL}/api/agent/optimize`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    job_description: jobDescription,
-                    resume_text: resumeContent,
-                    user_id: 'anonymous'
-                }),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.modified_resume && data.modified_resume.trim()) {
-                    optimizedLatexCode = data.modified_resume;
+                if (evt.event === 'node_started') {
+                    const node = evt?.data?.node || 'unknown';
+                    setBackendEvents((prev) => [
+                        ...prev,
+                        {
+                            id: `${Date.now()}-${node}-start`,
+                            node,
+                            label: NODE_LABELS[node] || node,
+                            status: 'running',
+                            at: eventTime,
+                        },
+                    ]);
+                    return;
                 }
+
+                if (evt.event === 'node_completed') {
+                    const node = evt?.data?.node || 'unknown';
+                    setBackendEvents((prev) =>
+                        prev.map((item) =>
+                            item.node === node && item.status === 'running'
+                                ? { ...item, status: 'done', at: eventTime }
+                                : item
+                        )
+                    );
+                    return;
+                }
+
+                if (evt.event === 'error') {
+                    setBackendEvents((prev) => [
+                        ...prev,
+                        {
+                            id: `${Date.now()}-error`,
+                            node: 'error',
+                            label: evt?.data?.message || 'Optimization failed',
+                            status: 'error',
+                            at: eventTime,
+                        },
+                    ]);
+                }
+            });
+            setOptimizationResult(data);
+
+            if (data.fit_decision === 'poor_fit') {
+                toast.error(data.fit_reason || 'Current resume is too far from the target role for meaningful optimization.');
+                setIsOptimizing(false);
+                return;
             }
-        } catch {
-            // falls back to sampleLatex on timeout or failure
+            if (data.modified_resume && data.modified_resume.trim()) {
+                optimizedLatexCode = data.modified_resume;
+            } else {
+                toast.error('Agent did not return optimized LaTeX output.');
+                setIsOptimizing(false);
+                setCurrentStep(3);
+                return;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Optimization failed.');
+            setIsOptimizing(false);
+            setCurrentStep(3);
+            return;
         }
 
         setOptimizedLatex(optimizedLatexCode);
+        setIsOptimizing(false);
         setIsCompiling(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ latex_code: optimizedLatexCode }),
-            });
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                setCompiledPdfUrl(url);
+        try {
+            const blob = await compileLatex(optimizedLatexCode);
+            if (compiledPdfUrl) {
+                window.URL.revokeObjectURL(compiledPdfUrl);
             }
+            const url = window.URL.createObjectURL(blob);
+            setCompiledPdfUrl(url);
         } catch {
-            // compilation failed, PDF preview will be empty
+            // compilation failed silently, user can retry with Recompile button
         } finally {
             setIsCompiling(false);
         }
@@ -282,6 +336,16 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
 
             {/* Main Content Card */}
             <div className="max-w-4xl mx-auto">
+                {!keyStatusLoaded && (
+                    <div className="mb-6 p-4 rounded-xl border border-slate-700 bg-slate-900/50 text-slate-300">
+                        Checking API key status...
+                    </div>
+                )}
+                {keyStatusLoaded && !hasApiKey && (
+                    <div className="mb-6 p-4 rounded-xl border border-yellow-500/40 bg-yellow-500/10 text-yellow-200">
+                        API key required. Open Settings and save your key before running optimization.
+                    </div>
+                )}
                 <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
 
                     {/* Step 1: Choose Input Type */}
@@ -499,8 +563,8 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
 
                                 <button
                                     onClick={handleContinue}
-                                    disabled={!canProceedStep3}
-                                    className={`px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${canProceedStep3
+                                    disabled={!canProceedStep3 || !keyStatusLoaded}
+                                    className={`px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${canProceedStep3 && keyStatusLoaded
                                         ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/50 hover:scale-105'
                                         : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                         }`}
@@ -522,13 +586,84 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                                 <p className="text-slate-400">Review, edit, and compile your optimized LaTeX resume</p>
                             </div>
 
-                            {!optimizedLatex ? (
-                                <div className="text-center py-16">
+                            {isOptimizing ? (
+                                <div className="py-10">
                                     <div className="w-24 h-24 mx-auto mb-6">
                                         <div className="w-full h-full border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
                                     </div>
-                                    <h3 className="text-2xl font-bold text-white mb-4">Optimizing Your Resume</h3>
-                                    <p className="text-slate-400">AI is analyzing and optimizing your resume...</p>
+                                    <h3 className="text-2xl font-bold text-white mb-3 text-center">Agent Is Working</h3>
+                                    <p className="text-slate-400 text-center mb-8">
+                                        Real-time backend updates while your optimization is running
+                                        {runStartedAt ? ` (${Math.max(1, Math.floor((Date.now() - runStartedAt.getTime()) / 1000))}s)` : ''}
+                                    </p>
+                                    <div className="max-w-xl mx-auto space-y-3">
+                                        {!backendEvents.length ? (
+                                            <div className="rounded-xl border border-slate-700 bg-slate-800/30 p-4">
+                                                <p className="text-sm text-slate-300">Waiting for backend events...</p>
+                                            </div>
+                                        ) : (
+                                            backendEvents.map((evt) => (
+                                                <div
+                                                    key={evt.id}
+                                                    className={`rounded-xl border p-3 transition-all ${evt.status === 'running'
+                                                        ? 'border-cyan-500 bg-cyan-500/10'
+                                                        : evt.status === 'done'
+                                                            ? 'border-green-500/40 bg-green-500/10'
+                                                            : 'border-red-500/40 bg-red-500/10'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <p className={`text-sm font-medium ${evt.status === 'running'
+                                                            ? 'text-cyan-300'
+                                                            : evt.status === 'done'
+                                                                ? 'text-green-300'
+                                                                : 'text-red-200'
+                                                            }`}>
+                                                            {evt.label}
+                                                        </p>
+                                                        <span className="text-xs text-slate-400">{evt.at}</span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            ) : optimizationResult?.fit_decision === 'poor_fit' ? (
+                                <div className="max-w-2xl mx-auto">
+                                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-6">
+                                        <h3 className="text-2xl font-bold text-red-200 mb-3">Optimization Stopped: Low Match</h3>
+                                        <p className="text-red-100 mb-5">
+                                            {optimizationResult.fit_reason || 'Your resume does not currently match enough core requirements for this job.'}
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                                            <div className="rounded-lg bg-slate-900/40 p-3">
+                                                <p className="text-xs text-slate-400">Fit Decision</p>
+                                                <p className="text-red-200 font-semibold">{optimizationResult.fit_decision}</p>
+                                            </div>
+                                            <div className="rounded-lg bg-slate-900/40 p-3">
+                                                <p className="text-xs text-slate-400">Confidence</p>
+                                                <p className="text-red-200 font-semibold">
+                                                    {optimizationResult.fit_confidence === null || optimizationResult.fit_confidence === undefined
+                                                        ? 'N/A'
+                                                        : Number(optimizationResult.fit_confidence).toFixed(2)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
+                                            <button
+                                                onClick={() => setCurrentStep(3)}
+                                                className="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white"
+                                            >
+                                                Edit Job Description
+                                            </button>
+                                            <button
+                                                onClick={() => navigate('/history')}
+                                                className="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                                            >
+                                                Go to History
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -645,7 +780,7 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                     )}
                 </div>
             </div>
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
         </div>
     );
 }

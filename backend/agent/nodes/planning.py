@@ -1,19 +1,11 @@
 from typing import Dict
-from openai import OpenAI
-from dotenv import load_dotenv
 import json
-import os
-
-load_dotenv()
-
-MODEL = os.getenv("PLANNING_MODEL", "llama-3.3-70b-versatile")
+from .llm_client import build_groq_client
+from config import settings
 
 
 def _safe_json_load(content: str) -> Dict:
-    """
-    Safely extract JSON from LLM output.
-    Handles markdown code blocks and malformed responses.
-    """
+    # Parse JSON from LLM response, handling code blocks and errors
     if "```json" in content:
         content = content.split("```json")[1].split("```")[0].strip()
     elif "```" in content:
@@ -34,23 +26,15 @@ def _safe_json_load(content: str) -> Dict:
 
 
 def plan_improvements(state: Dict) -> Dict:
-    """
-    LangGraph Node: Improvement Planning
-
-    Compares job requirements with resume analysis and
-    creates a prioritized, actionable improvement plan.
-    """
-
-    # ---- HARD VALIDATION (ENGINEER MOVE) ----
+    # Create improvement plan by comparing job requirements with resume gaps
+    
+    # Make sure we have the data we need
     required_fields = ["job_requirements", "resume_analysis", "ats_score_before"]
     for field in required_fields:
         if field not in state or state[field] is None:
             raise ValueError(f"Missing required state field: {field}")
 
-    client = OpenAI(
-        api_key=os.getenv("GROQ_API_KEY"),
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = build_groq_client(state)
 
     prompt = f"""
 You are an expert ATS optimization strategist.
@@ -93,14 +77,14 @@ Rules:
 """
 
     response = client.chat.completions.create(
-        model=MODEL,
+        model=settings.PLANNING_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.2
+        temperature=settings.DEFAULT_TEMPERATURE
     )
 
     plan = _safe_json_load(response.choices[0].message.content)
 
-    # ---- DECISION LOG (AGENT BEHAVIOR) ----
+    # Track what the agent decided to do
     decision = {
         "node": "planning",
         "action": "created_improvement_plan",

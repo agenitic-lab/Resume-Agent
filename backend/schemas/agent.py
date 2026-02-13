@@ -1,21 +1,15 @@
 
-"""
-Agent API Schemas
-
-Pydantic models for agent endpoints.
-"""
+# schemas for agent API endpoints
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 
 
 class OptimizeRequest(BaseModel):
-    """Request to optimize a resume."""
     job_description: str = Field(..., min_length=50)
     resume: str = Field(..., min_length=100)
 
 
 class OptimizeResponse(BaseModel):
-    """Response from optimization."""
     run_id: str
     user_id: str
     
@@ -24,25 +18,30 @@ class OptimizeResponse(BaseModel):
     original_resume: str
     
     # Outputs
-    modified_resume: str
-    
+    modified_resume: Optional[str] = None
+
     # Scores
     ats_score_before: float
-    ats_score_after: float
-    improvement_delta: float
-    
+    ats_score_after: Optional[float] = None
+    improvement_delta: Optional[float] = None
+    ats_breakdown_before: Optional[Dict[str, float]] = None
+    ats_breakdown_after: Optional[Dict[str, float]] = None
+
     # Agent details
     iteration_count: int
     final_status: str
-    
+    fit_decision: str
+    fit_reason: Optional[str] = None
+    fit_confidence: Optional[float] = None
+
     # Structured data
     job_requirements: Optional[Dict[str, Any]] = None
     resume_analysis: Optional[Dict[str, Any]] = None
     improvement_plan: Optional[Dict[str, Any]] = None
+    decision_log: Optional[list[Dict[str, Any]]] = None
 
 
 class RunStatusResponse(BaseModel):
-    """Status of an optimization run."""
     run_id: str
     status: str
     created_at: str

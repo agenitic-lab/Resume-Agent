@@ -1,28 +1,21 @@
-"""
-User Routes
-
-Protected endpoints requiring authentication.
-Demonstrates auth middleware usage and provides user-related functionality.
-"""
+# User profile and settings endpoints
 import logging
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from database.connection import get_db
 from database.models.user import User
+from database.models.run import Run
 from auth.dependencies import get_current_user, get_current_user_optional
-from schemas.auth import UserResponse
+from schemas.auth import UserResponse, ApiKeyUpsertRequest, ApiKeyStatusResponse
+from core.security import encrypt_api_key
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Create router
 router = APIRouter(prefix="/api/user", tags=["User"])
 
-
-# ============================================================================
-# Protected Endpoints (Require Authentication)
-# ============================================================================
 
 @router.get(
     "/me",
@@ -50,20 +43,6 @@ router = APIRouter(prefix="/api/user", tags=["User"])
 def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ) -> UserResponse:
-    """
-    Get current authenticated user's information.
-    
-    **Protected Endpoint** - Requires valid JWT token in Authorization header.
-    
-    Returns:
-        User information including ID, email, and account creation date
-        
-    Example:
-        ```bash
-        curl -H "Authorization: Bearer YOUR_TOKEN" \\
-             http://localhost:8000/api/user/me
-        ```
-    """
     logger.info(f"User info requested: {current_user.email}")
     
     return UserResponse(
@@ -116,9 +95,7 @@ def get_user_profile(
     """
     logger.info(f"Profile requested: {current_user.email}")
     
-    # TODO: In Sprint 2, query actual optimization runs from database
-    # For now, return placeholder data
-    resume_count = 0
+    resume_count = db.query(Run).filter(Run.user_id == current_user.id).count()
     
     return {
         "user_id": str(current_user.id),
@@ -129,9 +106,7 @@ def get_user_profile(
     }
 
 
-# ============================================================================
 # Example: Optional Authentication
-# ============================================================================
 
 @router.get(
     "/status",
@@ -192,3 +167,51 @@ def get_service_status(
         logger.debug("Status check by anonymous user")
     
     return response
+
+
+@router.get(
+    "/api-key/status",
+    response_model=ApiKeyStatusResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get BYOK status",
+)
+def get_api_key_status(
+    current_user: User = Depends(get_current_user),
+):
+    return ApiKeyStatusResponse(
+        has_api_key=bool(current_user.encrypted_api_key),
+        updated_at=current_user.api_key_updated_at,
+    )
+
+
+@router.post(
+    "/api-key",
+    status_code=status.HTTP_200_OK,
+    summary="Store user API key securely",
+)
+def set_api_key(
+    data: ApiKeyUpsertRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.encrypted_api_key = encrypt_api_key(data.api_key)
+    current_user.api_key_updated_at = datetime.now(timezone.utc)
+    db.add(current_user)
+    db.commit()
+    return {"message": "API key saved securely"}
+
+
+@router.delete(
+    "/api-key",
+    status_code=status.HTTP_200_OK,
+    summary="Delete user API key",
+)
+def delete_api_key(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.encrypted_api_key = None
+    current_user.api_key_updated_at = None
+    db.add(current_user)
+    db.commit()
+    return {"message": "API key removed"}
