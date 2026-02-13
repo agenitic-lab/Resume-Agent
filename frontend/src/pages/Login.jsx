@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { login } from '../services/api';
+import { login, isAuthenticated } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,6 +10,13 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleGoogleLogin = () => {
     console.log("Login with Google");
@@ -37,9 +44,9 @@ export default function Login() {
       const data = await login(email, password);
       toast.success('Login successful!');
 
-      // Navigate to dashboard after a brief delay
+      const from = location.state?.from || '/dashboard';
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate(from, { replace: true });
       }, 500);
     } catch (err) {
       const errorMsg = err.message || 'Login failed';

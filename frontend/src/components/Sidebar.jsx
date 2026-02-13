@@ -1,8 +1,19 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import ConfirmDialog from './ConfirmDialog';
+import { logout } from '../services/api';
 
 export default function Sidebar() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+    const handleLogout = async () => {
+        logout();
+        toast.success('Logged out successfully');
+        navigate('/login');
+    };
 
     const menuItems = [
         {
@@ -77,8 +88,8 @@ export default function Sidebar() {
                         key={item.path}
                         to={item.path}
                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive(item.path)
-                                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                                : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                             }`}
                     >
                         {item.icon}
@@ -103,13 +114,27 @@ export default function Sidebar() {
                 </div>
 
                 {/* Sign Out */}
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
+                <button
+                    onClick={() => setShowLogoutDialog(true)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     <span className="font-medium">Sign Out</span>
                 </button>
             </div>
+
+            <ConfirmDialog
+                isOpen={showLogoutDialog}
+                title="Sign Out"
+                message="Are you sure you want to sign out?"
+                confirmText="Sign Out"
+                cancelText="Cancel"
+                variant="danger"
+                onConfirm={handleLogout}
+                onCancel={() => setShowLogoutDialog(false)}
+            />
         </div>
     );
 }
