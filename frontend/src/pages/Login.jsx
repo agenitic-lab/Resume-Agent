@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { login, isAuthenticated } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -7,43 +9,49 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleGoogleLogin = () => {
-    // Placeholder for future Google OAuth integration
     console.log("Login with Google");
-    // Future implementation:
-    // window.location.href = `${API_URL}/auth/google`;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Client-side validation
     if (!email || !password) {
       setError('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
 
     if (!email.includes('@')) {
       setError('Please enter a valid email');
+      toast.error('Please enter a valid email');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Handle login logic here
-      console.log('Login with:', { email, password });
-      // TODO: Add API integration when AG-34 is complete
-      // await login(email, password);
-      // navigate('/dashboard');
+      await login(email, password);
+      toast.success('Login successful!');
 
-      // Temporary success simulation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      alert('Login successful! (API integration coming in AG-34)');
+      const from = location.state?.from || '/dashboard';
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 500);
     } catch (err) {
-      setError(err.message || 'Login failed');
+      const errorMsg = err.message || 'Login failed';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
