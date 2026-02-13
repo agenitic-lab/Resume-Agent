@@ -414,7 +414,3 @@ export async function compileLatex(latexCode) {
 
     return response.blob();
 }
-
-export async function getCurrentUser() {
-    return apiRequest('/api/auth/me');
-}
