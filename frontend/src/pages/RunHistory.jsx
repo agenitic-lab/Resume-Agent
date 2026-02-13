@@ -25,11 +25,6 @@ export default function RunHistory() {
         navigate(`/optimization/${id}`);
     };
 
-    const handleDelete = (id) => {
-        // Not implemented in backend yet
-        setHistoryItems(historyItems.filter(item => item.id !== id));
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
             <div className="max-w-5xl mx-auto">

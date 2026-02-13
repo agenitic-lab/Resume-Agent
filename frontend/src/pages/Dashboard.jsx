@@ -11,7 +11,7 @@ export default function Dashboard() {
   });
   const [latestRun, setLatestRun] = useState(null);
   const [recentRuns, setRecentRuns] = useState([]);
-  const [loading, setLoading] = useState(true);
+
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function Dashboard() {
 
         if (runs.length > 0) {
           // Calculate stats
-          const totalRuns = runs.length; // This should ideally come from a stats endpoint
+
           const improvements = runs
             .map(r => r.improvement_delta || 0)
             .filter(i => i !== null);
@@ -64,8 +64,6 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
