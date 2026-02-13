@@ -19,8 +19,11 @@ from schemas.auth import (
     UserResponse,
     ErrorResponse
 )
+from schemas.google import GoogleLoginRequest
 from core.security import hash_password, verify_password
 from auth.jwt import create_access_token
+from auth.google_oauth import verify_google_token
+from auth.dependencies import get_current_user
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -74,7 +77,8 @@ def register_user(
     # Create user instance
     user = User(
         email=data.email,
-        password_hash=hashed_password
+        password_hash=hashed_password,
+        auth_provider='email'
     )
 
     # Add to database
@@ -166,7 +170,16 @@ def login(
             headers={"WWW-Authenticate": "Bearer"}
         )
     
-    # Step 2: Verify password
+    # Step 2: Check if user is OAuth user
+    if user.auth_provider != 'email':
+        logger.warning(f"Login failed - OAuth user attempted password login: {credentials.email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"This account uses {user.auth_provider} authentication. Please sign in with {user.auth_provider}.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    # Step 3: Verify password
     if not verify_password(credentials.password, user.password_hash):
         logger.warning(f"Login failed - invalid password for: {credentials.email}")
         raise HTTPException(
@@ -175,13 +188,144 @@ def login(
             headers={"WWW-Authenticate": "Bearer"}
         )
     
-    # Step 3: Generate JWT token
+    # Step 4: Generate JWT token
     try:
         access_token, expires_in = create_access_token(
             user_id=str(user.id),
             email=user.email
         )
         logger.info(f"Login successful for user: {user.id}")
+        
+    except Exception as e:
+        logger.error(f"Token generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate access token"
+        )
+    
+    # Step 5: Return response with token and user info
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=expires_in,
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            created_at=user.created_at
+        )
+    )
+
+
+# ============================================================================
+# Google OAuth Endpoint
+# ============================================================================
+
+@router.post(
+    "/google",
+    response_model=LoginResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Authenticate with Google",
+    description="Sign in or sign up using Google OAuth. Creates account if user doesn't exist.",
+    responses={
+        200: {
+            "description": "Authentication successful, returns JWT token and user info",
+            "model": LoginResponse
+        },
+        401: {
+            "description": "Invalid Google token",
+            "model": ErrorResponse
+        }
+    }
+)
+def google_auth(
+    data: GoogleLoginRequest,
+    db: Session = Depends(get_db)
+) -> LoginResponse:
+    """
+    Authenticate user with Google OAuth.
+    
+    - **credential**: Google ID token from Google Sign-In
+    
+    This endpoint handles both sign-in and sign-up:
+    - If user exists: logs them in
+    - If user doesn't exist: creates account and logs them in
+    
+    Returns:
+    - **access_token**: JWT token for authenticated requests
+    - **token_type**: Always "bearer"
+    - **expires_in**: Token expiration time in seconds
+    - **user**: User information
+    """
+    logger.info("Google OAuth authentication attempt")
+    
+    # Step 1: Verify Google token and extract user info
+    try:
+        google_user = verify_google_token(data.credential)
+    except ValueError as e:
+        logger.error(f"Google token verification failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    # Step 2: Check if user exists by google_id
+    user = db.query(User).filter(User.google_id == google_user.google_id).first()
+    
+    if user:
+        # Existing user - update profile info if changed
+        logger.info(f"Existing Google user logging in: {user.email}")
+        if google_user.profile_picture and user.profile_picture != google_user.profile_picture:
+            user.profile_picture = google_user.profile_picture
+        if google_user.full_name and user.full_name != google_user.full_name:
+            user.full_name = google_user.full_name
+        db.commit()
+        db.refresh(user)
+    else:
+        # Check if email already exists (user might have registered with email/password)
+        user = db.query(User).filter(User.email == google_user.email).first()
+        
+        if user:
+            # Email exists but not linked to Google - link it
+            logger.info(f"Linking existing email account to Google: {user.email}")
+            user.google_id = google_user.google_id
+            user.auth_provider = 'google'
+            user.profile_picture = google_user.profile_picture
+            user.full_name = google_user.full_name
+            db.commit()
+            db.refresh(user)
+        else:
+            # New user - create account
+            logger.info(f"Creating new Google user: {google_user.email}")
+            user = User(
+                email=google_user.email,
+                google_id=google_user.google_id,
+                auth_provider='google',
+                profile_picture=google_user.profile_picture,
+                full_name=google_user.full_name,
+                password_hash=None  # OAuth users don't have passwords
+            )
+            db.add(user)
+            
+            try:
+                db.commit()
+                db.refresh(user)
+                logger.info(f"Google user created successfully: {user.id}")
+            except IntegrityError:
+                db.rollback()
+                logger.error(f"Failed to create Google user - integrity error: {google_user.email}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to create user account"
+                )
+    
+    # Step 3: Generate JWT token
+    try:
+        access_token, expires_in = create_access_token(
+            user_id=str(user.id),
+            email=user.email
+        )
+        logger.info(f"Google authentication successful for user: {user.id}")
         
     except Exception as e:
         logger.error(f"Token generation failed: {str(e)}")
@@ -200,4 +344,43 @@ def login(
             email=user.email,
             created_at=user.created_at
         )
+    )
+
+
+# ============================================================================
+# User Profile Endpoint
+# ============================================================================
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get current user",
+    description="Get the currently authenticated user's profile information.",
+    responses={
+        200: {
+            "description": "User profile retrieved successfully",
+            "model": UserResponse
+        },
+        401: {
+            "description": "Not authenticated",
+            "model": ErrorResponse
+        }
+    }
+)
+def get_current_user_profile(
+    current_user: User = Depends(get_current_user)
+) -> UserResponse:
+    """
+    Get the currently authenticated user's profile.
+    
+    Returns:
+    - **user**: User information (id, email, created_at)
+    """
+    return UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        created_at=current_user.created_at,
+        full_name=current_user.full_name,
+        profile_picture=current_user.profile_picture
     )

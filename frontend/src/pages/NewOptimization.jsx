@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
+import { runOptimization } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -187,32 +188,17 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
         try {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            // Call backend API (handles auth automatically via api.js)
+            const data = await runOptimization(jobDescription, resumeContent);
 
-            const response = await fetch(`${API_BASE_URL}/api/agent/optimize`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    job_description: jobDescription,
-                    resume_text: resumeContent,
-                    user_id: 'anonymous'
-                }),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.modified_resume && data.modified_resume.trim()) {
-                    optimizedLatexCode = data.modified_resume;
-                }
+            if (data.modified_resume && data.modified_resume.trim()) {
+                optimizedLatexCode = data.modified_resume;
+                setToast({ message: 'Optimization completed successfully!', type: 'success' });
             }
-        } catch {
-            // falls back to sampleLatex on timeout or failure
+        } catch (error) {
+            console.error('Optimization failed:', error);
+            setToast({ message: `Optimization failed: ${error.message}`, type: 'error' });
+            // falls back to sampleLatex on failure so user can still see something
         }
 
         setOptimizedLatex(optimizedLatexCode);

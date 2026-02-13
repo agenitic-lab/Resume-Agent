@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ConfirmDialog from './ConfirmDialog';
-import { logout } from '../services/api';
+import { logout, getCurrentUser } from '../services/api';
 
 export default function Sidebar() {
     const location = useLocation();
     const navigate = useNavigate();
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const userData = await getCurrentUser();
+                setUser(userData);
+            } catch (error) {
+                console.error("Failed to fetch user in sidebar:", error);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const handleLogout = async () => {
         logout();
@@ -104,12 +117,20 @@ export default function Sidebar() {
             {/* User Profile */}
             <div className="p-4 border-t border-slate-800">
                 <div className="flex items-center gap-3 p-3 bg-slate-900/50 rounded-lg mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        R
+                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                        {user?.profile_picture ? (
+                            <img src={user.profile_picture} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                            <span>{user?.email?.[0]?.toUpperCase() || 'U'}</span>
+                        )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">resumeagent2026</p>
-                        <p className="text-xs text-slate-500 truncate">resumeagent2026@gmail.com</p>
+                        <p className="text-sm font-medium text-white truncate">
+                            {user?.full_name || user?.email?.split('@')[0] || 'User'}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate">
+                            {user?.email || 'Loading...'}
+                        </p>
                     </div>
                 </div>
 

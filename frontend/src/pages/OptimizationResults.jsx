@@ -1,63 +1,97 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getRunDetails } from '../services/api';
 
 export default function OptimizationResults() {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
+    const [resultsData, setResultsData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock data - replace with actual API data
-    const resultsData = {
-        date: 'February 7, 2026',
-        originalScore: 58,
-        optimizedScore: 76,
-        improvement: 18,
-        iterations: 2,
-        scoreProgression: [58, 68, 76],
-        jobRequirements: {
-            mustHave: ['Python', 'FastAPI', 'PostgreSQL'],
-            niceToHave: ['Docker', 'AWS'],
-            keywords: ['backend', 'API'],
-            seniorityLevel: 'junior'
-        },
-        resumeAnalysis: {
-            skillsPresent: ['Python', 'Django'],
-            skillsMissing: ['FastAPI'],
-            strongSections: ['education'],
-            weakSections: ['projects']
-        },
-        changes: [
-            {
-                id: 1,
-                title: 'add keywords',
-                description: 'Added relevant keywords to skills section',
-                reason: 'Improve ATS matching'
+    useEffect(() => {
+        const fetchRunDetails = async () => {
+            try {
+                if (!id) return;
+                const data = await getRunDetails(id);
+
+                // Transform API data to match component structure if needed
+                // Currently ensuring defaults for missing fields
+                const transformedData = {
+                    date: new Date(data.created_at).toLocaleDateString(),
+                    originalScore: Math.round(data.ats_score_before || 0),
+                    optimizedScore: Math.round(data.ats_score_after || 0),
+                    improvement: Math.round(data.improvement_delta || 0),
+                    iterations: data.iteration_count || 1,
+                    scoreProgression: [
+                        Math.round(data.ats_score_before || 0),
+                        Math.round((data.ats_score_before + data.ats_score_after) / 2),
+                        Math.round(data.ats_score_after || 0)
+                    ],
+                    jobRequirements: data.job_requirements || {
+                        mustHave: [],
+                        niceToHave: [],
+                        keywords: [],
+                        seniorityLevel: 'Not specified'
+                    },
+                    resumeAnalysis: data.resume_analysis || {
+                        skillsPresent: [],
+                        skillsMissing: [],
+                        strongSections: [],
+                        weakSections: []
+                    },
+                    changes: (data.improvement_plan || []).map((change, index) => ({
+                        id: index + 1,
+                        title: change.area || 'Improvement',
+                        description: change.suggestion || change.description || '',
+                        reason: change.reason || 'To improve ATS score'
+                    })),
+                    coverLetter: "Cover letter generation is not yet implemented in the backend." // Backend doesn't return cover letter yet
+                };
+
+                setResultsData(transformedData);
+            } catch (err) {
+                console.error("Failed to fetch run details:", err);
+                setError("Failed to load optimization results.");
+            } finally {
+                setLoading(false);
             }
-        ],
-        coverLetter: `Dear Hiring Manager,
+        };
 
-I am writing to express my strong interest in the Junior Python Developer position at your company. With my background in Python development and experience with Django, I am excited about the opportunity to contribute to your team.
-
-My experience includes:
-- Building scalable backend systems with Python and Django
-- Working with PostgreSQL databases
-- Developing RESTful APIs
-- Strong foundation in software engineering principles
-
-I am particularly drawn to this role because it aligns perfectly with my career goals of working with modern Python frameworks like FastAPI and expanding my expertise in backend development.
-
-I am eager to bring my skills and enthusiasm to your team and would welcome the opportunity to discuss how I can contribute to your projects.
-
-Thank you for considering my application.
-
-Best regards,
-John Doe`
-    };
+        fetchRunDetails();
+    }, [id]);
 
     const handleCopyCoverLetter = () => {
+        if (!resultsData?.coverLetter) return;
         navigator.clipboard.writeText(resultsData.coverLetter);
         setCoverLetterCopied(true);
         setTimeout(() => setCoverLetterCopied(false), 2000);
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 flex items-center justify-center">
+                <div className="text-white text-xl">Loading results...</div>
+            </div>
+        );
+    }
+
+    if (error || !resultsData) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-red-400 text-xl mb-4">{error || "Run not found"}</div>
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700"
+                    >
+                        Back to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
@@ -131,7 +165,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-white font-semibold mb-2">Must Have</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {resultsData.jobRequirements.mustHave.map((skill) => (
+                                        {resultsData.jobRequirements.mustHave?.map((skill) => (
                                             <span key={skill} className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm">
                                                 {skill}
                                             </span>
@@ -142,7 +176,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-white font-semibold mb-2">Nice to Have</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {resultsData.jobRequirements.niceToHave.map((skill) => (
+                                        {resultsData.jobRequirements.niceToHave?.map((skill) => (
                                             <span key={skill} className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm">
                                                 {skill}
                                             </span>
@@ -153,7 +187,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-white font-semibold mb-2">Keywords</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {resultsData.jobRequirements.keywords.map((keyword) => (
+                                        {resultsData.jobRequirements.keywords?.map((keyword) => (
                                             <span key={keyword} className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">
                                                 {keyword}
                                             </span>
@@ -178,7 +212,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-green-400 font-semibold mb-2">Skills Present</h3>
                                     <ul className="space-y-1">
-                                        {resultsData.resumeAnalysis.skillsPresent.map((skill) => (
+                                        {resultsData.resumeAnalysis.skillsPresent?.map((skill) => (
                                             <li key={skill} className="text-slate-300 text-sm flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
                                                 {skill}
@@ -190,7 +224,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-red-400 font-semibold mb-2">Skills Missing</h3>
                                     <ul className="space-y-1">
-                                        {resultsData.resumeAnalysis.skillsMissing.map((skill) => (
+                                        {resultsData.resumeAnalysis.skillsMissing?.map((skill) => (
                                             <li key={skill} className="text-slate-300 text-sm flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 bg-red-400 rounded-full" />
                                                 {skill}
@@ -202,7 +236,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-white font-semibold mb-2">Strong Sections</h3>
                                     <ul className="space-y-1">
-                                        {resultsData.resumeAnalysis.strongSections.map((section) => (
+                                        {resultsData.resumeAnalysis.strongSections?.map((section) => (
                                             <li key={section} className="text-slate-300 text-sm">{section}</li>
                                         ))}
                                     </ul>
@@ -211,7 +245,7 @@ John Doe`
                                 <div>
                                     <h3 className="text-white font-semibold mb-2">Weak Sections</h3>
                                     <ul className="space-y-1">
-                                        {resultsData.resumeAnalysis.weakSections.map((section) => (
+                                        {resultsData.resumeAnalysis.weakSections?.map((section) => (
                                             <li key={section} className="text-slate-300 text-sm">{section}</li>
                                         ))}
                                     </ul>

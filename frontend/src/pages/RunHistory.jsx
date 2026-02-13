@@ -1,36 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getUserRuns } from '../services/api';
 
 export default function RunHistory() {
     const navigate = useNavigate();
-    const [historyItems, setHistoryItems] = useState([
-        {
-            id: 1,
-            status: 'Completed',
-            date: 'Feb 7, 2026, 12:04 PM',
-            jobTitle: 'Junior Position',
-            jobDescription: 'python developer skill python,django,arm,hhhhhhhhhhhh...',
-            originalScore: 58,
-            optimizedScore: 76,
-            improvement: 18
-        },
-        {
-            id: 2,
-            status: 'Completed',
-            date: 'Jan 15, 2024, 04:00 PM',
-            jobTitle: 'Junior Position',
-            jobDescription: 'Looking for a Python backend developer with FastAPI experience.....',
-            originalScore: 62,
-            optimizedScore: 84,
-            improvement: 22
-        }
-    ]);
+    const [historyItems, setHistoryItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRuns = async () => {
+            try {
+                const runs = await getUserRuns(100);
+                setHistoryItems(runs);
+            } catch (error) {
+                console.error("Failed to fetch history:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRuns();
+    }, []);
 
     const handleView = (id) => {
         navigate(`/optimization/${id}`);
     };
 
     const handleDelete = (id) => {
+        // Not implemented in backend yet
         setHistoryItems(historyItems.filter(item => item.id !== id));
     };
 
@@ -45,7 +41,9 @@ export default function RunHistory() {
 
                 {/* History List */}
                 <div className="space-y-4">
-                    {historyItems.length === 0 ? (
+                    {loading ? (
+                        <div className="text-center text-slate-400 py-12">Loading history...</div>
+                    ) : historyItems.length === 0 ? (
                         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
                             <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,11 +72,13 @@ export default function RunHistory() {
                                             <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold">
                                                 {item.status}
                                             </span>
-                                            <span className="text-slate-500 text-sm">{item.date}</span>
+                                            <span className="text-slate-500 text-sm">{new Date(item.created_at).toLocaleDateString()}</span>
                                         </div>
 
-                                        <h3 className="text-xl font-bold text-white mb-1">{item.jobTitle}</h3>
-                                        <p className="text-slate-400 text-sm mb-4 line-clamp-1">{item.jobDescription}</p>
+                                        <h3 className="text-xl font-bold text-white mb-1">
+                                            {item.job_description ? (item.job_description.substring(0, 50) + "...") : "Optimization Run"}
+                                        </h3>
+                                        <p className="text-slate-400 text-sm mb-4 line-clamp-1">{item.job_description}</p>
                                     </div>
 
                                     {/* Right Side - Scores and Actions */}
@@ -86,14 +86,14 @@ export default function RunHistory() {
                                         {/* Score Display */}
                                         <div className="text-right">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-2xl font-bold text-white">{item.originalScore}</span>
+                                                <span className="text-2xl font-bold text-white">{Math.round(item.ats_score_before || 0)}</span>
                                                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                 </svg>
-                                                <span className="text-2xl font-bold text-cyan-400">{item.optimizedScore}</span>
+                                                <span className="text-2xl font-bold text-cyan-400">{Math.round(item.ats_score_after || 0)}</span>
                                             </div>
                                             <div className="text-green-400 text-sm font-semibold">
-                                                +{item.improvement} points
+                                                +{Math.round(item.improvement_delta || 0)} points
                                             </div>
                                         </div>
 
@@ -107,15 +107,6 @@ export default function RunHistory() {
                                                 <svg className="w-5 h-5 text-slate-400 group-hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(item.id)}
-                                                className="p-3 bg-slate-800 hover:bg-red-900/50 rounded-lg transition-all group"
-                                                title="Delete"
-                                            >
-                                                <svg className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
                                         </div>
