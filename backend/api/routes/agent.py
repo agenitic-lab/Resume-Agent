@@ -16,6 +16,11 @@ from database.models import User
 from auth.dependencies import get_current_user
 from schemas.agent import OptimizeRequest, OptimizeResponse
 
+from typing import List
+from sqlalchemy import desc
+from database.models.run import ResumeRun
+from schemas.agent import OptimizeRequest, OptimizeResponse, RunListItem, RunDetailResponse
+
 # Import agent workflow
 # Adjust path to import from agent directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -62,12 +67,37 @@ def run_agent_workflow(
         
         print(f"Agent completed: {result['final_status']}")
         
-        # NOTE: Database persistence (AG-37/AG-38) disabled as per user request.
-        # Results are returned directly without saving to agent_runs table.
+        # Save to database (AG-37)
+        db_run = ResumeRun(
+            user_id=current_user.id,
+            job_description=request.job_description,
+            original_resume_text=request.resume,
+            
+            # Outputs
+            modified_resume_text=result.get("modified_resume"),
+            
+            # Scores
+            ats_score_before=result.get("ats_score_before"),
+            ats_score_after=result.get("ats_score_after"),
+            improvement_delta=result.get("improvement_delta"),
+            
+            # Status
+            status=result.get("final_status", "completed"),
+            completed_at=datetime.now(),
+            
+            # Structured Data
+            job_requirements=result.get("job_requirements"),
+            resume_analysis=result.get("resume_analysis"),
+            improvement_plan=result.get("improvement_plan")
+        )
+        
+        db.add(db_run)
+        db.commit()
+        db.refresh(db_run)
         
         # Return response
         return OptimizeResponse(
-            run_id=run_id,
+            run_id=str(db_run.id),
             user_id=str(current_user.id),
             job_description=request.job_description,
             original_resume=request.resume,
@@ -92,7 +122,7 @@ def run_agent_workflow(
         )
 
 
-@router.get("/runs/{run_id}")
+@router.get("/runs/{run_id}", response_model=RunDetailResponse)
 def get_run(
     run_id: str,
     current_user: User = Depends(get_current_user),
@@ -101,21 +131,71 @@ def get_run(
     """
     Get details of a specific optimization run.
     """
-    # AG-37 (Database Model) is pending, so we cannot fetch runs yet.
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Run history not yet implemented (requires AG-37)"
+    run = db.query(ResumeRun).filter(ResumeRun.id == run_id).first()
+    
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Run not found"
+        )
+        
+    # Check ownership
+    if str(run.user_id) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this run"
+        )
+        
+    return RunDetailResponse(
+        id=str(run.id),
+        run_id=str(run.id),
+        user_id=str(run.user_id),
+        created_at=run.created_at,
+        completed_at=run.completed_at,
+        
+        job_description=run.job_description,
+        original_resume=run.original_resume_text,
+        modified_resume=run.modified_resume_text or "",
+        
+        ats_score_before=run.ats_score_before or 0.0,
+        ats_score_after=run.ats_score_after or 0.0,
+        improvement_delta=run.improvement_delta or 0.0,
+        
+        iteration_count=0, # Not persisted currently
+        final_status=run.status,
+        
+        job_requirements=run.job_requirements,
+        resume_analysis=run.resume_analysis,
+        improvement_plan=run.improvement_plan
     )
 
 
-@router.get("/runs")
+@router.get("/runs", response_model=List[RunListItem])
 def get_user_runs(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    limit: int = 10
+    limit: int = 10,
+    skip: int = 0
 ):
     """
     Get user's optimization run history.
     """
-    # AG-37 (Database Model) is pending, so we cannot fetch runs yet.
-    return []
+    runs = db.query(ResumeRun)\
+        .filter(ResumeRun.user_id == current_user.id)\
+        .order_by(desc(ResumeRun.created_at))\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+        
+    return [
+        RunListItem(
+            id=str(run.id),
+            created_at=run.created_at,
+            job_description=run.job_description[:100] + "..." if len(run.job_description) > 100 else run.job_description,
+            ats_score_before=run.ats_score_before,
+            ats_score_after=run.ats_score_after,
+            improvement_delta=run.improvement_delta,
+            status=run.status
+        )
+        for run in runs
+    ]
