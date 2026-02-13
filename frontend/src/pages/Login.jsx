@@ -41,7 +41,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await login(email, password);
+      await login(email, password);
       toast.success('Login successful!');
 
       const from = location.state?.from || '/dashboard';

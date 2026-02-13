@@ -11,7 +11,6 @@ export default function Register() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,8 +46,6 @@ export default function Register() {
       return;
     }
 
-    setLoading(true);
-
     try {
       await register(formData.email, formData.password);
       toast.success('Account created successfully!');
@@ -59,7 +56,6 @@ export default function Register() {
     } catch (err) {
       const errorMsg = err.message || 'Registration failed';
       toast.error(errorMsg);
-      setLoading(false);
     }
   };
 
