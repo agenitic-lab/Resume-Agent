@@ -71,6 +71,16 @@ class UserResponse(BaseModel):
         description="Account creation timestamp",
         examples=["2024-01-15T10:30:00Z"]
     )
+    full_name: Optional[str] = Field(
+        None,
+        description="User's full name",
+        examples=["John Doe"]
+    )
+    profile_picture: Optional[str] = Field(
+        None,
+        description="URL to user's profile picture",
+        examples=["https://lh3.googleusercontent.com/a/ACg8oc..."]
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -78,7 +88,9 @@ class UserResponse(BaseModel):
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "email": "john.doe@example.com",
-                "created_at": "2024-01-15T10:30:00Z"
+                "created_at": "2024-01-15T10:30:00Z",
+                "full_name": "John Doe",
+                "profile_picture": "https://lh3.googleusercontent.com/a/ACg8oc..."
             }
         }
     )

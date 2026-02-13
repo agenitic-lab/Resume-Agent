@@ -1,5 +1,5 @@
 # database models
 from .user import User
-from .run import Run, RunStatus
+from .run import ResumeRun
 
-__all__ = ["User", "Run", "RunStatus"]
+__all__ = ["User", "ResumeRun"]

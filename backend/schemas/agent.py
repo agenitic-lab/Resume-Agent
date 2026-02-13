@@ -46,3 +46,21 @@ class RunStatusResponse(BaseModel):
     status: str
     created_at: str
     completed_at: Optional[str] = None
+
+
+class RunListItem(BaseModel):
+    """Summary of a run for list view."""
+    id: str
+    created_at: Any
+    job_description: str
+    ats_score_before: Optional[float] = None
+    ats_score_after: Optional[float] = None
+    improvement_delta: Optional[float] = None
+    status: str
+
+
+class RunDetailResponse(OptimizeResponse):
+    """Full detail of a run (same fields as optimize response)."""
+    id: str
+    created_at: Any
+    completed_at: Optional[Any] = None

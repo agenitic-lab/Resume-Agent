@@ -1,37 +1,39 @@
 import uuid
-import enum
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Enum
+from sqlalchemy import Column, String, DateTime, Float, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from database.connection import Base
 
-class RunStatus(str, enum.Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-class Run(Base):
-    __tablename__ = "runs"
+class ResumeRun(Base):
+    __tablename__ = "resume_runs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     
-    status = Column(Enum(RunStatus), default=RunStatus.PENDING, nullable=False)
+    # Input Data
+    job_description = Column(Text, nullable=False)
+    original_resume_text = Column(Text, nullable=False)
     
-    # Inputs
-    job_description = Column(Text, nullable=True)
-    original_resume_text = Column(Text, nullable=True)
-    resume_file_path = Column(String, nullable=True)
+    # Output Data
+    modified_resume_text = Column(Text, nullable=True)
     
-    # Outputs
-    optimized_resume_path = Column(String, nullable=True)
-    result_json = Column(JSONB, nullable=True)  # Store full agent output
+    # Scores
+    ats_score_before = Column(Float, nullable=True)
+    ats_score_after = Column(Float, nullable=True)
+    improvement_delta = Column(Float, nullable=True)
+    
+    # Status
+    status = Column(String, default="pending", nullable=False) # pending, completed, failed
+    
+    # Structured Data (stored as JSON)
+    job_requirements = Column(JSONB, nullable=True)
+    resume_analysis = Column(JSONB, nullable=True)
+    improvement_plan = Column(JSONB, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user = relationship("User", backref="runs")
+    user = relationship("database.models.user.User", backref="resume_runs")

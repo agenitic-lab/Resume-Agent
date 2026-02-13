@@ -123,6 +123,35 @@ export async function login(email, password) {
     return data;
 }
 
+export async function googleAuth(credential) {
+    const data = await apiRequest('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ credential }),
+    });
+
+    // Store token on successful authentication
+    if (data.access_token) {
+        setToken(data.access_token);
+    }
+
+    return data;
+}
+
+export async function runOptimization(job_description, resume) {
+    return apiRequest('/api/agent/run', {
+        method: 'POST',
+        body: JSON.stringify({ job_description, resume }),
+    });
+}
+
+export async function getUserRuns(limit = 10, skip = 0) {
+    return apiRequest(`/api/agent/runs?limit=${limit}&skip=${skip}`);
+}
+
+export async function getRunDetails(runId) {
+    return apiRequest(`/api/agent/runs/${runId}`);
+}
+
 export async function logout() {
     removeToken();
     clearSessionCaches();
@@ -384,4 +413,8 @@ export async function compileLatex(latexCode) {
     }
 
     return response.blob();
+}
+
+export async function getCurrentUser() {
+    return apiRequest('/api/auth/me');
 }
