@@ -77,9 +77,18 @@ export default function Settings() {
         </div>
 
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 mb-6">
-          <h2 className="text-xl font-bold text-white mb-2">LLM API Key (Required)</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Groq API Key (Required)</h2>
           <p className="text-slate-400 text-sm mb-4">
-            Resume optimization is disabled until a valid API key is saved.
+            This app uses Groq's API for AI-powered resume optimization. Get your free API key from{' '}
+            <a 
+              href="https://console.groq.com/keys" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-cyan-400 hover:text-cyan-300 underline"
+            >
+              console.groq.com/keys
+            </a>
+            . Resume optimization is disabled until a valid key is saved.
           </p>
 
           {loading ? (

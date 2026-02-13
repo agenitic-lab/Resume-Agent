@@ -119,8 +119,16 @@ Resume-Agent/
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- PostgreSQL
-- Groq API Key
+- PostgreSQL (via Supabase recommended)
+- **Groq API Key** - Free tier available at [console.groq.com/keys](https://console.groq.com/keys)
+
+### Get Your Groq API Key
+
+1. Visit [https://console.groq.com/keys](https://console.groq.com/keys)
+2. Sign in or create a free account
+3. Click "Create API Key"
+4. Copy your API key (starts with `gsk_`)
+5. Add it to Settings page in the web app, or set `GROQ_API_KEY` in backend `.env`
 
 ### Backend
 

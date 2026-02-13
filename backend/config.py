@@ -22,6 +22,9 @@ class Settings:
     
     ENCRYPTION_KEY: Optional[str] = os.getenv("ENCRYPTION_KEY")
     
+    # Google OAuth (optional)
+    GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+    
     # CORS
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "")
     ALLOWED_ORIGIN_REGEX: str = os.getenv(

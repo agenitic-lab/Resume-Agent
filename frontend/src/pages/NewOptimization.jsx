@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
-import { runOptimization } from '../services/api';
+import { runOptimization, getApiKeyStatus } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -20,6 +20,21 @@ export default function NewOptimization() {
     const [isCompiling, setIsCompiling] = useState(false);
     const [toast, setToast] = useState(null);
     const [copyButtonText, setCopyButtonText] = useState('Copy');
+    const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = status
+
+    // check API key status on mount
+    useEffect(() => {
+        async function checkApiKey() {
+            try {
+                const status = await getApiKeyStatus();
+                setHasApiKey(status.has_api_key);
+            } catch (error) {
+                console.error('Failed to check API key status:', error);
+                setHasApiKey(false);
+            }
+        }
+        checkApiKey();
+    }, []);
 
     // reset to step 1 if user refreshes mid-optimization
     useEffect(() => {
@@ -197,7 +212,18 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
             }
         } catch (error) {
             console.error('Optimization failed:', error);
-            setToast({ message: `Optimization failed: ${error.message}`, type: 'error' });
+            const errorMsg = error.message || 'Unknown error';
+            
+            // Check if it's an API key issue
+            if (errorMsg.includes('API key') || errorMsg.includes('Settings')) {
+                setToast({ 
+                    message: 'Please add your Groq API key in Settings before running optimization.', 
+                    type: 'error' 
+                });
+                setHasApiKey(false); // Update state to show warning banner
+            } else {
+                setToast({ message: `Optimization failed: ${errorMsg}`, type: 'error' });
+            }
             // falls back to sampleLatex on failure so user can still see something
         }
 
@@ -232,6 +258,38 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
+            {/* API Key Warning Banner */}
+            {hasApiKey === false && (
+                <div className="max-w-4xl mx-auto mb-6">
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-3">
+                        <svg className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="flex-1">
+                            <h3 className="text-yellow-400 font-semibold mb-1">Groq API Key Required</h3>
+                            <p className="text-slate-300 text-sm mb-3">
+                                You need to add your Groq API key to use the resume optimization feature. 
+                                Get your free API key from{' '}
+                                <a 
+                                    href="https://console.groq.com/keys" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-cyan-400 hover:text-cyan-300 underline"
+                                >
+                                    console.groq.com/keys
+                                </a>
+                            </p>
+                            <button
+                                onClick={() => navigate('/settings')}
+                                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-medium transition-colors text-sm"
+                            >
+                                Go to Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Step Indicator */}
             <div className="max-w-4xl mx-auto mb-12">
                 <div className="flex items-center justify-center gap-4">
