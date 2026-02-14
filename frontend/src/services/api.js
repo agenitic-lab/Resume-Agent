@@ -152,6 +152,15 @@ export async function getRunDetails(runId) {
     return apiRequest(`/api/agent/runs/${runId}`);
 }
 
+export async function deleteRun(runId) {
+    const result = await apiRequest(`/api/agent/runs/${runId}`, {
+        method: 'DELETE',
+    });
+    // Clear runs cache after deletion
+    clearRunsCache();
+    return result;
+}
+
 export async function logout() {
     removeToken();
     clearSessionCaches();
@@ -368,13 +377,6 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent) {
 
     clearRunsCache();
     return finalResult;
-}
-
-export async function deleteRun(runId) {
-    await apiRequest(`/api/agent/runs/${runId}`, {
-        method: 'DELETE',
-    });
-    clearRunsCache();
 }
 
 export async function clearRunHistory() {

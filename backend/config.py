@@ -60,8 +60,8 @@ class Settings:
     MAX_ITERATIONS: int = int(os.getenv("MAX_ITERATIONS", "3"))
     TARGET_SCORE: float = float(os.getenv("TARGET_SCORE", "75.0"))
     MIN_ITERATION_GAIN: float = float(os.getenv("MIN_ITERATION_GAIN", "1.0"))
-    FIT_THRESHOLD_POOR: float = float(os.getenv("FIT_THRESHOLD_POOR", "0.25"))
-    FIT_THRESHOLD_PARTIAL: float = float(os.getenv("FIT_THRESHOLD_PARTIAL", "0.45"))
+    FIT_THRESHOLD_POOR: float = float(os.getenv("FIT_THRESHOLD_POOR", "0.15"))
+    FIT_THRESHOLD_PARTIAL: float = float(os.getenv("FIT_THRESHOLD_PARTIAL", "0.40"))
     
     # External services
     LATEX_COMPILE_URL: str = os.getenv(

@@ -144,6 +144,9 @@ def get_run(
     job_requirements = result_json.get("job_requirements")
     resume_analysis = result_json.get("resume_analysis")
     improvement_plan = result_json.get("improvement_plan")
+    
+    # Convert enum to string value if needed
+    final_status = run.status.value if hasattr(run.status, 'value') else str(run.status)
         
     return RunDetailResponse(
         id=str(run.id),
@@ -163,7 +166,7 @@ def get_run(
         ats_breakdown_after=result_json.get("ats_breakdown_after"),
         
         iteration_count=result_json.get("iteration_count", 0),
-        final_status=run.status,
+        final_status=final_status,
         fit_decision=result_json.get("fit_decision", "unknown"),
         fit_reason=result_json.get("fit_reason"),
         fit_confidence=result_json.get("fit_confidence"),
@@ -216,8 +219,37 @@ def get_user_runs(
                 ats_score_before=ats_score_before,
                 ats_score_after=ats_score_after,
                 improvement_delta=improvement_delta,
-                status=run.status
+                status=run.status.value if hasattr(run.status, 'value') else str(run.status)
             )
         )
     
     return result_list
+
+
+@router.delete("/runs/{run_id}")
+def delete_run(
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Delete a specific run by ID
+    run = db.query(ResumeRun).filter(ResumeRun.id == run_id).first()
+    
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Run not found"
+        )
+        
+    # Check ownership
+    if str(run.user_id) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this run"
+        )
+    
+    # Delete the run
+    db.delete(run)
+    db.commit()
+    
+    return {"message": "Run deleted successfully"}

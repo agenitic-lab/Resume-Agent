@@ -194,6 +194,22 @@ export default function NewOptimization() {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
 
             const data = await runOptimization(jobDescription, resumeContent);
+            console.log('Optimization response:', {
+                final_status: data.final_status,
+                fit_decision: data.fit_decision,
+                has_modified_resume: !!data.modified_resume
+            });
+
+            // Check if optimization was rejected due to poor fit
+            if (data.final_status === 'rejected_poor_fit' || data.fit_decision === 'poor_fit') {
+                const reason = data.fit_reason || 'Your profile does not match the job requirements sufficiently.';
+                setToast({
+                    message: `Optimization skipped: ${reason}`,
+                    type: 'warning'
+                });
+                setCurrentStep(3);
+                return;
+            }
 
             if (data.modified_resume && data.modified_resume.trim()) {
                 const optimizedLatexCode = data.modified_resume;
