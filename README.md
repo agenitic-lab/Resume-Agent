@@ -176,7 +176,7 @@ pytest tests/api/          # API tests only
 
 ## 🤝 Team
 
-Built by Shabas, Sinan, and Marva - A 21-day Agile sprint learning LangGraph and agentic AI.
+Built by Shabas, Sinan, and Marva 
 
 ## 📄 License
 
