@@ -124,21 +124,7 @@ def login(
     credentials: LoginRequest,
     db: Session = Depends(get_db)
 ) -> LoginResponse:
-    """
-    Authenticate user and return JWT access token.
-    
-    - **email**: User's registered email address
-    - **password**: User's password
-    
-    Returns:
-    - **access_token**: JWT token for authenticated requests
-    - **token_type**: Always "bearer"
-    - **expires_in**: Token expiration time in seconds
-    - **user**: User information (id, email, created_at)
-    
-    The access token should be included in subsequent requests using the
-    Authorization header: `Authorization: Bearer <token>`
-    """
+    # Authenticate user and return JWT token
     logger.info(f"Login attempt for email: {credentials.email}")
     
     # Step 1: Find user by email
@@ -223,21 +209,7 @@ def google_auth(
     data: GoogleLoginRequest,
     db: Session = Depends(get_db)
 ) -> LoginResponse:
-    """
-    Authenticate user with Google OAuth.
-    
-    - **credential**: Google ID token from Google Sign-In
-    
-    This endpoint handles both sign-in and sign-up:
-    - If user exists: logs them in
-    - If user doesn't exist: creates account and logs them in
-    
-    Returns:
-    - **access_token**: JWT token for authenticated requests
-    - **token_type**: Always "bearer"
-    - **expires_in**: Token expiration time in seconds
-    - **user**: User information
-    """
+    # Authenticate via Google OAuth (handles both sign-in and sign-up)
     logger.info("Google OAuth authentication attempt")
     
     # Step 1: Verify Google token and extract user info
@@ -353,12 +325,7 @@ def google_auth(
 def get_current_user_profile(
     current_user: User = Depends(get_current_user)
 ) -> UserResponse:
-    """
-    Get the currently authenticated user's profile.
-    
-    Returns:
-    - **user**: User information (id, email, created_at)
-    """
+    # Get current authenticated user profile
     return UserResponse(
         id=str(current_user.id),
         email=current_user.email,

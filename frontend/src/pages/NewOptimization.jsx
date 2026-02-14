@@ -18,6 +18,7 @@ export default function NewOptimization() {
     const [isDragging, setIsDragging] = useState(false);
     const [isExtracting, setIsExtracting] = useState(false);
     const [isCompiling, setIsCompiling] = useState(false);
+    const [isOptimizing, setIsOptimizing] = useState(false);
     const [toast, setToast] = useState(null);
     const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = status
@@ -36,12 +37,12 @@ export default function NewOptimization() {
         checkApiKey();
     }, []);
 
-    // reset to step 1 if user refreshes mid-optimization
+    // reset to step 1 if user refreshes mid-optimization (skip while API call is in-flight)
     useEffect(() => {
-        if (currentStep === 4 && !optimizedLatex) {
+        if (currentStep === 4 && !optimizedLatex && !isOptimizing) {
             setCurrentStep(1);
         }
-    }, [currentStep, optimizedLatex]);
+    }, [currentStep, optimizedLatex, isOptimizing]);
 
     // cleanup blob URL on unmount or when compiledPdfUrl changes
     useEffect(() => {
@@ -175,78 +176,76 @@ export default function NewOptimization() {
         }
     };
 
+    const resetForm = () => {
+        // Reset all form state
+        setInputType(null);
+        setResumeFile(null);
+        setResumeText('');
+        setExtractedText('');
+        setJobDescription('');
+        setOptimizedLatex('');
+        setCompiledPdfUrl(null);
+        setCurrentStep(1);
+    };
+
     const simulateAgentOptimization = async () => {
-        const sampleLatex = `\\documentclass{article}
-\\usepackage[margin=1in]{geometry}
-\\usepackage{enumitem}
-\\begin{document}
-
-\\section*{John Doe}
-\\textbf{Email:} john.doe@example.com | \\textbf{Phone:} (555) 123-4567
-
-\\section*{Professional Summary}
-Experienced software engineer with 5+ years in full-stack development.
-
-\\section*{Experience}
-\\textbf{Senior Software Engineer} | Tech Company | 2020 - Present
-\\begin{itemize}[nosep]
-    \\item Led development of microservices architecture
-    \\item Improved system performance by 40\\%
-\\end{itemize}
-
-\\section*{Skills}
-Python, JavaScript, React, Node.js, Docker, Kubernetes
-
-\\end{document}`;
-
-        let optimizedLatexCode = sampleLatex;
+        setIsOptimizing(true);
         try {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
 
-            // Call backend API (handles auth automatically via api.js)
             const data = await runOptimization(jobDescription, resumeContent);
 
             if (data.modified_resume && data.modified_resume.trim()) {
-                optimizedLatexCode = data.modified_resume;
-                setToast({ message: 'Optimization completed successfully!', type: 'success' });
+                const optimizedLatexCode = data.modified_resume;
+                setOptimizedLatex(optimizedLatexCode);
+
+                // Compile the optimized LaTeX
+                setIsCompiling(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ latex_code: optimizedLatexCode }),
+                    });
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        setCompiledPdfUrl(url);
+                        setToast({ message: 'Optimization completed successfully!', type: 'success' });
+                    } else {
+                        throw new Error('LaTeX compilation failed');
+                    }
+                } catch (compileError) {
+                    console.error('Compilation error:', compileError);
+                    setToast({ message: 'Optimization succeeded but PDF compilation failed. Check LaTeX syntax.', type: 'warning' });
+                } finally {
+                    setIsCompiling(false);
+                }
+            } else {
+                throw new Error('No optimized resume returned from server');
             }
         } catch (error) {
             console.error('Optimization failed:', error);
             const errorMsg = error.message || 'Unknown error';
-            
+
             // Check if it's an API key issue
             if (errorMsg.includes('API key') || errorMsg.includes('Settings')) {
-                setToast({ 
-                    message: 'Please add your Groq API key in Settings before running optimization.', 
-                    type: 'error' 
+                setToast({
+                    message: 'Please add your Groq API key in Settings before running optimization.',
+                    type: 'error'
                 });
                 setHasApiKey(false); // Update state to show warning banner
             } else {
                 setToast({ message: `Optimization failed: ${errorMsg}`, type: 'error' });
             }
-            // falls back to sampleLatex on failure so user can still see something
-        }
 
-        setOptimizedLatex(optimizedLatexCode);
-        setIsCompiling(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ latex_code: optimizedLatexCode }),
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                setCompiledPdfUrl(url);
-            }
-        } catch {
-            // compilation failed, PDF preview will be empty
+            // Go back to step 3 so user can retry without re-entering everything
+            setCurrentStep(3);
         } finally {
-            setIsCompiling(false);
+            setIsOptimizing(false);
         }
     };
 
@@ -268,11 +267,11 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                         <div className="flex-1">
                             <h3 className="text-yellow-400 font-semibold mb-1">Groq API Key Required</h3>
                             <p className="text-slate-300 text-sm mb-3">
-                                You need to add your Groq API key to use the resume optimization feature. 
+                                You need to add your Groq API key to use the resume optimization feature.
                                 Get your free API key from{' '}
-                                <a 
-                                    href="https://console.groq.com/keys" 
-                                    target="_blank" 
+                                <a
+                                    href="https://console.groq.com/keys"
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-cyan-400 hover:text-cyan-300 underline"
                                 >
@@ -661,27 +660,39 @@ Python, JavaScript, React, Node.js, Docker, Kubernetes
                                     </div>
 
                                     {/* Bottom Actions */}
-                                    <div className="flex gap-4 justify-end">
+                                    <div className="flex gap-4 justify-between">
                                         <button
-                                            onClick={() => navigate('/dashboard')}
-                                            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-all"
-                                        >
-                                            Back to Dashboard
-                                        </button>
-
-                                        <button
-                                            onClick={handleDownloadPdf}
-                                            disabled={!compiledPdfUrl}
-                                            className={`px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${compiledPdfUrl
-                                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:shadow-green-500/50 hover:scale-105'
-                                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                                }`}
+                                            onClick={resetForm}
+                                            className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
-                                            <span>Download PDF</span>
+                                            <span>Start Over</span>
                                         </button>
+
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => navigate('/dashboard')}
+                                                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-all"
+                                            >
+                                                Back to Dashboard
+                                            </button>
+
+                                            <button
+                                                onClick={handleDownloadPdf}
+                                                disabled={!compiledPdfUrl}
+                                                className={`px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${compiledPdfUrl
+                                                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:shadow-green-500/50 hover:scale-105'
+                                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                                    }`}
+                                            >
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                <span>Download PDF</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </>
                             )}

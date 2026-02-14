@@ -81,18 +81,7 @@ def get_user_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get user profile with statistics.
-    
-    **Protected Endpoint** - Requires valid JWT token.
-    
-    Returns user information along with usage statistics like
-    number of resume optimizations performed.
-    
-    Note:
-        Resume optimization count will be implemented in Sprint 2
-        when the optimization runs table is connected.
-    """
+    # Get user profile with resume optimization stats
     logger.info(f"Profile requested: {current_user.email}")
     
     resume_count = db.query(Run).filter(Run.user_id == current_user.id).count()
@@ -145,15 +134,7 @@ def get_user_profile(
 def get_service_status(
     current_user: User = Depends(get_current_user_optional)
 ):
-    """
-    Get service status with optional authentication.
-    
-    This endpoint demonstrates optional authentication - it works
-    for both authenticated and anonymous users, but provides
-    personalized information when authenticated.
-    
-    **No authentication required**, but enhanced response if authenticated.
-    """
+    # Get service status (optional auth - enhanced response when authenticated)
     response = {
         "service": "Resume Agent API",
         "status": "operational",

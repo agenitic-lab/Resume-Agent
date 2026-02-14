@@ -1,17 +1,12 @@
 
-"""
-Agent Routes
+# Resume optimization API endpoints
 
-Resume optimization endpoints.
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
 import uuid
 from datetime import datetime
-import sys
-import os
 
 from database.connection import get_db
 from database.models import User
@@ -20,18 +15,12 @@ from auth.dependencies import get_current_user
 from schemas.agent import OptimizeRequest, OptimizeResponse, RunListItem, RunDetailResponse
 from core.security import decrypt_api_key
 
-# Import agent workflow
-# Adjust path to import from agent directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
-agent_dir = os.path.abspath(os.path.join(current_dir, "../../agent"))
-if agent_dir not in sys.path:
-    sys.path.append(agent_dir)
-
+# Import agent workflow using proper package path
 try:
-    from workflow import run_optimization
-except ImportError:
+    from agent.workflow import run_optimization
+except ImportError as e:
     # Fallback for testing/development if workflow not found
-    print("Warning: Could not import run_optimization from workflow")
+    print(f"Warning: Could not import run_optimization from agent.workflow: {e}")
     def run_optimization(**kwargs):
         raise NotImplementedError("Workflow module not available")
 
@@ -44,12 +33,7 @@ def run_agent_workflow(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Optimize a resume for a job description.
-    
-    Runs the LangGraph agent workflow and returns optimized results.
-    Protected endpoint - requires authentication.
-    """
+    # Run agent optimization workflow
     # Check if user has set their API key
     if not current_user.encrypted_api_key:
         raise HTTPException(
@@ -83,27 +67,13 @@ def run_agent_workflow(
         print(f"Agent completed: {result['final_status']}")
         
         # Save to database (AG-37)
+        # Store all results in result_json JSONB field
         db_run = ResumeRun(
             user_id=current_user.id,
             job_description=request.job_description,
             original_resume_text=request.resume,
-            
-            # Outputs
-            modified_resume_text=result.get("modified_resume"),
-            
-            # Scores
-            ats_score_before=result.get("ats_score_before"),
-            ats_score_after=result.get("ats_score_after"),
-            improvement_delta=result.get("improvement_delta"),
-            
-            # Status
             status=result.get("final_status", "completed"),
-            completed_at=datetime.now(),
-            
-            # Structured Data
-            job_requirements=result.get("job_requirements"),
-            resume_analysis=result.get("resume_analysis"),
-            improvement_plan=result.get("improvement_plan")
+            result_json=result  # Store the entire result in JSONB
         )
         
         db.add(db_run)
@@ -149,9 +119,7 @@ def get_run(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """
-    Get details of a specific optimization run.
-    """
+    # Get single run by ID
     run = db.query(ResumeRun).filter(ResumeRun.id == run_id).first()
     
     if not run:
@@ -166,28 +134,46 @@ def get_run(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this run"
         )
+    
+    # Extract data from result_json
+    result_json = run.result_json or {}
+    ats_score_before = result_json.get("ats_score_before", 0.0)
+    ats_score_after = result_json.get("ats_score_after", 0.0)
+    improvement_delta = result_json.get("improvement_delta", 0.0)
+    modified_resume = result_json.get("modified_resume", "")
+    job_requirements = result_json.get("job_requirements")
+    resume_analysis = result_json.get("resume_analysis")
+    improvement_plan = result_json.get("improvement_plan")
         
     return RunDetailResponse(
         id=str(run.id),
         run_id=str(run.id),
         user_id=str(run.user_id),
         created_at=run.created_at,
-        completed_at=run.completed_at,
+        completed_at=run.updated_at,
         
         job_description=run.job_description,
         original_resume=run.original_resume_text,
-        modified_resume=run.modified_resume_text or "",
+        modified_resume=modified_resume,
         
-        ats_score_before=run.ats_score_before or 0.0,
-        ats_score_after=run.ats_score_after or 0.0,
-        improvement_delta=run.improvement_delta or 0.0,
+        ats_score_before=ats_score_before,
+        ats_score_after=ats_score_after,
+        improvement_delta=improvement_delta,
+        ats_breakdown_before=result_json.get("ats_breakdown_before"),
+        ats_breakdown_after=result_json.get("ats_breakdown_after"),
         
-        iteration_count=0, # Not persisted currently
+        iteration_count=result_json.get("iteration_count", 0),
         final_status=run.status,
+        fit_decision=result_json.get("fit_decision", "unknown"),
+        fit_reason=result_json.get("fit_reason"),
+        fit_confidence=result_json.get("fit_confidence"),
         
-        job_requirements=run.job_requirements,
-        resume_analysis=run.resume_analysis,
-        improvement_plan=run.improvement_plan
+        job_requirements=job_requirements,
+        resume_analysis=resume_analysis,
+        improvement_plan=improvement_plan,
+        decision_log=result_json.get("decision_log"),
+        score_history=result_json.get("score_history"),
+        cover_letter=result_json.get("cover_letter")
     )
 
 
@@ -198,9 +184,7 @@ def get_user_runs(
     limit: int = 10,
     skip: int = 0
 ):
-    """
-    Get user's optimization run history.
-    """
+    # Get user's run history with pagination
     runs = db.query(ResumeRun)\
         .filter(ResumeRun.user_id == current_user.id)\
         .order_by(desc(ResumeRun.created_at))\
@@ -208,15 +192,32 @@ def get_user_runs(
         .limit(limit)\
         .all()
         
-    return [
-        RunListItem(
-            id=str(run.id),
-            created_at=run.created_at,
-            job_description=run.job_description[:100] + "..." if len(run.job_description) > 100 else run.job_description,
-            ats_score_before=run.ats_score_before,
-            ats_score_after=run.ats_score_after,
-            improvement_delta=run.improvement_delta,
-            status=run.status
+    result_list = []
+    for run in runs:
+        # Extract scores from result_json if available
+        result_json = run.result_json or {}
+        ats_score_before = result_json.get("ats_score_before")
+        ats_score_after = result_json.get("ats_score_after")
+        
+        # Calculate improvement delta if both scores are available
+        improvement_delta = None
+        if ats_score_before is not None and ats_score_after is not None:
+            improvement_delta = ats_score_after - ats_score_before
+        
+        # Truncate job description safely
+        job_desc = run.job_description or ""
+        truncated_job_desc = job_desc[:100] + "..." if len(job_desc) > 100 else job_desc
+        
+        result_list.append(
+            RunListItem(
+                id=str(run.id),
+                created_at=run.created_at,
+                job_description=truncated_job_desc,
+                ats_score_before=ats_score_before,
+                ats_score_after=ats_score_after,
+                improvement_delta=improvement_delta,
+                status=run.status
+            )
         )
-        for run in runs
-    ]
+    
+    return result_list

@@ -44,9 +44,7 @@ def _route_after_rescore(state: ResumeAgentState) -> str:
 
 
 def create_agent_workflow():
-    """
-    Build and compile the LangGraph workflow.
-    """
+    # Build and compile LangGraph workflow
     graph = StateGraph(ResumeAgentState)
 
     # Add all the agent nodes to the graph
@@ -101,12 +99,7 @@ def run_optimization_with_events(
     run_id: Optional[str] = None,
     event_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
 ) -> ResumeAgentState:
-    """
-    Run the optimization workflow using LangGraph's compiled graph.
-    
-    This properly uses LangGraph's runtime engine instead of manually calling nodes.
-    Events are emitted by monitoring the stream of updates from LangGraph.
-    """
+    # Run optimization workflow with event callbacks
     if run_id is None:
         run_id = str(uuid.uuid4())
 
@@ -185,10 +178,7 @@ def run_optimization(
     user_llm_api_key: Optional[str] = None,
     run_id: Optional[str] = None,
 ) -> ResumeAgentState:
-    """
-    Convenience wrapper to run the workflow without events.
-    Uses LangGraph's compiled graph via run_optimization_with_events.
-    """
+    # Wrapper to run workflow without event callbacks
     return run_optimization_with_events(
         job_description=job_description,
         resume=resume,
