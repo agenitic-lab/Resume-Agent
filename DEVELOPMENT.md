@@ -14,24 +14,58 @@
 **Solution:**
 
 #### Option 1: Run the cache clearing script
+
+**Linux/Mac:**
 ```bash
 cd backend
 ./clear_cache.sh
 ```
 
+**Windows:**
+```cmd
+cd backend
+clear_cache.bat
+```
+
 #### Option 2: Manual cleanup
+
+**Linux/Mac:**
 ```bash
 # From backend directory
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
 find . -type f -name "*.pyc" -delete
 ```
 
+**Windows (PowerShell):**
+```powershell
+# From backend directory
+Get-ChildItem -Path . -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
+Get-ChildItem -Path . -Recurse -File -Filter "*.pyc" | Remove-Item -Force
+```
+
+**Windows (Command Prompt):**
+```cmd
+for /d /r . %d in (__pycache__) do @if exist "%d" rd /s /q "%d"
+del /s /q *.pyc
+```
+
 #### Option 3: Restart with cache clear
+
+**Linux/Mac:**
 ```bash
 # Stop your uvicorn server (Ctrl+C)
 # Clear cache
 ./clear_cache.sh
 # Restart server
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Windows:**
+```cmd
+REM Stop your uvicorn server (Ctrl+C)
+REM Clear cache
+clear_cache.bat
+REM Restart server
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -64,6 +98,7 @@ Python compiles `.py` files to `.pyc` bytecode for faster loading. Sometimes thi
 
 ### Quick Commands Reference:
 
+**Linux/Mac:**
 ```bash
 # Clear Python cache
 ./backend/clear_cache.sh
@@ -77,6 +112,25 @@ PYTHONDONTWRITEBYTECODE=1 python -m uvicorn main:app --reload
 
 # Check for cache files
 find backend -name "*.pyc" -o -name "__pycache__"
+```
+
+**Windows:**
+```cmd
+REM Clear Python cache
+cd backend
+clear_cache.bat
+
+REM Or manually (PowerShell):
+Get-ChildItem -Path backend -Recurse -Filter "*.pyc" | Remove-Item -Force
+Get-ChildItem -Path backend -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
+
+REM Force Python to not create cache (development only, slower)
+set PYTHONDONTWRITEBYTECODE=1
+python -m uvicorn main:app --reload
+
+REM Check for cache files (PowerShell)
+Get-ChildItem -Path backend -Recurse -Filter "*.pyc"
+Get-ChildItem -Path backend -Recurse -Directory -Filter "__pycache__"
 ```
 
 ---
@@ -105,8 +159,16 @@ pip install -r requirements.txt
 
 ### Issue: Frontend not updating
 
+**Linux/Mac:**
 ```bash
 cd frontend
 rm -rf node_modules/.vite  # Clear Vite cache
 npm run dev  # Restart dev server
+```
+
+**Windows:**
+```cmd
+cd frontend
+rmdir /s /q node_modules\.vite  REM Clear Vite cache
+npm run dev  REM Restart dev server
 ```
