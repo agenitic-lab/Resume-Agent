@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getRunDetails } from '../services/api';
+import Toast from '../components/Toast';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export default function OptimizationResults() {
     const navigate = useNavigate();
@@ -10,47 +13,84 @@ export default function OptimizationResults() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [latexCode, setLatexCode] = useState('');
+    const [compiledPdfUrl, setCompiledPdfUrl] = useState(null);
+    const [isCompiling, setIsCompiling] = useState(false);
+    const [copyButtonText, setCopyButtonText] = useState('Copy');
+    const [toast, setToast] = useState(null);
+    const hasAutoCompiled = useRef(false);
+
+    useEffect(() => {
+        return () => {
+            if (compiledPdfUrl) {
+                window.URL.revokeObjectURL(compiledPdfUrl);
+            }
+        };
+    }, [compiledPdfUrl]);
+
     useEffect(() => {
         const fetchRunDetails = async () => {
             try {
                 if (!id) return;
                 const data = await getRunDetails(id);
 
-                // Transform API data to match component structure if needed
-                // Currently ensuring defaults for missing fields
+                const plan = data.improvement_plan || {};
+                const planChanges = Array.isArray(plan)
+                    ? plan.map((change, index) => ({
+                        id: index + 1,
+                        title: change.area || 'Improvement',
+                        description: change.suggestion || change.description || '',
+                        reason: change.reason || 'To improve ATS score'
+                    }))
+                    : (plan.priority_changes || []).map((change, index) => ({
+                        id: index + 1,
+                        title: `Change ${index + 1}`,
+                        description: typeof change === 'string' ? change : (change.suggestion || change.description || ''),
+                        reason: plan.reasoning || 'To improve ATS score'
+                    }));
+
+                const reqs = data.job_requirements || {};
+                const analysis = data.resume_analysis || {};
+
+                const rawHistory = data.score_history || [];
+                const scoreProgression = rawHistory.length >= 2
+                    ? rawHistory.map(s => Math.round(s))
+                    : [
+                        Math.round(data.ats_score_before || 0),
+                        Math.round(data.ats_score_after || 0)
+                    ];
+
                 const transformedData = {
                     date: new Date(data.created_at).toLocaleDateString(),
                     originalScore: Math.round(data.ats_score_before || 0),
                     optimizedScore: Math.round(data.ats_score_after || 0),
                     improvement: Math.round(data.improvement_delta || 0),
                     iterations: data.iteration_count || 1,
-                    scoreProgression: [
-                        Math.round(data.ats_score_before || 0),
-                        Math.round((data.ats_score_before + data.ats_score_after) / 2),
-                        Math.round(data.ats_score_after || 0)
-                    ],
-                    jobRequirements: data.job_requirements || {
-                        mustHave: [],
-                        niceToHave: [],
-                        keywords: [],
-                        seniorityLevel: 'Not specified'
+                    scoreProgression,
+                    jobRequirements: {
+                        mustHave: reqs.required_skills || [],
+                        niceToHave: reqs.preferred_skills || [],
+                        keywords: reqs.key_keywords || [],
+                        seniorityLevel: reqs.experience_years
+                            ? `${reqs.experience_years}+ years`
+                            : 'Not specified'
                     },
-                    resumeAnalysis: data.resume_analysis || {
-                        skillsPresent: [],
-                        skillsMissing: [],
-                        strongSections: [],
-                        weakSections: []
+                    resumeAnalysis: {
+                        skillsPresent: analysis.strengths || [],
+                        skillsMissing: analysis.missing_keywords || [],
+                        strongSections: analysis.suggestions || [],
+                        weakSections: analysis.weaknesses || []
                     },
-                    changes: (data.improvement_plan || []).map((change, index) => ({
-                        id: index + 1,
-                        title: change.area || 'Improvement',
-                        description: change.suggestion || change.description || '',
-                        reason: change.reason || 'To improve ATS score'
-                    })),
-                    coverLetter: "Cover letter generation is not yet implemented in the backend." // Backend doesn't return cover letter yet
+                    changes: planChanges,
+                    coverLetter: data.cover_letter || "Cover letter not available for this run.",
+                    modifiedResume: data.modified_resume || ''
                 };
 
                 setResultsData(transformedData);
+
+                if (data.modified_resume) {
+                    setLatexCode(data.modified_resume);
+                }
             } catch (err) {
                 console.error("Failed to fetch run details:", err);
                 setError("Failed to load optimization results.");
@@ -61,6 +101,80 @@ export default function OptimizationResults() {
 
         fetchRunDetails();
     }, [id]);
+
+    // auto-compile when latex code is first loaded from the API
+    useEffect(() => {
+        if (latexCode && !hasAutoCompiled.current) {
+            hasAutoCompiled.current = true;
+            compileLatex(latexCode);
+        }
+    }, [latexCode]);
+
+    const compileLatex = async (code) => {
+        setIsCompiling(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latex_code: code }),
+            });
+
+            if (!response.ok) {
+                throw new Error('LaTeX compilation failed');
+            }
+
+            const blob = await response.blob();
+
+            if (compiledPdfUrl) {
+                window.URL.revokeObjectURL(compiledPdfUrl);
+            }
+
+            setCompiledPdfUrl(window.URL.createObjectURL(blob));
+        } catch (err) {
+            setToast({ message: `Failed to compile LaTeX: ${err.message}`, type: 'error' });
+        } finally {
+            setIsCompiling(false);
+        }
+    };
+
+    const handleRecompile = () => compileLatex(latexCode);
+
+    const handleDownloadPdf = async () => {
+        let url = compiledPdfUrl;
+
+        // if not compiled yet, compile first then download
+        if (!url) {
+            setIsCompiling(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ latex_code: latexCode }),
+                });
+                if (!response.ok) throw new Error('Compilation failed');
+                const blob = await response.blob();
+                url = window.URL.createObjectURL(blob);
+                setCompiledPdfUrl(url);
+            } catch (err) {
+                setToast({ message: `Failed to compile PDF: ${err.message}`, type: 'error' });
+                setIsCompiling(false);
+                return;
+            } finally {
+                setIsCompiling(false);
+            }
+        }
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'optimized_resume.pdf';
+        a.click();
+    };
+
+    const handleCopyLatex = () => {
+        navigator.clipboard.writeText(latexCode);
+        setCopyButtonText('Copied!');
+        setTimeout(() => setCopyButtonText('Copy'), 2000);
+    };
 
     const handleCopyCoverLetter = () => {
         if (!resultsData?.coverLetter) return;
@@ -102,11 +216,18 @@ export default function OptimizationResults() {
                         <h1 className="text-4xl font-bold text-white mb-2">Optimization Results</h1>
                         <p className="text-slate-400">{resultsData.date}</p>
                     </div>
-                    <button className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all flex items-center gap-2">
+                    <button
+                        onClick={handleDownloadPdf}
+                        disabled={!latexCode || isCompiling}
+                        className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${latexCode && !isCompiling
+                                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/50'
+                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                            }`}
+                    >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>Download PDF</span>
+                        <span>{isCompiling ? 'Compiling...' : 'Download PDF'}</span>
                     </button>
                 </div>
 
@@ -276,11 +397,110 @@ export default function OptimizationResults() {
                                     </div>
                                 ))}
                             </div>
-
-                            <button className="mt-4 w-full py-3 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-medium rounded-lg transition-all">
-                                Agent Decision Log
-                            </button>
                         </div>
+
+                        {/* Optimized Resume - LaTeX Editor + PDF Preview */}
+                        {latexCode && (
+                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                                <h2 className="text-xl font-bold text-white mb-2">Optimized Resume</h2>
+                                <p className="text-slate-500 text-sm mb-4">View, edit, and recompile your optimized LaTeX resume</p>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* LaTeX Editor */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-white font-medium">LaTeX Code (editable)</label>
+                                            <button
+                                                onClick={handleCopyLatex}
+                                                className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                                {copyButtonText}
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            value={latexCode}
+                                            onChange={(e) => setLatexCode(e.target.value)}
+                                            className="w-full h-[600px] p-4 bg-slate-800/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all font-mono text-sm resize-none"
+                                        />
+                                    </div>
+
+                                    {/* PDF Preview */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-white font-medium">PDF Preview</label>
+                                            <button
+                                                onClick={handleRecompile}
+                                                disabled={isCompiling}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${isCompiling
+                                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                                    : 'bg-cyan-600 hover:bg-cyan-700 text-white hover:shadow-lg'
+                                                    }`}
+                                            >
+                                                {isCompiling ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                        <span>Compiling...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                        </svg>
+                                                        <span>Recompile</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        <div className="relative h-[600px] bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+                                            {compiledPdfUrl ? (
+                                                <iframe
+                                                    src={compiledPdfUrl}
+                                                    className="w-full h-full"
+                                                    title="PDF Preview"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-slate-500">
+                                                    {isCompiling ? (
+                                                        <div className="text-center">
+                                                            <div className="w-16 h-16 mx-auto mb-4 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                                                            <p>Compiling PDF...</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center">
+                                                            <svg className="w-16 h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <p>Click "Recompile" to generate PDF</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Download button for this section */}
+                                <div className="flex justify-end mt-4">
+                                    <button
+                                        onClick={handleDownloadPdf}
+                                        disabled={!compiledPdfUrl || isCompiling}
+                                        className={`px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${compiledPdfUrl && !isCompiling
+                                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:shadow-green-500/50 hover:scale-105'
+                                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        <span>Download PDF</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column - Cover Letter */}
@@ -337,13 +557,14 @@ export default function OptimizationResults() {
                         New Optimization
                     </button>
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/history')}
                         className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-all"
                     >
-                        Back to Dashboard
+                        Back to History
                     </button>
                 </div>
             </div>
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 }

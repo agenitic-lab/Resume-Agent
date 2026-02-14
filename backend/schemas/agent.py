@@ -1,7 +1,7 @@
 
 # schemas for agent API endpoints
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 
 class OptimizeRequest(BaseModel):
@@ -38,7 +38,9 @@ class OptimizeResponse(BaseModel):
     job_requirements: Optional[Dict[str, Any]] = None
     resume_analysis: Optional[Dict[str, Any]] = None
     improvement_plan: Optional[Dict[str, Any]] = None
-    decision_log: Optional[list[Dict[str, Any]]] = None
+    decision_log: Optional[List[Dict[str, Any]]] = None
+    score_history: Optional[List[float]] = None
+    cover_letter: Optional[str] = None
 
 
 class RunStatusResponse(BaseModel):
