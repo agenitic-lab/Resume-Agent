@@ -14,6 +14,7 @@ class RunStatus(str, enum.Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+    REJECTED_POOR_FIT = "rejected_poor_fit"
 
 
 class Run(Base):
@@ -22,7 +23,7 @@ class Run(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    status = Column(Enum(RunStatus), default=RunStatus.PENDING, nullable=False)
+    status = Column(Enum(RunStatus, values_callable=lambda x: [e.value for e in x]), default=RunStatus.PENDING, nullable=False)
 
     # Inputs
     job_description = Column(Text, nullable=True)

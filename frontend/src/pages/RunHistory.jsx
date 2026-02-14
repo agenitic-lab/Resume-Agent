@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUserRuns } from '../services/api';
+import { getUserRuns, deleteRun } from '../services/api';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function RunHistory() {
     const navigate = useNavigate();
     const [historyItems, setHistoryItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, runId: null, runTitle: '' });
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         const fetchRuns = async () => {
@@ -23,6 +26,32 @@ export default function RunHistory() {
 
     const handleView = (id) => {
         navigate(`/optimization/${id}`);
+    };
+
+    const handleDeleteClick = (id, jobDescription) => {
+        const title = jobDescription ? (jobDescription.substring(0, 50) + "...") : "Optimization Run";
+        setDeleteConfirm({ isOpen: true, runId: id, runTitle: title });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteConfirm.runId) return;
+        
+        setDeleting(true);
+        try {
+            await deleteRun(deleteConfirm.runId);
+            // Remove the deleted item from the list
+            setHistoryItems(prev => prev.filter(item => item.id !== deleteConfirm.runId));
+            setDeleteConfirm({ isOpen: false, runId: null, runTitle: '' });
+        } catch (error) {
+            console.error("Failed to delete run:", error);
+            alert("Failed to delete optimization. Please try again.");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteConfirm({ isOpen: false, runId: null, runTitle: '' });
     };
 
     return (
@@ -104,6 +133,15 @@ export default function RunHistory() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </button>
+                                            <button
+                                                onClick={() => handleDeleteClick(item.id, item.job_description)}
+                                                className="p-3 bg-slate-800 hover:bg-red-900/50 rounded-lg transition-all group"
+                                                title="Delete"
+                                            >
+                                                <svg className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -112,6 +150,18 @@ export default function RunHistory() {
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={deleteConfirm.isOpen}
+                title="Delete Optimization"
+                message={`Are you sure you want to delete "${deleteConfirm.runTitle}"? This action cannot be undone.`}
+                confirmText={deleting ? "Deleting..." : "Delete"}
+                cancelText="Cancel"
+                onConfirm={handleDeleteConfirm}
+                onCancel={handleDeleteCancel}
+                variant="danger"
+            />
         </div>
     );
 }
