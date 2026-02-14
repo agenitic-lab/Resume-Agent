@@ -18,9 +18,7 @@ from database.connection import Base, get_db
 from database.models.user import User
 
 
-# ============================================================================
 # Test Database Setup
-# ============================================================================
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -58,9 +56,7 @@ def setup_database():
     Base.metadata.drop_all(bind=engine)
 
 
-# ============================================================================
 # Registration Tests
-# ============================================================================
 
 def test_register_success():
     """Test successful user registration."""
@@ -155,9 +151,7 @@ def test_register_missing_fields():
     assert response.status_code == 422
 
 
-# ============================================================================
 # Login Tests
-# ============================================================================
 
 def test_login_success():
     """Test successful login flow."""
@@ -287,9 +281,7 @@ def test_login_empty_password():
     assert response.status_code == 422  # Validation error
 
 
-# ============================================================================
 # Security Tests
-# ============================================================================
 
 def test_password_is_hashed():
     """Verify that passwords are stored hashed, not in plaintext."""
@@ -357,9 +349,7 @@ def test_case_sensitive_email():
     assert response.status_code == 401
 
 
-# ============================================================================
 # Integration Tests
-# ============================================================================
 
 def test_full_registration_and_login_flow():
     """Test complete user journey from registration to login."""
@@ -405,9 +395,7 @@ def test_multiple_users_can_login():
         assert response.json()["user"]["email"] == user["email"]
 
 
-# ============================================================================
 # Edge Cases
-# ============================================================================
 
 def test_very_long_password():
     """Test registration with very long password."""

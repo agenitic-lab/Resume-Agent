@@ -1,31 +1,32 @@
-﻿# --- Core Framework ---
+﻿# core
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.12.5
 python-multipart==0.0.22
 python-dotenv==1.0.0
 
-# --- Database ---
+# database
 SQLAlchemy==2.0.46
 psycopg2-binary==2.9.10
 
-# --- Auth ---
+# auth
 PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 email-validator==2.3.0
+cryptography==44.0.0
 google-auth==2.27.0
 
-# --- PDF Processing ---
+# pdf processing
 pdfplumber==0.11.9
 httpx==0.26.0
 
-# --- AI Agent ---
+# ai agent
 openai==1.12.0
 langgraph==0.0.30
 langchain-core==0.1.53
 langsmith==0.1.147
 
-# --- Dev/Testing ---
+# testing
 pytest==8.0.0
 

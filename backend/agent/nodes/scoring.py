@@ -1,9 +1,9 @@
-from typing import Dict
+from typing import Dict, Tuple
 
 
-def score_resume(state: Dict) -> Dict:
-    resume = state.get("original_resume", "").lower()
-    requirements = state.get("job_requirements", {}) or {}
+def _score_resume_text(resume_text: str, requirements: Dict) -> Tuple[float, Dict[str, float]]:
+    resume = (resume_text or "").lower()
+    requirements = requirements or {}
 
     keyword_score = 0.0
     skills_score = 0.0
@@ -58,20 +58,34 @@ def score_resume(state: Dict) -> Dict:
         2
     )
 
-    score_obj = {
-        "score": total_score,
-        "breakdown": {
-            "keywords": round(keyword_score, 2),
-            "skills": round(skills_score, 2),
-            "format": round(format_score, 2),
-            "sections": round(section_score, 2),
-        }
+    breakdown = {
+        "keywords": round(keyword_score, 2),
+        "skills": round(skills_score, 2),
+        "format": round(format_score, 2),
+        "sections": round(section_score, 2),
     }
 
+    return total_score, breakdown
+
+
+def score_resume(state: Dict) -> Dict:
+    score_value, breakdown = _score_resume_text(
+        resume_text=state.get("original_resume", ""),
+        requirements=state.get("job_requirements", {}),
+    )
+
     existing_history = state.get("score_history", []) or []
-    updated_history = list(existing_history) + [score_obj]
+    updated_history = list(existing_history) + [score_value]
+
+    decision = {
+        "node": "score_initial",
+        "action": "scored_original_resume",
+        "score": score_value,
+    }
 
     return {
-        "ats_score_before": score_obj,
-        "score_history": updated_history
+        "ats_score_before": score_value,
+        "ats_breakdown_before": breakdown,
+        "score_history": updated_history,
+        "decision_log": state.get("decision_log", []) + [decision],
     }

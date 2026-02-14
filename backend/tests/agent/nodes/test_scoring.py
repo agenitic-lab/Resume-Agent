@@ -44,7 +44,7 @@ def test_ats_scoring_basic():
     result = score_resume(state)
 
     assert "ats_score_before" in result
-    score = result["ats_score_before"]["score"]
+    score = result["ats_score_before"]
 
     assert 0 <= score <= 100
 

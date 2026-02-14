@@ -1,20 +1,10 @@
-"""
-Authentication Schemas
-
-Pydantic models for authentication request/response validation.
-Includes comprehensive validation, documentation, and examples.
-"""
+# schemas for auth endpoints
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
-# ============================================================================
-# Request Schemas
-# ============================================================================
-
 class RegisterRequest(BaseModel):
-    """User registration request schema."""
     
     email: EmailStr = Field(
         ...,
@@ -40,7 +30,6 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """User login request schema."""
     
     email: EmailStr = Field(
         ...,
@@ -65,12 +54,7 @@ class LoginRequest(BaseModel):
     )
 
 
-# ============================================================================
-# Response Schemas
-# ============================================================================
-
 class UserResponse(BaseModel):
-    """User information response schema."""
     
     id: str = Field(
         ...,
@@ -113,7 +97,6 @@ class UserResponse(BaseModel):
 
 
 class TokenData(BaseModel):
-    """JWT token payload data."""
     
     access_token: str = Field(
         ...,
@@ -143,7 +126,6 @@ class TokenData(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Successful login response schema."""
     
     access_token: str = Field(
         ...,
@@ -182,7 +164,6 @@ class LoginResponse(BaseModel):
 
 
 class RegisterResponse(BaseModel):
-    """Successful registration response schema."""
     
     user_id: str = Field(
         ...,
@@ -211,12 +192,7 @@ class RegisterResponse(BaseModel):
     )
 
 
-# ============================================================================
-# Error Schemas
-# ============================================================================
-
 class ErrorDetail(BaseModel):
-    """Detailed error information."""
     
     field: Optional[str] = Field(
         None,
@@ -236,7 +212,6 @@ class ErrorDetail(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    """Standard error response schema."""
     
     error: str = Field(
         ...,
@@ -262,3 +237,12 @@ class ErrorResponse(BaseModel):
             }
         }
     )
+
+
+class ApiKeyUpsertRequest(BaseModel):
+    api_key: str = Field(..., min_length=20, max_length=300)
+
+
+class ApiKeyStatusResponse(BaseModel):
+    has_api_key: bool
+    updated_at: Optional[datetime] = None

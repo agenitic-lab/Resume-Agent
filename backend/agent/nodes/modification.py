@@ -1,10 +1,7 @@
 from typing import Dict
-from openai import OpenAI
-from dotenv import load_dotenv
 import json
-import os
-
-load_dotenv()
+from .llm_client import build_groq_client
+from config import settings
 
 _LATEX_TYPO_FIXES = {
     "\\end{itemitemize}": "\\end{itemize}",
@@ -45,10 +42,7 @@ def modify_resume(state: Dict) -> Dict:
     plan = state["improvement_plan"]
     job_requirements = state.get("job_requirements", {})
 
-    client = OpenAI(
-        api_key=os.getenv("GROQ_API_KEY"),
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = build_groq_client(state)
 
     prompt = f"""You are an expert resume writer and LaTeX typesetter.
 
@@ -83,7 +77,7 @@ Return ONLY the complete LaTeX code. No explanations, no markdown code blocks, n
 Start directly with \\documentclass and end with \\end{{document}}."""
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model=settings.MODIFICATION_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3
     )

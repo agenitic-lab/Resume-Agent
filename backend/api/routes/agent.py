@@ -6,6 +6,8 @@ Resume optimization endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from typing import List
 import uuid
 from datetime import datetime
 import sys
@@ -13,13 +15,10 @@ import os
 
 from database.connection import get_db
 from database.models import User
-from auth.dependencies import get_current_user
-from schemas.agent import OptimizeRequest, OptimizeResponse
-
-from typing import List
-from sqlalchemy import desc
 from database.models.run import ResumeRun
+from auth.dependencies import get_current_user
 from schemas.agent import OptimizeRequest, OptimizeResponse, RunListItem, RunDetailResponse
+from core.security import decrypt_api_key
 
 # Import agent workflow
 # Adjust path to import from agent directory
@@ -51,6 +50,21 @@ def run_agent_workflow(
     Runs the LangGraph agent workflow and returns optimized results.
     Protected endpoint - requires authentication.
     """
+    # Check if user has set their API key
+    if not current_user.encrypted_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Set your API key in Settings before running optimization.",
+        )
+
+    try:
+        user_llm_api_key = decrypt_api_key(current_user.encrypted_api_key)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Stored API key is invalid. Please set your API key again in Settings.",
+        )
+
     try:
         # Generate run ID
         run_id = f"run-{uuid.uuid4()}"
@@ -62,6 +76,7 @@ def run_agent_workflow(
             job_description=request.job_description,
             resume=request.resume,
             user_id=str(current_user.id),
+            user_llm_api_key=user_llm_api_key,
             run_id=run_id
         )
         
@@ -101,15 +116,21 @@ def run_agent_workflow(
             user_id=str(current_user.id),
             job_description=request.job_description,
             original_resume=request.resume,
-            modified_resume=result["modified_resume"],
-            ats_score_before=result["ats_score_before"],
-            ats_score_after=result["ats_score_after"],
-            improvement_delta=result["improvement_delta"],
-            iteration_count=result["iteration_count"],
-            final_status=result["final_status"],
+            modified_resume=result.get("modified_resume"),
+            ats_score_before=result.get("ats_score_before", 0.0),
+            ats_score_after=result.get("ats_score_after"),
+            improvement_delta=result.get("improvement_delta"),
+            ats_breakdown_before=result.get("ats_breakdown_before"),
+            ats_breakdown_after=result.get("ats_breakdown_after"),
+            iteration_count=result.get("iteration_count", 0),
+            final_status=result.get("final_status", "completed"),
+            fit_decision=result.get("fit_decision", "unknown"),
+            fit_reason=result.get("fit_reason"),
+            fit_confidence=result.get("fit_confidence"),
             job_requirements=result.get("job_requirements"),
             resume_analysis=result.get("resume_analysis"),
-            improvement_plan=result.get("improvement_plan")
+            improvement_plan=result.get("improvement_plan"),
+            decision_log=result.get("decision_log")
         )
         
     except Exception as e:

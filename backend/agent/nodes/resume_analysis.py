@@ -1,17 +1,11 @@
 from typing import Dict
-from openai import OpenAI
-from dotenv import load_dotenv
 import json
-import os
-
-load_dotenv()
+from .llm_client import build_groq_client
+from config import settings
 
 
 def analyze_resume(state: Dict) -> Dict:
-    client = OpenAI(
-        api_key=os.getenv("GROQ_API_KEY"),
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = build_groq_client(state)
     
     resume = state["original_resume"]
     job_requirements = state["job_requirements"]
@@ -33,7 +27,7 @@ Return JSON with:
 Return ONLY valid JSON, no other text."""
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model=settings.RESUME_ANALYSIS_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0
     )

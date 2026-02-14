@@ -3,31 +3,25 @@ Google OAuth Helper Functions
 
 Handles Google OAuth token verification and user info extraction.
 """
-import os
 import logging
 from typing import Optional
-from pathlib import Path
-from dotenv import load_dotenv
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
 from schemas.google import GoogleUserInfo
+from config import settings
 
 logger = logging.getLogger(__name__)
 
-# Force load .env from backend root
-env_path = Path(__file__).resolve().parent.parent / '.env'
-load_dotenv(dotenv_path=env_path, override=True)
-
-# Google OAuth configuration
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+# Google OAuth configuration from centralized settings
+GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
 
 # Log configuration status (masked)
 if GOOGLE_CLIENT_ID:
     masked_id = f"{GOOGLE_CLIENT_ID[:5]}...{GOOGLE_CLIENT_ID[-5:]}"
     logger.info(f"Google OAuth configured with Client ID: {masked_id}")
 else:
-    logger.error("GOOGLE_CLIENT_ID not found in environment variables")
+    logger.warning("GOOGLE_CLIENT_ID not configured - Google OAuth will not work")
 
 
 def verify_google_token(credential: str) -> Optional[GoogleUserInfo]:

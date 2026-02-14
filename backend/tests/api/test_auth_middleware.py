@@ -16,9 +16,7 @@ from database.models.user import User
 from auth.jwt import create_access_token
 from core.security import hash_password
 
-# ============================================================================
 # Test Database Setup
-# ============================================================================
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test_auth_middleware.db"
@@ -45,9 +43,7 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 
-# ============================================================================
 # Fixtures
-# ============================================================================
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
@@ -91,9 +87,7 @@ def valid_token(test_user):
     return token
 
 
-# ============================================================================
 # Test: Protected Endpoint with Valid Token
-# ============================================================================
 
 def test_protected_endpoint_with_valid_token(valid_token):
     """Test accessing protected endpoint with valid JWT token."""
@@ -131,9 +125,7 @@ def test_profile_endpoint_with_valid_token(valid_token):
     assert data["account_status"] == "active"
 
 
-# ============================================================================
 # Test: Protected Endpoint without Token
-# ============================================================================
 
 def test_protected_endpoint_without_token():
     """Test accessing protected endpoint without authentication token."""
@@ -151,9 +143,7 @@ def test_profile_endpoint_without_token():
     assert response.status_code == 403
 
 
-# ============================================================================
 # Test: Protected Endpoint with Invalid Token
-# ============================================================================
 
 def test_protected_endpoint_with_invalid_token():
     """Test accessing protected endpoint with malformed token."""
@@ -178,9 +168,7 @@ def test_protected_endpoint_with_malformed_header():
     assert response.status_code == 403
 
 
-# ============================================================================
 # Test: Token for Non-Existent User
-# ============================================================================
 
 def test_token_for_deleted_user():
     """Test token validation when user has been deleted."""
@@ -201,9 +189,7 @@ def test_token_for_deleted_user():
     assert "not found" in data["detail"].lower() or "deleted" in data["detail"].lower()
 
 
-# ============================================================================
 # Test: Optional Authentication
-# ============================================================================
 
 def test_optional_auth_with_token(valid_token):
     """Test optional authentication endpoint with valid token."""
@@ -248,9 +234,7 @@ def test_optional_auth_with_invalid_token():
     assert data["authenticated"] is False
 
 
-# ============================================================================
 # Test: Multiple Requests with Same Token
-# ============================================================================
 
 def test_token_reusability(valid_token):
     """Test that same token can be used for multiple requests."""
@@ -273,9 +257,7 @@ def test_token_reusability(valid_token):
     assert response1.json()["email"] == response3.json()["email"]
 
 
-# ============================================================================
 # Run Tests
-# ============================================================================
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

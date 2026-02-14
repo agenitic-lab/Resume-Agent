@@ -1,9 +1,4 @@
-"""
-Authentication Routes
-
-Handles user registration and login endpoints.
-Implements secure authentication with JWT tokens.
-"""
+# Auth endpoints - register and login
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -28,13 +23,10 @@ from auth.dependencies import get_current_user
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Create router
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
-# ============================================================================
 # Registration Endpoint
-# ============================================================================
 
 @router.post(
     "/register",
@@ -61,14 +53,6 @@ def register_user(
     data: RegisterRequest,
     db: Session = Depends(get_db)
 ) -> RegisterResponse:
-    """
-    Register a new user account.
-    
-    - **email**: Valid email address (must be unique)
-    - **password**: Password with minimum 8 characters
-    
-    Returns the newly created user's ID and email.
-    """
     logger.info(f"Registration attempt for email: {data.email}")
     
     # Hash password securely
@@ -104,9 +88,7 @@ def register_user(
     )
 
 
-# ============================================================================
 # Login Endpoint
-# ============================================================================
 
 @router.post(
     "/login",

@@ -7,7 +7,6 @@ import NewOptimization from "./pages/NewOptimization";
 import OptimizationResults from "./pages/OptimizationResults";
 import RunHistory from "./pages/RunHistory";
 import Settings from "./pages/Settings";
-import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import DashboardLayout from "./components/DashboardLayout";
@@ -34,13 +33,11 @@ function AppContent() {
         {/* Dashboard Routes with Sidebar */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute>} />
         <Route path="/new-optimization" element={<ProtectedRoute><DashboardLayout><NewOptimization /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/optimization/details" element={<ProtectedRoute><DashboardLayout><OptimizationResults /></DashboardLayout></ProtectedRoute>} />
         <Route path="/optimization/:id" element={<ProtectedRoute><DashboardLayout><OptimizationResults /></DashboardLayout></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><DashboardLayout><RunHistory /></DashboardLayout></ProtectedRoute>} />
         <Route path="/templates" element={<ProtectedRoute><DashboardLayout><div className="p-8"><h1 className="text-3xl font-bold">Templates</h1></div></DashboardLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Settings /></DashboardLayout></ProtectedRoute>} />
 
-        <Route path="/results/:id" element={<Results />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
@@ -56,4 +53,3 @@ function App() {
 }
 
 export default App;
-
