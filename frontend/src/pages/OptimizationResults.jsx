@@ -34,6 +34,17 @@ export default function OptimizationResults() {
                 if (!id) return;
                 const data = await getRunDetails(id);
 
+                // Check if optimization was rejected due to poor fit
+                if (data.final_status === 'rejected_poor_fit' || data.fit_decision === 'poor_fit') {
+                    setError({
+                        type: 'poor_fit',
+                        reason: data.fit_reason || 'Your profile does not match the job requirements sufficiently.',
+                        score: Math.round(data.ats_score_before || 0)
+                    });
+                    setLoading(false);
+                    return;
+                }
+
                 const plan = data.improvement_plan || {};
                 const planChanges = Array.isArray(plan)
                     ? plan.map((change, index) => ({
@@ -192,10 +203,83 @@ export default function OptimizationResults() {
     }
 
     if (error || !resultsData) {
+        // Special handling for poor_fit rejection
+        if (error && typeof error === 'object' && error.type === 'poor_fit') {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="bg-slate-900/50 border border-amber-500/30 rounded-2xl p-8">
+                            {/* Warning Icon */}
+                            <div className="flex items-center justify-center mb-6">
+                                <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            {/* Title */}
+                            <h2 className="text-3xl font-bold text-amber-400 text-center mb-4">
+                                Optimization Skipped
+                            </h2>
+
+                            {/* Initial Score */}
+                            <div className="text-center mb-6">
+                                <p className="text-slate-400 mb-2">Initial ATS Score</p>
+                                <p className="text-5xl font-bold text-white">{error.score}</p>
+                            </div>
+
+                            {/* Reason */}
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-6">
+                                <h3 className="text-lg font-semibold text-white mb-2">Reason</h3>
+                                <p className="text-slate-300">{error.reason}</p>
+                            </div>
+
+                            {/* Suggestions */}
+                            <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-6 mb-6">
+                                <h3 className="text-lg font-semibold text-blue-400 mb-3">Suggestions</h3>
+                                <ul className="space-y-2 text-slate-300">
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-blue-400 mt-1">•</span>
+                                        <span>Try applying for positions that better match your experience and skills</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-blue-400 mt-1">•</span>
+                                        <span>Consider upskilling in the required technologies before applying</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="text-blue-400 mt-1">•</span>
+                                        <span>Look for roles that emphasize your current strengths</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => navigate('/new-optimization')}
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+                                >
+                                    Try Different Job
+                                </button>
+                                <button
+                                    onClick={() => navigate('/history')}
+                                    className="flex-1 px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all"
+                                >
+                                    View History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Generic error display
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-red-400 text-xl mb-4">{error || "Run not found"}</div>
+                    <div className="text-red-400 text-xl mb-4">{typeof error === 'string' ? error : "Run not found"}</div>
                     <button
                         onClick={() => navigate('/dashboard')}
                         className="px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700"

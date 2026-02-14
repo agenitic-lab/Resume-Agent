@@ -171,6 +171,7 @@ pytest tests/api/          # API tests only
 
 - **API Docs**: http://localhost:8000/docs (when running)
 - **Development Guide**: See `resume-agent-guide/` for day-by-day implementation details
+- **Troubleshooting**: See [`DEVELOPMENT.md`](DEVELOPMENT.md) for common issues and solutions
 - **Architecture**: See workflow diagram above
 
 ## 🤝 Team
