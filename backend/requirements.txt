@@ -28,7 +28,6 @@ openai==1.12.0
 langgraph==0.0.30
 langchain-core==0.1.53
 langsmith==0.1.147
-langchain_core==1.2.13
 
 # testing
 pytest==8.0.0
