@@ -16,6 +16,7 @@ from .nodes.planning import plan_improvements
 from .nodes.modification import modify_resume
 from .nodes.rescore import rescore_modified_resume
 from .nodes.fit_check import assess_job_fit
+from .nodes.cover_letter import generate_cover_letter
 
 
 def _route_after_fit(state: ResumeAgentState) -> str:
@@ -55,6 +56,7 @@ def create_agent_workflow():
     graph.add_node("plan_improvements", plan_improvements)
     graph.add_node("modify_resume", modify_resume)
     graph.add_node("score_modified", rescore_modified_resume)
+    graph.add_node("generate_cover_letter", generate_cover_letter)
 
     # Wire up the execution flow
     graph.set_entry_point("extract_requirements")
@@ -63,26 +65,34 @@ def create_agent_workflow():
     graph.add_edge("analyze_resume", "check_fit")
     graph.add_edge("check_fit", "score_initial")
 
+    # After initial scoring, route based on fit decision
+    # If poor fit, we can still generate a cover letter (optional)
+    # Or skip directly to END if you don't want letters for poor fits
     graph.add_conditional_edges(
         "score_initial",
         _route_after_fit,
         {
-            "stop": END,
-            "proceed": "plan_improvements",
+            "stop": "generate_cover_letter",  # Poor fit -> still generate letter
+            "proceed": "plan_improvements",    # Good fit -> optimize resume
         },
     )
 
     graph.add_edge("plan_improvements", "modify_resume")
     graph.add_edge("modify_resume", "score_modified")
 
+    # After rescoring, decide to iterate or finish
+    # When finished, generate cover letter before ending
     graph.add_conditional_edges(
         "score_modified",
         _route_after_rescore,
         {
-            "stop": END,
-            "iterate": "plan_improvements",
+            "stop": "generate_cover_letter",  # Optimization complete -> generate letter
+            "iterate": "plan_improvements",    # Continue optimizing
         },
     )
+
+    # Cover letter is the final step before END
+    graph.add_edge("generate_cover_letter", END)
 
     return graph.compile()
 
