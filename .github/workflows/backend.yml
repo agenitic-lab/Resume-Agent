@@ -1,4 +1,4 @@
-name: Backend CI
+name: Backend CI/CD
 
 on:
   push:
@@ -17,6 +17,7 @@ jobs:
     env:
       DATABASE_URL: sqlite:///./test.db
       JWT_SECRET: ci-test-secret
+      JWT_SECRET_KEY: ci-test-secret
     
     steps:
       - name: Checkout code
@@ -43,3 +44,38 @@ jobs:
         run: |
           cd backend
           python -c "from main import app; print('✓ App imports successfully')"
+
+  # ── Deploy to Render (runs only on pushes to main, after tests pass) ────────
+  deploy:
+    name: Deploy to Render
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": "do_not_clear"}')
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+
+          if [ -z "$body" ]; then
+            echo "Error: Empty response from Render API (HTTP $http_code)"
+            exit 1
+          fi
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "Error: Render API returned HTTP $http_code"
+            echo "$body"
+            exit 1
+          fi
+
+          python3 -c "import sys,json; d=json.loads(sys.argv[1]); print('Deploy triggered:', d.get('id','?'), d.get('status','?'))" "$body"

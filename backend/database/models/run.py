@@ -32,6 +32,7 @@ class Run(Base):
 
     # Outputs
     optimized_resume_path = Column(String, nullable=True)
+    cover_letter = Column(Text, nullable=True)
     result_json = Column(JSONB, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

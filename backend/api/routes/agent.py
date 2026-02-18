@@ -73,6 +73,7 @@ def run_agent_workflow(
             job_description=request.job_description,
             original_resume_text=request.resume,
             status=result.get("final_status", "completed"),
+            cover_letter=result.get("cover_letter"),  # Save to dedicated column
             result_json=result  # Store the entire result in JSONB
         )
         
@@ -87,6 +88,7 @@ def run_agent_workflow(
             job_description=request.job_description,
             original_resume=request.resume,
             modified_resume=result.get("modified_resume"),
+            cover_letter=result.get("cover_letter"),  # Include in response
             ats_score_before=result.get("ats_score_before", 0.0),
             ats_score_after=result.get("ats_score_after"),
             improvement_delta=result.get("improvement_delta"),

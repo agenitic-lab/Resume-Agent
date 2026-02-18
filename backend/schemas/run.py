@@ -21,6 +21,7 @@ class RunResponse(RunBase):
     original_resume_text: Optional[str] = None
     resume_file_path: Optional[str] = None
     optimized_resume_path: Optional[str] = None
+    cover_letter: Optional[str] = None
     result_json: Optional[Any] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -31,4 +32,5 @@ class RunResponse(RunBase):
 class RunUpdate(BaseModel):
     status: Optional[RunStatus] = None
     optimized_resume_path: Optional[str] = None
+    cover_letter: Optional[str] = None
     result_json: Optional[Any] = None

@@ -172,3 +172,6 @@ cd frontend
 rmdir /s /q node_modules\.vite  REM Clear Vite cache
 npm run dev  REM Restart dev server
 ```
+
+## CI/CD Deployment
+To trigger a deploy, push changes to the main branch.
