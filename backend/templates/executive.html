@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Resume</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 2.2cm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Georgia, "Times New Roman", serif;
+            color: #1a1a1a;
+            font-size: 10pt;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 18px;
+            border-bottom: 1.5px solid #1a1a1a;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 20pt;
+            margin: 0 0 2px 0;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .header .title {
+            font-size: 11pt;
+            font-style: italic;
+            color: #444;
+            margin-bottom: 4px;
+        }
+
+        .header .contact-line {
+            font-size: 9pt;
+            color: #333;
+        }
+
+        .header .contact-line span {
+            margin: 0 6px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 14px;
+        }
+
+        .section-header {
+            font-size: 9pt;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 2px;
+            margin-bottom: 8px;
+        }
+
+        /* Two-column layout for main content */
+        .two-col {
+            display: flex;
+            gap: 20px;
+        }
+
+        .col-label {
+            width: 110px;
+            flex-shrink: 0;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #333;
+            padding-top: 1px;
+        }
+
+        .col-content {
+            flex: 1;
+        }
+
+        /* Experience */
+        .job {
+            margin-bottom: 12px;
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .job-title {
+            font-weight: bold;
+            font-size: 10.5pt;
+        }
+
+        .job-company {
+            font-size: 9.5pt;
+        }
+
+        .job-location {
+            font-size: 9pt;
+            color: #555;
+        }
+
+        .job-date {
+            font-size: 9pt;
+            color: #555;
+            white-space: nowrap;
+        }
+
+        ul {
+            margin: 4px 0 0 0;
+            padding-left: 16px;
+        }
+
+        li {
+            margin-bottom: 2px;
+            font-size: 9.5pt;
+        }
+
+        /* Education */
+        .edu-item {
+            margin-bottom: 10px;
+        }
+
+        .edu-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .edu-degree {
+            font-weight: bold;
+            font-size: 10.5pt;
+        }
+
+        .edu-school {
+            font-size: 9.5pt;
+            font-style: italic;
+        }
+
+        .edu-date {
+            font-size: 9pt;
+            color: #555;
+        }
+
+        /* Skills */
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 20px;
+        }
+
+        .skill-item {
+            font-size: 9.5pt;
+        }
+
+        /* Profile */
+        .profile-text {
+            font-size: 9.5pt;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>{{ contact.name }}</h1>
+        {% if contact.location or contact.phone or contact.email %}
+        <div class="contact-line">
+            {% if contact.location %}<span>{{ contact.location }}</span>{% endif %}
+            {% if contact.phone %}<span>{{ contact.phone }}</span>{% endif %}
+            {% if contact.email %}<span>{{ contact.email }}</span>{% endif %}
+            {% if contact.linkedin %}<span>{{ contact.linkedin }}</span>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Profile / Summary -->
+    {% if contact.summary %}
+    <div class="section">
+        <div class="section-header">Profile</div>
+        <div class="two-col">
+            <div class="col-content profile-text">{{ contact.summary }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Employment History -->
+    {% if experience %}
+    <div class="section">
+        <div class="section-header">Employment History</div>
+        {% for job in experience %}
+        <div class="job">
+            <div class="job-header">
+                <div>
+                    <span class="job-title">{{ job.title }}</span>
+                    {% if job.company %}, <span class="job-company">{{ job.company }}</span>{% endif %}
+                </div>
+                <div class="job-date">
+                    {% if job.start_date %}{{ job.start_date }}{% endif %}
+                    {% if job.end_date %} — {{ job.end_date }}{% endif %}
+                </div>
+            </div>
+            {% if job.location %}<div class="job-location">{{ job.location }}</div>{% endif %}
+            {% if job.details %}
+            <ul>
+                {% for detail in job.details %}
+                {% if detail.strip() %}<li>{{ detail }}</li>{% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Projects -->
+    {% if projects %}
+    <div class="section">
+        <div class="section-header">Projects</div>
+        {% for project in projects %}
+        <div class="job">
+            <div class="job-header">
+                <div><span class="job-title">{{ project.title }}</span>{% if project.role %} — <em>{{ project.role
+                        }}</em>{% endif %}</div>
+            </div>
+            {% if project.details %}
+            <ul>
+                {% for detail in project.details %}
+                {% if detail.strip() %}<li>{{ detail }}</li>{% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Education -->
+    {% if education %}
+    <div class="section">
+        <div class="section-header">Education</div>
+        {% for edu in education %}
+        <div class="edu-item">
+            <div class="edu-header">
+                <div>
+                    <div class="edu-degree">{{ edu.degree }}</div>
+                    <div class="edu-school">{{ edu.school }}</div>
+                </div>
+                <div class="edu-date">
+                    {% if edu.start_year %}{{ edu.start_year }}{% endif %}
+                    {% if edu.end_year %} — {{ edu.end_year }}{% endif %}
+                    {% if edu.year %}{{ edu.year }}{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Skills -->
+    {% if skills %}
+    <div class="section">
+        <div class="section-header">Skills</div>
+        <div class="skills-grid">
+            {% for skill in skills %}
+            <span class="skill-item">{{ skill }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</body>
+
+</html>
