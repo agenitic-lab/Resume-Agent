@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getRunDetails } from '../services/api';
 import Toast from '../components/Toast';
@@ -119,9 +119,9 @@ export default function OptimizationResults() {
             hasAutoCompiled.current = true;
             compileLatex(latexCode);
         }
-    }, [latexCode]);
+    }, [latexCode, compileLatex]);
 
-    const compileLatex = async (code) => {
+    const compileLatex = useCallback(async (code) => {
         setIsCompiling(true);
         try {
             const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
@@ -146,7 +146,7 @@ export default function OptimizationResults() {
         } finally {
             setIsCompiling(false);
         }
-    };
+    }, [compiledPdfUrl]);
 
     const handleRecompile = () => compileLatex(latexCode);
 

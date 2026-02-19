@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
 import { register, googleAuth, isAuthenticated } from '../services/api';
 
@@ -41,7 +41,7 @@ export default function Register() {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const canvasRef = useRef(null);
@@ -162,7 +162,7 @@ export default function Register() {
       <div className="relative z-10 flex min-h-screen">
         {/* Left Side: Editorial Branding */}
         <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-24 space-y-8 border-r border-neutral-200 bg-white/50 backdrop-blur-md">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
@@ -173,9 +173,9 @@ export default function Register() {
               </svg>
             </div>
             <span className="text-3xl font-black tracking-tighter uppercase italic text-neutral-900">ResumeAgent</span>
-          </motion.div>
+          </Motion.div>
 
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -188,7 +188,7 @@ export default function Register() {
             <p className="text-neutral-500 text-lg font-medium leading-relaxed max-w-sm">
               Initialize your professional identity with the world's most advanced AI resume engine.
             </p>
-          </motion.div>
+          </Motion.div>
 
           {/* Stats Bar */}
           <div className="grid grid-cols-2 gap-8 pt-8 border-t border-neutral-200">
@@ -205,7 +205,7 @@ export default function Register() {
 
         {/* Right Side: Auth Form */}
         <div className="flex-1 flex items-center justify-center p-8">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md bg-white border border-neutral-200 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group"
@@ -307,7 +307,7 @@ export default function Register() {
                 Member? <Link to="/login" className="text-[#606c38] hover:text-[#4a532b]">Secure Sign In</Link>
               </p>
             </form>
-          </motion.div>
+          </Motion.div>
         </div>
       </div>
     </div>

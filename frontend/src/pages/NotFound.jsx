@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 
 // Replicating High-Performance Particle class for Plexus 
 class Particle {
@@ -30,6 +30,14 @@ class Particle {
     ctx.fill();
   }
 }
+
+// Generate static points once outside the component to ensure purity
+const INITIAL_POINTS = [...Array(6)].map(() => ({
+  top: `${20 + Math.random() * 60}%`,
+  left: `${20 + Math.random() * 60}%`,
+  duration: 2 + Math.random() * 2,
+  delay: Math.random() * 5
+}));
 
 export default function NotFound() {
   const canvasRef = useRef(null);
@@ -135,29 +143,29 @@ export default function NotFound() {
 
           {/* Central Visual */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <motion.h1
+            <Motion.h1
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-8xl md:text-9xl font-black italic tracking-tighter text-neutral-900/90 drop-shadow-[0_0_20px_rgba(96,108,56,0.15)] animate-glitch"
             >
               404
-            </motion.h1>
+            </Motion.h1>
             <div className="text-[10px] font-black uppercase tracking-[0.4em] text-[#606c38]/60 mt-2">
               Void Protocol Active
             </div>
           </div>
 
           {/* Data Points */}
-          {[...Array(6)].map((_, i) => (
-            <motion.div
+          {INITIAL_POINTS.map((p, i) => (
+            <Motion.div
               key={i}
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 0] }}
-              transition={{ repeat: Infinity, duration: 2 + Math.random() * 2, delay: Math.random() * 5 }}
+              transition={{ repeat: Infinity, duration: p.duration, delay: p.delay }}
               className="absolute w-1 h-1 bg-neutral-900 rounded-full"
               style={{
-                top: `${20 + Math.random() * 60}%`,
-                left: `${20 + Math.random() * 60}%`,
+                top: p.top,
+                left: p.left,
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)'
               }}
             />
@@ -166,7 +174,7 @@ export default function NotFound() {
 
         {/* Messaging */}
         <div className="text-center space-y-6 max-w-lg">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -177,7 +185,7 @@ export default function NotFound() {
             <p className="text-neutral-500 font-medium leading-relaxed">
               The requested executive entity does not exist in this sector. The intelligence engine has mapped a void at this address.
             </p>
-          </motion.div>
+          </Motion.div>
 
           {/* Technical Metadata */}
           <div className="flex justify-center gap-8 py-4 border-y border-neutral-100">
@@ -195,7 +203,7 @@ export default function NotFound() {
             </div>
           </div>
 
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -207,7 +215,7 @@ export default function NotFound() {
             >
               Re-establish Uplink
             </Link>
-          </motion.div>
+          </Motion.div>
         </div>
       </div>
     </div>

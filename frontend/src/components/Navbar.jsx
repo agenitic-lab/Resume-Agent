@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
+
+import { motion as Motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,7 +17,7 @@ export default function Navbar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-      <motion.nav
+      <Motion.nav
         layout
         animate={{
           width: isScrolled ? "auto" : "100%",
@@ -43,7 +44,7 @@ export default function Navbar() {
         `}
       >
         {/* Logo Section */}
-        <motion.div layout className="flex items-center gap-2.5 group shrink-0">
+        <Motion.div layout className="flex items-center gap-2.5 group shrink-0">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-[#606c38] rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg shadow-[#606c38]/20 translate-z-0">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +53,7 @@ export default function Navbar() {
             </div>
             <AnimatePresence mode="wait">
               {!isScrolled && (
-                <motion.span
+                <Motion.span
                   key="logo-text"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -61,14 +62,14 @@ export default function Navbar() {
                   className="text-lg font-black text-neutral-900 tracking-tighter group-hover:text-[#606c38] transition-colors"
                 >
                   ResumeAgent
-                </motion.span>
+                </Motion.span>
               )}
             </AnimatePresence>
           </Link>
-        </motion.div>
+        </Motion.div>
 
         {/* Navigation Links */}
-        <motion.div layout className="hidden md:flex items-center gap-8">
+        <Motion.div layout className="hidden md:flex items-center gap-8">
           {["Home", "Features"].map((item) => (
             <a
               key={item}
@@ -78,10 +79,10 @@ export default function Navbar() {
               {item}
             </a>
           ))}
-        </motion.div>
+        </Motion.div>
 
         {/* Auth Actions */}
-        <motion.div layout className="flex items-center gap-6 shrink-0">
+        <Motion.div layout className="flex items-center gap-6 shrink-0">
           <Link
             to="/login"
             className="hidden sm:block text-neutral-500 hover:text-[#606c38] font-black text-[10px] uppercase tracking-[0.2em] transition-colors"
@@ -94,8 +95,8 @@ export default function Navbar() {
           >
             Get Started
           </Link>
-        </motion.div>
-      </motion.nav>
+        </Motion.div>
+      </Motion.nav>
     </div>
   );
 }

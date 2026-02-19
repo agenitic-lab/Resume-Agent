@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion as Motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 // Refined Particle class for Global Dense Network (Plexus)
 class Particle {
@@ -138,11 +138,11 @@ export default function Home() {
           />
 
           {/* Deep Ambient Glows */}
-          <motion.div
+          <Motion.div
             style={{ y: y1 }}
             className="absolute top-[-20%] right-[10%] w-[800px] h-[800px] bg-[#606c38]/5 blur-[150px] rounded-full animate-blob"
           />
-          <motion.div
+          <Motion.div
             style={{ y: y2 }}
             className="absolute bottom-[0%] left-[-10%] w-[600px] h-[600px] bg-neutral-400/5 blur-[120px] rounded-full animate-blob [animation-delay:3s]"
           />
@@ -158,7 +158,7 @@ export default function Home() {
 
 
               {/* Main Headline */}
-              <motion.h1
+              <Motion.h1
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1, delay: 0.1 }}
@@ -167,10 +167,10 @@ export default function Home() {
                 <span className="block text-neutral-900 opacity-95">Transform Your</span>
                 <span className="block text-neutral-900 opacity-95">Resume.</span>
                 <span className="block mt-3 text-[#606c38] drop-shadow-[0_0_15px_rgba(96,108,56,0.1)]">Beat the ATS.</span>
-              </motion.h1>
+              </Motion.h1>
 
               {/* Subheadline (Reduced Description) */}
-              <motion.p
+              <Motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
@@ -178,10 +178,10 @@ export default function Home() {
               >
                 Autonomous AI that analyzes, scores, and optimizes your resume
                 with full decision transparency.
-              </motion.p>
+              </Motion.p>
 
               {/* CTA Buttons */}
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5 }}
@@ -209,21 +209,21 @@ export default function Home() {
                   </div>
                   <span>Watch System Demo</span>
                 </button>
-              </motion.div>
+              </Motion.div>
             </div>
           </section>
 
           {/* Demo Modal */}
           <AnimatePresence>
             {isDemoOpen && (
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl"
                 onClick={() => setIsDemoOpen(false)}
               >
-                <motion.div
+                <Motion.div
                   initial={{ scale: 0.9, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -296,7 +296,7 @@ export default function Home() {
                           )
                         }
                       ].map((item, idx) => (
-                        <motion.div
+                        <Motion.div
                           key={item.phase}
                           initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -311,7 +311,7 @@ export default function Home() {
                           </div>
                           <h4 className="text-2xl font-black text-neutral-900 italic tracking-tighter mb-3">{item.title}</h4>
                           <p className="text-neutral-500 text-sm font-medium leading-relaxed">{item.desc}</p>
-                        </motion.div>
+                        </Motion.div>
                       ))}
                     </div>
 
@@ -342,8 +342,8 @@ export default function Home() {
                     <div className="text-[9px] font-black uppercase tracking-[0.4em] text-neutral-400">System Status: <span className="text-[#606c38]/60">Verified Optimized Output</span></div>
                     <div className="text-[8px] font-black uppercase tracking-[0.2em] text-neutral-300 italic font-medium">© 2026 RA.SYS_V2</div>
                   </div>
-                </motion.div>
-              </motion.div>
+                </Motion.div>
+              </Motion.div>
             )}
           </AnimatePresence>
 
@@ -401,7 +401,7 @@ export default function Home() {
                     className: "md:col-span-2 md:row-span-1 bg-neutral-900 text-white"
                   }
                 ].map((feature, index) => (
-                  <motion.div
+                  <Motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.98 }}
                     whileInView={{ opacity: 1, scale: 1 }}
@@ -424,7 +424,7 @@ export default function Home() {
                         }`}>{feature.description}</p>
                     </div>
                     <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 blur-2xl rounded-full -translate-y-1/2 translate-x-1/2" />
-                  </motion.div>
+                  </Motion.div>
                 ))}
               </div>
             </div>
@@ -444,7 +444,7 @@ export default function Home() {
 
               <div className="grid lg:grid-cols-2 gap-12 items-start">
                 {/* Standard Resume (Left) */}
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, x: -30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -518,10 +518,10 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </Motion.div>
 
                 {/* Optimized Resume (Right) */}
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, x: 30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -625,7 +625,7 @@ export default function Home() {
 
                   {/* Feature Floating Callout */}
                   <div className="absolute -right-8 -bottom-4 hidden xl:block">
-                    <motion.div
+                    <Motion.div
                       animate={{ y: [0, -8, 0] }}
                       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                       className="p-4 bg-[#606c38] text-white rounded-[1.5rem] shadow-2xl shadow-olive-900/30 flex items-center gap-3 border border-white/10"
@@ -637,9 +637,9 @@ export default function Home() {
                         <div className="text-[8px] font-black uppercase tracking-widest opacity-60">ATS Score Result</div>
                         <div className="text-lg font-black italic tracking-tighter">100/100</div>
                       </div>
-                    </motion.div>
+                    </Motion.div>
                   </div>
-                </motion.div>
+                </Motion.div>
               </div>
             </div>
           </section>

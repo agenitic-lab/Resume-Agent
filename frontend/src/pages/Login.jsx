@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
 import { login, googleAuth, isAuthenticated } from '../services/api';
 
@@ -158,7 +158,7 @@ export default function Login() {
       <div className="relative z-10 flex min-h-screen">
         {/* Left Side: Editorial Branding */}
         <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-24 space-y-8 border-r border-neutral-200 bg-white/50 backdrop-blur-md">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-4"
@@ -169,9 +169,9 @@ export default function Login() {
               </svg>
             </div>
             <span className="text-3xl font-black tracking-tighter uppercase italic text-neutral-900">ResumeAgent</span>
-          </motion.div>
+          </Motion.div>
 
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -184,11 +184,11 @@ export default function Login() {
             <p className="text-neutral-500 text-lg font-medium leading-relaxed max-w-sm">
               Log in to your private AI command center and command attention in the job market.
             </p>
-          </motion.div>
+          </Motion.div>
 
           <div className="pt-8 space-y-4">
             {['100% Traceable Decisions', 'Neural Pattern Extraction', 'Real-time ATS Scoring'].map((text, i) => (
-              <motion.div
+              <Motion.div
                 key={text}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -197,14 +197,14 @@ export default function Login() {
               >
                 <div className="w-1 h-4 bg-[#606c38]/60" />
                 {text}
-              </motion.div>
+              </Motion.div>
             ))}
           </div>
         </div>
 
         {/* Right Side: Auth Form */}
         <div className="flex-1 flex items-center justify-center p-8">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md bg-white border border-neutral-200 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group"
@@ -217,13 +217,13 @@ export default function Login() {
             </div>
 
             {error && (
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold rounded-xl"
               >
                 {error}
-              </motion.div>
+              </Motion.div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -297,7 +297,7 @@ export default function Login() {
                 New user? <Link to="/signup" className="text-[#606c38] hover:text-[#4a532b]">Initialize Account</Link>
               </p>
             </form>
-          </motion.div>
+          </Motion.div>
         </div>
       </div>
     </div>

@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { createResume, getResumePreview, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -135,7 +134,6 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
     const [selectedYear, setSelectedYear] = useState('');
     const ref = useRef(null);
 
-    // Parse existing value
     React.useEffect(() => {
         if (value && value !== 'Present') {
             const parts = value.split(' ');
@@ -144,7 +142,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
                 setSelectedYear(parts[1]);
             }
         }
-    }, []);
+    }, [value]);
 
     const handleSelect = (month, year) => {
         const formatted = `${month} ${year}`;
@@ -268,7 +266,6 @@ function YearPicker({ value, onChange, placeholder, allowPresent = false }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function ResumeBuilder() {
-    const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [resumeId, setResumeId] = useState(null);
@@ -429,7 +426,7 @@ export default function ResumeBuilder() {
         const newErrors = {};
         const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-        const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
+        const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/;
 
         switch (currentStep) {
             case 1: // Contact
