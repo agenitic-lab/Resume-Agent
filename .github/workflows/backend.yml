@@ -14,10 +14,25 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test_user -d test_db"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
-      DATABASE_URL: sqlite:///./test.db
-      JWT_SECRET: ci-test-secret
+      DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
       JWT_SECRET_KEY: ci-test-secret
+      ENCRYPTION_KEY: ci-test-encryption-key-not-real
     
     steps:
       - name: Checkout code
@@ -33,6 +48,7 @@ jobs:
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install httpx
       
       - name: Run linting
         run: |
@@ -40,10 +56,10 @@ jobs:
           cd backend
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
       
-      - name: Test health endpoint
+      - name: Run tests
         run: |
           cd backend
-          python -c "from main import app; print('✓ App imports successfully')"
+          pytest tests/api/ -v --tb=short
 
   # ── Deploy to Render (runs only on pushes to main, after tests pass) ────────
   deploy:
