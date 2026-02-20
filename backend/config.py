@@ -32,9 +32,6 @@ class Settings:
         r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$"
     )
     
-    # LLM settings
-    GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY")
-    
     # Model names
     JOB_REQUIREMENTS_MODEL: str = os.getenv(
         "JOB_REQUIREMENTS_MODEL",

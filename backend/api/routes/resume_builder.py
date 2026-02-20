@@ -8,6 +8,7 @@ from database.models.user import User
 from auth.dependencies import get_current_user
 from services.template_renderer import render_resume, generate_pdf
 from services.ai_resume_generator import generate_ats_bullets, generate_ats_summary, generate_ats_project_bullets
+from core.security import decrypt_api_key
 from pydantic import BaseModel
 from typing import List
 
@@ -132,10 +133,19 @@ def generate_bullets(
     payload: BulletGenerationRequest,
     current_user: User = Depends(get_current_user)
 ):
+    if not current_user.encrypted_api_key:
+        raise HTTPException(status_code=400, detail="Set your API key in Settings before generating bullets.")
+    
+    try:
+        api_key = decrypt_api_key(current_user.encrypted_api_key)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt API key. Please reset it in Settings.")
+
     bullets = generate_ats_bullets(
         role=payload.role,
         technologies=payload.technologies,
-        keywords=payload.keywords
+        keywords=payload.keywords,
+        api_key=api_key
     )
     return {"bullets": bullets}
 
@@ -149,10 +159,19 @@ def generate_summary(
     payload: SummaryGenerationRequest,
     current_user: User = Depends(get_current_user)
 ):
+    if not current_user.encrypted_api_key:
+        raise HTTPException(status_code=400, detail="Set your API key in Settings before generating summary.")
+    
+    try:
+        api_key = decrypt_api_key(current_user.encrypted_api_key)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt API key. Please reset it in Settings.")
+
     summary = generate_ats_summary(
         current_role=payload.current_role,
         experience_level=payload.experience_level,
-        keywords=payload.keywords
+        keywords=payload.keywords,
+        api_key=api_key
     )
     return {"summary": summary}
 
@@ -168,11 +187,20 @@ def generate_project_bullets(
     payload: ProjectGenerationRequest,
     current_user: User = Depends(get_current_user)
 ):
+    if not current_user.encrypted_api_key:
+        raise HTTPException(status_code=400, detail="Set your API key in Settings before generating project bullets.")
+    
+    try:
+        api_key = decrypt_api_key(current_user.encrypted_api_key)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt API key. Please reset it in Settings.")
+
     bullets = generate_ats_project_bullets(
         project_name=payload.project_name,
         project_type=payload.project_type,
         role=payload.role,
         technologies=payload.technologies,
-        keywords=payload.keywords
+        keywords=payload.keywords,
+        api_key=api_key
     )
     return {"bullets": bullets}
