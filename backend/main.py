@@ -19,6 +19,7 @@ except ImportError:
     LATEX_AVAILABLE = False
 
 from api.routes.agent import router as agent_router
+from api.routes.resume_builder import router as resume_builder_router
 
 AGENT_AVAILABLE = True
 logger = logging.getLogger(__name__)
@@ -55,6 +56,8 @@ if LATEX_AVAILABLE:
 if AGENT_AVAILABLE:
     app.include_router(agent_router)
 
+app.include_router(resume_builder_router)
+
 
 @app.on_event("startup")
 def startup():
@@ -83,6 +86,6 @@ def root():
     }
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok"}

@@ -85,6 +85,12 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         if (!response.ok) {
+            // Handle unauthorized globally (e.g., expired token)
+            if (response.status === 401) {
+                removeToken();
+                window.location.href = '/login?expired=true';
+            }
+
             // Extract error message from backend response
             const errorMessage = (typeof data === 'object' && data !== null)
                 ? (data.detail || data.message || 'Request failed')
@@ -415,4 +421,65 @@ export async function compileLatex(latexCode) {
     }
 
     return response.blob();
+}
+
+// Resume Builder Endpoints
+export async function createResume(data) {
+    return apiRequest('/api/resume/create', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function getResumePreview(resumeId, templateName) {
+    const token = getToken();
+    const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to load preview');
+    }
+    return response.text();
+}
+
+export async function downloadResume(resumeId, templateName) {
+    const token = getToken();
+    const response = await fetch(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.detail || 'Failed to download resume');
+        error.status = response.status;
+        throw error;
+    }
+    return response.blob();
+}
+
+export async function generateResumeBullets(data) {
+    return apiRequest('/api/resume/generate-bullets', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function generateResumeSummary(data) {
+    return apiRequest('/api/resume/generate-summary', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function generateProjectBullets(data) {
+    return apiRequest('/api/resume/generate-project-bullets', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
 }

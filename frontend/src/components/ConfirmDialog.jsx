@@ -31,30 +31,31 @@ export default function ConfirmDialog({
     if (!isOpen) return null;
 
     const confirmButtonClass = variant === "danger"
-        ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
-        : "bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-500";
+        ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/10"
+        : "bg-brand-primary hover:bg-brand-hover text-black shadow-brand-primary/10";
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
                 onClick={onCancel}
             />
 
-            <div className="relative bg-slate-900 border border-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6 animate-slide-up">
-                <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-                <p className="text-slate-400 mb-6">{message}</p>
+            <div className="relative bg-bg-surface border border-border-muted rounded-[2.5rem] shadow-2xl max-w-md w-full p-10 animate-slide-up overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-brand-primary/20" />
+                <h3 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">{title}</h3>
+                <p className="text-text-secondary text-sm font-medium leading-relaxed mb-10">{message}</p>
 
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                     <button
                         onClick={onCancel}
-                        className="flex-1 px-4 py-2.5 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors font-medium"
+                        className="flex-1 px-6 py-4 bg-bg-secondary text-text-muted rounded-2xl hover:bg-bg-primary transition-all font-black text-[10px] uppercase tracking-widest active:scale-95 border border-border-subtle"
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors font-medium ${confirmButtonClass}`}
+                        className={`flex-1 px-6 py-4 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest active:scale-95 shadow-xl ${confirmButtonClass}`}
                     >
                         {confirmText}
                     </button>

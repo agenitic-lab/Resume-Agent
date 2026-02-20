@@ -35,7 +35,7 @@ export default function RunHistory() {
 
     const handleDeleteConfirm = async () => {
         if (!deleteConfirm.runId) return;
-        
+
         setDeleting(true);
         try {
             await deleteRun(deleteConfirm.runId);
@@ -55,91 +55,99 @@ export default function RunHistory() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
+        <div className="min-h-screen bg-bg-primary p-8">
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2">Run History</h1>
-                    <p className="text-slate-400">View all your past resume optimization runs</p>
+                <div className="mb-12">
+                    <h1 className="text-4xl font-black text-text-primary mb-2 italic tracking-tighter uppercase font-black">Run Archives</h1>
+                    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">Complete historical manifest of optimization cycles</p>
                 </div>
 
                 {/* History List */}
                 <div className="space-y-4">
                     {loading ? (
-                        <div className="text-center text-slate-400 py-12">Loading history...</div>
+                        <div className="text-center py-20">
+                            <div className="w-12 h-12 mx-auto relative">
+                                <div className="absolute inset-0 border-4 border-brand-primary/10 rounded-full" />
+                                <div className="absolute inset-0 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                            </div>
+                            <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mt-6">Retrieving Archives...</p>
+                        </div>
                     ) : historyItems.length === 0 ? (
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
-                            <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-16 text-center shadow-xl shadow-black/5">
+                            <div className="w-24 h-24 bg-bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-8 border border-border-subtle">
+                                <svg className="w-12 h-12 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <h3 className="text-xl font-semibold text-white mb-2">No optimization history yet</h3>
-                            <p className="text-slate-400 mb-6">Start optimizing your resume to see your history here</p>
+                            <h3 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">No Archives Detected</h3>
+                            <p className="text-text-muted text-sm mb-10 font-medium">Your historical data manifest is currently empty.</p>
                             <button
                                 onClick={() => navigate('/new-optimization')}
-                                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+                                className="px-10 py-4 bg-[#606c38] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-olive-500/20 hover:bg-[#4a532b] transition-all active:scale-95"
                             >
-                                Start New Optimization
+                                Initiate Primary Cycle
                             </button>
                         </div>
                     ) : (
                         historyItems.map((item) => (
                             <div
                                 key={item.id}
-                                className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all"
+                                className="bg-bg-surface border border-border-muted rounded-3xl p-8 hover:border-brand-primary/30 hover:shadow-xl hover:shadow-black/10 transition-all group"
                             >
-                                <div className="flex items-start justify-between gap-6">
+                                <div className="flex items-center justify-between gap-8">
                                     {/* Left Side - Status, Date, Info */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-4 mb-3">
+                                            <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-brand-primary/10">
                                                 {item.status}
                                             </span>
-                                            <span className="text-slate-500 text-sm">{new Date(item.created_at).toLocaleDateString()}</span>
+                                            <span className="text-text-muted text-[10px] font-black uppercase tracking-widest">
+                                                {new Date(item.created_at).toLocaleDateString()}
+                                            </span>
                                         </div>
 
-                                        <h3 className="text-xl font-bold text-white mb-1">
-                                            {item.job_description ? (item.job_description.substring(0, 50) + "...") : "Optimization Run"}
+                                        <h3 className="text-xl font-black text-text-primary mb-1 italic tracking-tighter uppercase truncate">
+                                            {item.job_description ? (item.job_description.substring(0, 60) + "...") : "Optimization Run"}
                                         </h3>
-                                        <p className="text-slate-400 text-sm mb-4 line-clamp-1">{item.job_description}</p>
+                                        <p className="text-text-muted text-xs font-medium truncate">{item.job_description}</p>
                                     </div>
 
                                     {/* Right Side - Scores and Actions */}
-                                    <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-8 shrink-0">
                                         {/* Score Display */}
-                                        <div className="text-right">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-2xl font-bold text-white">{Math.round(item.ats_score_before || 0)}</span>
-                                                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                        <div className="text-right border-r border-border-muted pr-8">
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <span className="text-xl font-black text-text-muted italic tracking-tighter">{Math.round(item.ats_score_before || 0)}</span>
+                                                <svg className="w-4 h-4 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                 </svg>
-                                                <span className="text-2xl font-bold text-cyan-400">{Math.round(item.ats_score_after || 0)}</span>
+                                                <span className="text-2xl font-black text-text-primary italic tracking-tighter underline decoration-brand-primary decoration-2 underline-offset-4">{Math.round(item.ats_score_after || 0)}</span>
                                             </div>
-                                            <div className="text-green-400 text-sm font-semibold">
-                                                +{Math.round(item.improvement_delta || 0)} points
+                                            <div className="text-brand-primary text-[9px] font-black uppercase tracking-widest">
+                                                +{Math.round(item.improvement_delta || 0)} yield
                                             </div>
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => handleView(item.id)}
-                                                className="p-3 bg-slate-800 hover:bg-slate-700 rounded-lg transition-all group"
+                                                className="p-4 bg-bg-secondary hover:bg-brand-primary text-text-muted hover:text-black rounded-2xl transition-all shadow-inner border border-border-subtle hover:border-brand-primary active:scale-95"
                                                 title="View Details"
                                             >
-                                                <svg className="w-5 h-5 text-slate-400 group-hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteClick(item.id, item.job_description)}
-                                                className="p-3 bg-slate-800 hover:bg-red-900/50 rounded-lg transition-all group"
+                                                className="p-4 bg-bg-secondary hover:bg-red-500 text-text-muted hover:text-white rounded-2xl transition-all shadow-inner border border-border-subtle hover:border-red-500 active:scale-95"
                                                 title="Delete"
                                             >
-                                                <svg className="w-5 h-5 text-slate-400 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
                                         </div>

@@ -7,6 +7,7 @@ Tests registration and login functionality with various scenarios:
 - Edge cases
 - Security validations
 """
+import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -18,16 +19,15 @@ from database.connection import Base, get_db
 from database.models.user import User
 
 
-# Test Database Setup
+# Use the same DB engine as CI/production for test isolation
+TEST_DB_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
-# Create in-memory SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+engine_kwargs = {"pool_pre_ping": True}
+if TEST_DB_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+    engine_kwargs["poolclass"] = StaticPool
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+engine = create_engine(TEST_DB_URL, **engine_kwargs)
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

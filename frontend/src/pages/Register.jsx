@@ -1,8 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
 import { register, googleAuth, isAuthenticated } from '../services/api';
+
+// Replicating High-Performance Particle class for Plexus 
+class Particle {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 0.4;
+    this.vy = (Math.random() - 0.5) * 0.4;
+    this.radius = Math.random() * 1.5;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (this.x < 0) this.x = this.canvas.width;
+    if (this.x > this.canvas.width) this.x = 0;
+    if (this.y < 0) this.y = this.canvas.height;
+    if (this.y > this.canvas.height) this.y = 0;
+  }
+
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(141, 163, 74, 0.4)'; // brand-primary accent
+    ctx.fill();
+  }
+}
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -11,8 +41,10 @@ export default function Register() {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -20,374 +52,264 @@ export default function Register() {
     }
   }, [navigate]);
 
+  // Plexus Animation Effect
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+
+    const particles = [];
+    const particleCount = Math.min(Math.floor(window.innerWidth / 12), 100);
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle(canvas));
+    }
+
+    let animationFrameId;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((particle, i) => {
+        particle.update();
+        particle.draw(ctx);
+        for (let j = i + 1; j < particles.length; j++) {
+          const other = particles[j];
+          const dx = particle.x - other.x;
+          const dy = particle.y - other.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 150) {
+            const opacity = 0.12 * (1 - distance / 150);
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(141, 163, 74, ${opacity})`; // brand-primary accent
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(other.x, other.y);
+            ctx.stroke();
+          }
+        }
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+    window.addEventListener('resize', resizeCanvas);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
+
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       await googleAuth(credentialResponse.credential);
       toast.success('Account created successfully!');
-
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 500);
+      setTimeout(() => navigate('/dashboard', { replace: true }), 500);
     } catch (err) {
-      const errorMsg = err.message || 'Google signup failed';
-      toast.error(errorMsg);
+      toast.error(err.message || 'Google signup failed');
     }
-  };
-
-  const handleGoogleError = () => {
-    toast.error('Google signup failed. Please try again.');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.email || !formData.password || !formData.confirmPassword) {
       toast.error('Please fill in all fields');
       return;
     }
-
-    if (!formData.email.includes('@')) {
-      toast.error('Please enter a valid email');
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters');
-      return;
-    }
-
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-
+    setLoading(true);
     try {
       await register(formData.email, formData.password);
       toast.success('Account created successfully!');
-
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
-      const errorMsg = err.message || 'Registration failed';
-      toast.error(errorMsg);
+      toast.error(err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Password strength validation
   const passwordValidation = {
     hasMinLength: formData.password.length >= 8,
     hasUpperCase: /[A-Z]/.test(formData.password),
     hasNumber: /[0-9]/.test(formData.password)
   };
 
-  const passwordsMatch = formData.password && formData.password === formData.confirmPassword;
-
   return (
-    <>
-      <style>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+    <div className="relative min-h-screen bg-bg-primary text-text-primary overflow-hidden font-sans selection:bg-brand-primary/30 pt-20">
+      {/* Background Layer */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 opacity-100"
+          style={{
+            backgroundImage: 'linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)',
+            backgroundSize: '60px 60px'
+          }}
+        />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-40 mix-blend-screen" />
+      </div>
 
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .animate-slide-up {
-          animation: slideUp 0.6s ease-out forwards;
-        }
-
-        .animate-fade-in {
-          animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        .delay-100 { animation-delay: 0.1s; opacity: 0; }
-        .delay-200 { animation-delay: 0.2s; opacity: 0; }
-        .delay-300 { animation-delay: 0.3s; opacity: 0; }
-      `}</style>
-
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex">
-        {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-          {/* Gradient Orbs */}
-          <div
-            className="absolute top-20 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full"
-            style={{ filter: 'blur(100px)' }}
-          />
-          <div
-            className="absolute bottom-20 -right-20 w-96 h-96 bg-blue-500/20 rounded-full"
-            style={{ filter: 'blur(100px)' }}
-          />
-
-          <div className="relative z-10 flex flex-col justify-center px-16 max-w-2xl animate-fade-in">
-            {/* Logo */}
-            <div className="flex items-center gap-3 mb-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/50">
-                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                ResumeAgent
-              </span>
+      <div className="relative z-10 flex min-h-screen">
+        {/* Left Side: Editorial Branding */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-24 space-y-8 border-r border-border-muted bg-bg-surface/50 backdrop-blur-md">
+          <Motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4"
+          >
+            <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
+              <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
             </div>
+            <span className="text-3xl font-black tracking-tighter uppercase italic text-text-primary">ResumeAgent</span>
+          </Motion.div>
 
-            {/* Headline */}
-            <h1 className="text-5xl font-black text-white mb-6 leading-tight">
-              Start Optimizing Your Resume
-              <br />
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                Today
-              </span>
+          <Motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-4"
+          >
+            <h1 className="text-6xl font-black leading-[0.9] tracking-tighter text-text-primary">
+              Start Your <br />
+              <span className="text-brand-primary">Journey.</span>
             </h1>
-
-            {/* Description */}
-            <p className="text-xl text-slate-400 mb-12 leading-relaxed">
-              Join thousands of job seekers who have improved their resume scores and landed their dream positions.
+            <p className="text-text-secondary text-lg font-medium leading-relaxed max-w-sm">
+              Initialize your professional identity with the world's most advanced AI resume engine.
             </p>
+          </Motion.div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <div className="text-4xl font-bold text-cyan-400 mb-2">85%</div>
-                <div className="text-slate-400">Average score improvement</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-cyan-400 mb-2">10K+</div>
-                <div className="text-slate-400">Resumes optimized</div>
-              </div>
+          {/* Stats Bar */}
+          <div className="grid grid-cols-2 gap-8 pt-8 border-t border-border-subtle">
+            <div>
+              <div className="text-3xl font-black text-brand-primary italic tracking-tighter">85%</div>
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Avg. Score Boost</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-text-primary italic tracking-tighter">10K+</div>
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Agents Deployed</div>
             </div>
           </div>
         </div>
 
-        {/* Right Side - Registration Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
-          <div className="w-full max-w-md">
-            {/* Mobile Logo */}
-            <div className="lg:hidden flex items-center gap-3 mb-8 animate-slide-up">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/50">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                ResumeAgent
-              </span>
+        {/* Right Side: Auth Form */}
+        <div className="flex-1 flex items-center justify-center p-8">
+          <Motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group"
+          >
+            <div className="absolute top-0 left-0 w-full h-1 bg-brand-primary/20" />
+
+            <div className="mb-10">
+              <h2 className="text-3xl font-black text-text-primary mb-2 italic tracking-tighter">Create Account.</h2>
+              <p className="text-text-secondary text-xs font-black uppercase tracking-widest">Deploy your personal AI Agent</p>
             </div>
 
-            {/* Form Card */}
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl animate-slide-up delay-100">
-              {/* Header */}
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">Create your account</h2>
-                <p className="text-slate-400">
-                  Start optimizing your resume today
-                </p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Work Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@company.com"
+                  className="w-full px-6 py-4 bg-bg-secondary border border-border-subtle rounded-2xl text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-brand-primary/50 transition-all font-medium text-sm"
+                  required
+                />
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Input */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="you@example.com"
-                      className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                      required
-                    />
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Secure Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    className="w-full px-6 py-4 bg-bg-secondary border border-border-subtle rounded-2xl text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-brand-primary/50 transition-all font-medium text-sm"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+                  >
+                    {showPassword ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268-2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    )}
+                  </button>
+                </div>
+                {formData.password && (
+                  <div className="flex gap-2 px-1">
+                    {[passwordValidation.hasMinLength, passwordValidation.hasUpperCase, passwordValidation.hasNumber].map((valid, i) => (
+                      <div key={i} className={`h-1 flex-1 rounded-full ${valid ? 'bg-brand-primary' : 'bg-bg-secondary'}`} />
+                    ))}
                   </div>
-                </div>
+                )}
+              </div>
 
-                {/* Password Input */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Create a strong password"
-                      className="w-full pl-12 pr-12 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  {/* Password Strength Indicators */}
-                  {formData.password && (
-                    <div className="mt-3 space-y-2">
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className={`w-2 h-2 rounded-full ${passwordValidation.hasMinLength ? 'bg-green-500' : 'bg-slate-600'}`} />
-                        <span className={passwordValidation.hasMinLength ? 'text-green-400' : 'text-slate-500'}>
-                          At least 8 characters
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className={`w-2 h-2 rounded-full ${passwordValidation.hasUpperCase ? 'bg-green-500' : 'bg-slate-600'}`} />
-                        <span className={passwordValidation.hasUpperCase ? 'text-green-400' : 'text-slate-500'}>
-                          One uppercase letter
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <div className={`w-2 h-2 rounded-full ${passwordValidation.hasNumber ? 'bg-green-500' : 'bg-slate-600'}`} />
-                        <span className={passwordValidation.hasNumber ? 'text-green-400' : 'text-slate-500'}>
-                          One number
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-text-muted ml-1">Confirm Identity</label>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full px-6 py-4 bg-bg-secondary border border-border-subtle rounded-2xl text-text-primary placeholder-text-muted/50 focus:outline-none focus:border-brand-primary/50 transition-all font-medium text-sm"
+                  required
+                />
+              </div>
 
-                {/* Confirm Password Input */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </div>
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      placeholder="Re-enter your password"
-                      className="w-full pl-12 pr-12 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showConfirmPassword ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  {formData.confirmPassword && (
-                    <div className="mt-2 flex items-center gap-2 text-xs">
-                      {passwordsMatch ? (
-                        <>
-                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span className="text-green-400">Passwords match</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          <span className="text-red-400">Passwords do not match</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-brand-primary text-black font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-brand-hover transition-all active:scale-95 shadow-xl shadow-brand-primary/10 disabled:opacity-50"
+              >
+                {loading ? 'Initializing...' : 'Construct Account'}
+              </button>
 
-                {/* Create Account Button */}
-                <button
-                  type="submit"
-                  className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2"
-                >
-                  <span>Create Account</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
+              <div className="relative flex items-center py-4">
+                <div className="flex-grow border-t border-border-subtle" />
+                <span className="px-4 text-[8px] font-black uppercase tracking-[0.3em] text-text-muted">or bridge account</span>
+                <div className="flex-grow border-t border-border-subtle" />
+              </div>
 
-                {/* Divider */}
-                <div className="relative flex items-center my-6">
-                  <div className="flex-grow border-t border-slate-700" />
-                  <span className="px-4 text-sm text-slate-500 bg-slate-900/50">or continue with</span>
-                  <div className="flex-grow border-t border-slate-700" />
-                </div>
-
-                {/* Google Sign Up */}
-                <div className="flex justify-center">
+              <div className="flex justify-center">
+                <div className="w-full max-w-[200px] opacity-60 hover:opacity-100 transition-all">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    theme="filled_black"
-                    size="large"
+                    onError={() => toast.error('Google Auth Failed')}
+                    theme="outline"
+                    shape="pill"
                     text="signup_with"
-                    shape="rectangular"
-                    width="384"
                   />
                 </div>
+              </div>
 
-                {/* Sign In Link */}
-                <p className="text-center text-sm text-slate-400">
-                  Already have an account?{" "}
-                  <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-                    Sign in
-                  </Link>
-                </p>
-              </form>
-            </div>
-          </div>
+              <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-text-muted font-medium">
+                Member? <Link to="/login" className="text-brand-primary hover:text-brand-hover">Secure Sign In</Link>
+              </p>
+            </form>
+          </Motion.div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
