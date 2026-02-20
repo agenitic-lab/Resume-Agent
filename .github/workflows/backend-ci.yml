@@ -1,0 +1,70 @@
+name: Backend CI
+# Runs lint + tests on every pull request targeting main that touches backend/.
+# Deployment is handled separately in backend-deploy.yml (push to main only).
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test_user -d test_db"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
+      JWT_SECRET: ci-test-secret
+      JWT_SECRET_KEY: ci-test-secret
+      ENCRYPTION_KEY: ci-test-encryption-key-not-real
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install httpx flake8
+
+      - name: Run linting
+        run: |
+          cd backend
+          # E9=runtime errors, F63/F7/F82=fatal syntax/undefined-name errors
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Run tests
+        run: |
+          cd backend
+          pytest tests/api/ -v --tb=short
