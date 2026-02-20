@@ -6,10 +6,9 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 
-def get_groq_client():
-    api_key = os.getenv("GROQ_API_KEY")
+def get_groq_client(api_key: str):
     if not api_key:
-        logger.warning("GROQ_API_KEY not found in environment variables.")
+        logger.warning("No API key provided to get_groq_client")
         return None
     return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
@@ -99,13 +98,13 @@ def _get_field_context(role: str) -> dict:
         }
 
 
-def generate_ats_bullets(role: str, technologies: List[str], keywords: List[str]) -> List[str]:
+def generate_ats_bullets(role: str, technologies: List[str], keywords: List[str], api_key: str) -> List[str]:
     """
     Generates ATS-friendly bullet points for a specific role, tailored to the field.
     """
-    client = get_groq_client()
+    client = get_groq_client(api_key)
     if not client:
-        return ["Error: GROQ_API_KEY not configured. Cannot generate bullets."]
+        return ["Error: No API key provided or invalid. Cannot generate bullets."]
 
     ctx = _get_field_context(role)
     skills_str = ", ".join(technologies + keywords) if (technologies or keywords) else "core professional skills"
@@ -146,13 +145,13 @@ Rules:
         return [f"Error generating content: {str(e)}"]
 
 
-def generate_ats_summary(current_role: str, experience_level: str, keywords: List[str]) -> str:
+def generate_ats_summary(current_role: str, experience_level: str, keywords: List[str], api_key: str) -> str:
     """
     Generates a professional summary tailored to the field.
     """
-    client = get_groq_client()
+    client = get_groq_client(api_key)
     if not client:
-        return "Error: GROQ_API_KEY not configured. Cannot generate summary."
+        return "Error: No API key provided or invalid. Cannot generate summary."
 
     ctx = _get_field_context(current_role)
     keywords_str = ", ".join(keywords) if keywords else "core professional skills"
@@ -194,13 +193,13 @@ Rules:
         return f"Error generating summary: {str(e)}"
 
 
-def generate_ats_project_bullets(project_name: str, project_type: str, role: str, technologies: List[str], keywords: List[str]) -> List[str]:
+def generate_ats_project_bullets(project_name: str, project_type: str, role: str, technologies: List[str], keywords: List[str], api_key: str) -> List[str]:
     """
     Generates ATS-friendly bullet points for a project, tailored to the field and project type.
     """
-    client = get_groq_client()
+    client = get_groq_client(api_key)
     if not client:
-        return ["Error: GROQ_API_KEY not configured. Cannot generate bullets."]
+        return ["Error: No API key provided or invalid. Cannot generate bullets."]
 
     ctx = _get_field_context(role)
     skills_str = ", ".join(technologies + keywords) if (technologies or keywords) else "core professional skills"

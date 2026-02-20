@@ -4,9 +4,9 @@ from config import settings
 
 
 def build_groq_client(state: Dict) -> OpenAI:
-    api_key = state.get("user_llm_api_key") or settings.GROQ_API_KEY
+    api_key = state.get("user_llm_api_key")
     if not api_key:
-        raise ValueError("No LLM API key provided")
+        raise ValueError("User LLM API key not found in state. Please set it in Settings.")
     return OpenAI(
         api_key=api_key,
         base_url="https://api.groq.com/openai/v1",
