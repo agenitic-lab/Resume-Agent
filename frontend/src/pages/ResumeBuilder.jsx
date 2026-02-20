@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { createResume, getResumePreview, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets } from '../services/api';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createResume, getResumePreview, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus } from '../services/api';
 import toast from 'react-hot-toast';
 
 // ─── Job Title Suggestions ─────────────────────────────────────────────────
@@ -266,6 +267,7 @@ function YearPicker({ value, onChange, placeholder, allowPresent = false }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function ResumeBuilder() {
+    const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [resumeId, setResumeId] = useState(null);
@@ -273,6 +275,15 @@ export default function ResumeBuilder() {
     const [selectedTemplate, setSelectedTemplate] = useState('classic');
     const [skillInput, setSkillInput] = useState('');
     const [errors, setErrors] = useState({});
+    const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = resolved
+
+    // Check whether the user has a stored API key on mount.
+    // All AI generation features require it — surface a clear warning early.
+    useEffect(() => {
+        getApiKeyStatus()
+            .then(status => setHasApiKey(Boolean(status.has_api_key)))
+            .catch(() => setHasApiKey(false));
+    }, []);
 
     const [formData, setFormData] = useState({
         field: '',
@@ -568,7 +579,7 @@ export default function ResumeBuilder() {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to generate summary.", { id: toastId });
+            toast.error(error.message || "Failed to generate summary.", { id: toastId });
         }
     };
 
@@ -591,7 +602,7 @@ export default function ResumeBuilder() {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to generate bullets.", { id: toastId });
+            toast.error(error.message || "Failed to generate bullets.", { id: toastId });
         }
     };
 
@@ -621,7 +632,7 @@ export default function ResumeBuilder() {
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to generate project bullets.", { id: toastId });
+            toast.error(error.message || "Failed to generate project bullets.", { id: toastId });
         }
     };
 
@@ -1222,6 +1233,35 @@ export default function ResumeBuilder() {
 
     return (
         <div className="min-h-screen bg-bg-primary flex flex-col">
+            {/* API Key Warning Banner */}
+            {hasApiKey === false && (
+                <div className="w-full px-6 pt-6">
+                    <div className="max-w-2xl mx-auto bg-bg-surface border-l-4 border-brand-primary rounded-2xl p-6 shadow-xl shadow-black/5 flex items-start gap-5">
+                        <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-base font-black text-text-primary mb-1 italic tracking-tighter uppercase">Groq API Key Required for AI Features</h3>
+                            <p className="text-text-secondary text-sm font-medium mb-3 leading-relaxed">
+                                The AI summary, bullet point, and project description generators need your Groq API key.
+                                Get a free key from{' '}
+                                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
+                                    className="text-brand-primary hover:underline font-black">
+                                    console.groq.com/keys
+                                </a>
+                            </p>
+                            <button
+                                onClick={() => navigate('/settings')}
+                                className="px-5 py-2 bg-text-primary text-bg-primary rounded-xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-black active:scale-95">
+                                Go to Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Progress Bar */}
             <div className="w-full h-1.5 bg-bg-secondary">
                 <div
