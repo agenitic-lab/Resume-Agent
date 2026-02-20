@@ -1,17 +1,17 @@
-name: Backend CI/CD
+name: Backend Deploy
+# Triggered only when code is merged/pushed directly to main and touches backend/.
+# Runs lint + tests first to validate the merged state, then deploys to Render.
+# This workflow never runs on pull requests, so no "skipped" check noise on PRs.
 
 on:
   push:
     branches: [main]
     paths:
       - 'backend/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'backend/**'
 
 jobs:
   test:
+    name: Lint & Test
     runs-on: ubuntu-latest
 
     services:
@@ -34,39 +34,45 @@ jobs:
       JWT_SECRET: ci-test-secret
       JWT_SECRET_KEY: ci-test-secret
       ENCRYPTION_KEY: ci-test-encryption-key-not-real
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install httpx
-      
+          pip install httpx flake8
+
       - name: Run linting
         run: |
-          pip install flake8
           cd backend
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
-      
+          # E9=runtime errors, F63/F7/F82=fatal syntax/undefined-name errors
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
       - name: Run tests
         run: |
           cd backend
           pytest tests/api/ -v --tb=short
 
-  # ── Deploy to Render (runs only on pushes to main, after tests pass) ────────
   deploy:
     name: Deploy to Render
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
