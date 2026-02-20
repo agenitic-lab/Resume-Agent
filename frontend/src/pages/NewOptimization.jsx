@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Toast from '../components/Toast';

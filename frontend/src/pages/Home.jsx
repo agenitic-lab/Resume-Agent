@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion as Motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion as Motion, useScroll, AnimatePresence } from 'framer-motion';
 
 // Neural Node class for intelligent background animation
 class Neuron {
@@ -65,7 +65,7 @@ export default function Home() {
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const canvasRef = useRef(null);
-  const { scrollY } = useScroll();
+  useScroll();
 
   useEffect(() => {
     const canvas = canvasRef.current;
