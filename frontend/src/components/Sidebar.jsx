@@ -90,15 +90,15 @@ export default function Sidebar() {
     const isActive = (path) => location.pathname === path;
 
     return (
-        <div className="w-64 h-screen bg-white border-r border-neutral-200 hidden md:flex flex-col">
+        <div className="w-64 h-screen bg-bg-surface border-r border-border-muted hidden md:flex flex-col">
             {/* Logo */}
-            <div className="p-6 flex items-center gap-3 border-b border-neutral-100">
-                <div className="w-10 h-10 bg-[#606c38] rounded-xl flex items-center justify-center shadow-lg shadow-olive-500/10">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-6 flex items-center gap-3 border-b border-border-subtle">
+                <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/10">
+                    <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
-                <span className="text-xl font-black text-neutral-900 tracking-tighter italic">
+                <span className="text-xl font-black text-text-primary tracking-tighter italic">
                     ResumeAgent
                 </span>
             </div>
@@ -110,23 +110,23 @@ export default function Sidebar() {
                         key={item.path}
                         to={item.path}
                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive(item.path)
-                            ? 'bg-[#606c38]/10 text-[#606c38] border border-[#606c38]/10'
-                            : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'
+                            ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/10'
+                            : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
                             }`}
                     >
                         {item.icon}
                         <span className="font-black uppercase text-[10px] tracking-widest">{item.name}</span>
                         {isActive(item.path) && (
-                            <div className="ml-auto w-2 h-2 bg-[#606c38] rounded-full" />
+                            <div className="ml-auto w-2 h-2 bg-brand-primary rounded-full shadow-[0_0_8px_rgba(141,163,74,0.4)]" />
                         )}
                     </Link>
                 ))}
             </nav>
 
             {/* User Profile */}
-            <div className="p-4 border-t border-neutral-100">
-                <div className="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg mb-3">
-                    <div className="w-10 h-10 bg-[#606c38] rounded-full flex items-center justify-center text-white font-black flex-shrink-0">
+            <div className="p-4 border-t border-border-muted/50">
+                <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg mb-3">
+                    <div className="w-10 h-10 bg-brand-primary rounded-full flex items-center justify-center text-black font-black flex-shrink-0 shadow-lg shadow-brand-primary/10">
                         {user?.profile_picture ? (
                             <img src={user.profile_picture} alt="Profile" className="w-full h-full rounded-full object-cover" />
                         ) : (
@@ -134,10 +134,10 @@ export default function Sidebar() {
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-neutral-900 truncate tracking-tighter uppercase italic">
+                        <p className="text-sm font-black text-text-primary truncate tracking-tighter uppercase italic">
                             {user?.full_name || user?.email?.split('@')[0] || 'User'}
                         </p>
-                        <p className="text-xs text-neutral-400 truncate font-medium">
+                        <p className="text-xs text-text-muted truncate font-medium">
                             {user?.email || 'Loading...'}
                         </p>
                     </div>
@@ -146,7 +146,7 @@ export default function Sidebar() {
                 {/* Sign Out */}
                 <button
                     onClick={() => setShowLogoutDialog(true)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-text-muted hover:text-red-400 hover:bg-red-950/20 rounded-lg transition-all"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

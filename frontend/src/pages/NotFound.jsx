@@ -26,7 +26,7 @@ class Particle {
   draw(ctx) {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(96, 108, 56, 0.4)'; // Olive Accent
+    ctx.fillStyle = 'rgba(141, 163, 74, 0.4)'; // brand-primary accent
     ctx.fill();
   }
 }
@@ -75,7 +75,7 @@ export default function NotFound() {
           if (distance < 150) {
             const opacity = 0.12 * (1 - distance / 150);
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(96, 108, 56, ${opacity})`; // Olive Accent
+            ctx.strokeStyle = `rgba(141, 163, 74, ${opacity})`; // brand-primary accent
             ctx.lineWidth = 0.5;
             ctx.moveTo(particle.x, particle.y);
             ctx.lineTo(other.x, other.y);
@@ -95,7 +95,7 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#f5f5f5] text-neutral-900 overflow-hidden font-sans selection:bg-[#606c38]/30 flex flex-col items-center justify-center p-6 pt-32">
+    <div className="relative min-h-screen bg-bg-primary text-text-primary overflow-hidden font-sans selection:bg-brand-primary/30 flex flex-col items-center justify-center p-6 pt-32">
       <style>{`
         @keyframes scan {
           from { transform: rotate(0deg); }
@@ -121,24 +121,24 @@ export default function NotFound() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 opacity-100"
           style={{
-            backgroundImage: 'linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)',
             backgroundSize: '60px 60px'
           }}
         />
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60 mix-blend-multiply" />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60 mix-blend-screen" />
       </div>
 
       <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
         {/* Radar Scanner Visual */}
         <div className="relative w-64 h-64 md:w-96 md:h-96 mb-12">
           {/* Main Circle */}
-          <div className="absolute inset-0 rounded-full border border-neutral-200 bg-white/50 backdrop-blur-xl" />
-          <div className="absolute inset-8 rounded-full border border-neutral-100" />
-          <div className="absolute inset-20 rounded-full border border-neutral-50" />
+          <div className="absolute inset-0 rounded-full border border-border-muted bg-bg-surface/50 backdrop-blur-xl" />
+          <div className="absolute inset-8 rounded-full border border-border-subtle/50" />
+          <div className="absolute inset-20 rounded-full border border-border-subtle/30" />
 
           {/* Scanning Line */}
           <div className="absolute inset-0 rounded-full flex items-center justify-center animate-scan pointer-events-none">
-            <div className="w-[50%] h-[2px] bg-gradient-to-r from-[#606c38]/40 to-transparent absolute right-0 origin-left" />
+            <div className="w-[50%] h-[2px] bg-gradient-to-r from-brand-primary/40 to-transparent absolute right-0 origin-left" />
           </div>
 
           {/* Central Visual */}
@@ -146,11 +146,11 @@ export default function NotFound() {
             <Motion.h1
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-8xl md:text-9xl font-black italic tracking-tighter text-neutral-900/90 drop-shadow-[0_0_20px_rgba(96,108,56,0.15)] animate-glitch"
+              className="text-8xl md:text-9xl font-black italic tracking-tighter text-text-primary/90 drop-shadow-[0_0_20px_rgba(141,163,74,0.15)] animate-glitch"
             >
               404
             </Motion.h1>
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-[#606c38]/60 mt-2">
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary/60 mt-2">
               Void Protocol Active
             </div>
           </div>
@@ -188,18 +188,18 @@ export default function NotFound() {
           </Motion.div>
 
           {/* Technical Metadata */}
-          <div className="flex justify-center gap-8 py-4 border-y border-neutral-100">
+          <div className="flex justify-center gap-8 py-4 border-y border-border-muted/50">
             <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-1">Status</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-1">Status</div>
               <div className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none">Lost in Void</div>
             </div>
             <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-1">Vector</div>
-              <div className="text-[10px] font-black text-neutral-900 uppercase tracking-widest leading-none">0x000F4</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-1">Vector</div>
+              <div className="text-[10px] font-black text-text-primary uppercase tracking-widest leading-none">0x000F4</div>
             </div>
             <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-neutral-400 mb-1">Signal</div>
-              <div className="text-[10px] font-black text-[#606c38] uppercase tracking-widest leading-none italic">Unstable</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-1">Signal</div>
+              <div className="text-[10px] font-black text-brand-primary uppercase tracking-widest leading-none italic">Unstable</div>
             </div>
           </div>
 
