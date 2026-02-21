@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getUserRuns, getCurrentUser } from '../services/api';
+import { Skeleton } from '../components/ui/skeleton';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [recentRuns, setRecentRuns] = useState([]);
 
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +66,8 @@ export default function Dashboard() {
         }
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -74,8 +78,12 @@ export default function Dashboard() {
     <div className="min-h-screen bg-primary text-primary p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">
-          Welcome back, <span className="text-brand">{user ? (user.full_name || user.email.split('@')[0]) : 'User'}</span>
+        <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight flex items-center gap-2 flex-wrap">
+          Welcome back,{' '}
+          {loading
+            ? <Skeleton className="inline-block h-9 w-36 rounded-xl" />
+            : <span className="text-brand">{user ? (user.full_name || user.email.split('@')[0]) : 'User'}</span>
+          }
         </h1>
         <p className="text-secondary text-lg font-medium">
           Ready to optimize your resume with AI-powered analysis?
@@ -113,6 +121,17 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-lg shadow-black/5">
+              <div className="flex items-center gap-4 mb-4">
+                <Skeleton className="w-12 h-12 rounded-xl" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <Skeleton className="h-10 w-20 rounded-xl" />
+            </div>
+          ))
+        ) : (<>
         <StatCard
           icon={
             <svg className="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,6 +169,7 @@ export default function Dashboard() {
           title="Last Run"
           value={stats.lastRunDate}
         />
+        </>)}
       </div>
 
       {/* Bottom Section - Latest Optimization & Recent History */}
@@ -165,7 +185,20 @@ export default function Dashboard() {
             <h3 className="text-lg font-semibold text-primary">Latest Optimization</h3>
           </div>
 
-          {latestRun ? (
+          {loading ? (
+            <div className="space-y-6">
+              <Skeleton className="h-4 w-48" />
+              <div className="flex items-center justify-between px-4">
+                <Skeleton className="w-28 h-28 rounded-full" />
+                <div className="flex flex-col items-center gap-2">
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <Skeleton className="w-28 h-28 rounded-full" />
+              </div>
+              <Skeleton className="h-12 w-full rounded-2xl mt-2" />
+            </div>
+          ) : latestRun ? (
             <>
               <p className="text-secondary text-sm mb-8">Your most recent resume analysis</p>
 
@@ -236,7 +269,22 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {recentRuns.length > 0 ? (
+          {loading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-5 bg-secondary rounded-2xl border border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="w-2 h-2 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-12" />
+                </div>
+              ))}
+            </div>
+          ) : recentRuns.length > 0 ? (
             <div className="space-y-4">
               {recentRuns.map(run => (
                 <HistoryItem

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getRunDetails } from '../services/api';
 import Toast from '../components/Toast';
+import { Skeleton } from '../components/ui/skeleton';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -196,10 +197,51 @@ export default function OptimizationResults() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-primary p-8 flex items-center justify-center">
-                <div className="w-16 h-16 relative">
-                    <div className="absolute inset-0 border-4 border-brand-primary/10 rounded-full" />
-                    <div className="absolute inset-0 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-primary p-6 md:p-10">
+                <div className="max-w-5xl mx-auto">
+                    {/* Back button */}
+                    <Skeleton className="h-10 w-32 mb-8 rounded-2xl" />
+
+                    {/* Score header card */}
+                    <div className="bg-surface border border-gray-100 rounded-[2.5rem] p-8 mb-6">
+                        <div className="flex flex-wrap items-center gap-8">
+                            <div className="space-y-2">
+                                <Skeleton className="h-3 w-28" />
+                                <Skeleton className="h-20 w-24 rounded-2xl" />
+                            </div>
+                            <div className="flex-1 space-y-3">
+                                <Skeleton className="h-5 w-48" />
+                                <Skeleton className="h-4 w-64" />
+                                <Skeleton className="h-4 w-40" />
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-3 w-20" />
+                                <Skeleton className="h-16 w-28 rounded-2xl" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tab bar */}
+                    <div className="flex gap-3 mb-6 flex-wrap">
+                        {[160, 180, 140, 120].map((w, i) => (
+                            <Skeleton key={i} className="h-10 rounded-2xl" style={{ width: w }} />
+                        ))}
+                    </div>
+
+                    {/* Main content panel */}
+                    <div className="bg-surface border border-gray-100 rounded-[2.5rem] p-8 space-y-4">
+                        <Skeleton className="h-5 w-40 mb-6" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-11/12" />
+                        <Skeleton className="h-4 w-4/5" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                        <div className="pt-4 space-y-3">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-5/6" />
+                            <Skeleton className="h-4 w-2/3" />
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -562,12 +604,22 @@ export default function OptimizationResults() {
                                             ) : (
                                                 <div className="flex items-center justify-center h-full text-gray-500">
                                                     {isCompiling ? (
-                                                        <div className="text-center">
-                                                            <div className="w-16 h-16 mx-auto mb-6 relative">
-                                                                <div className="absolute inset-0 border-4 border-brand-primary/10 rounded-full" />
-                                                                <div className="absolute inset-0 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                                                        <div className="w-full h-full p-6 space-y-3">
+                                                            <Skeleton className="h-8 w-3/4 mx-auto" />
+                                                            <Skeleton className="h-4 w-full" />
+                                                            <Skeleton className="h-4 w-full" />
+                                                            <Skeleton className="h-4 w-5/6" />
+                                                            <Skeleton className="h-4 w-full" />
+                                                            <Skeleton className="h-4 w-4/5" />
+                                                            <div className="pt-2 space-y-2">
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-3/4" />
                                                             </div>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest">Generating PDF</p>
+                                                            <div className="pt-2 space-y-2">
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-5/6" />
+                                                            </div>
                                                         </div>
                                                     ) : (
                                                         <div className="text-center px-8">
