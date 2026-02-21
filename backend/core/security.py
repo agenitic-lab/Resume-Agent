@@ -14,10 +14,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+from config import settings
+
 def _get_fernet() -> Fernet:
-    key = os.getenv("USER_API_KEY_ENCRYPTION_KEY")
+    key = settings.ENCRYPTION_KEY
     if not key:
-        raise RuntimeError("USER_API_KEY_ENCRYPTION_KEY is not configured")
+        raise RuntimeError("ENCRYPTION_KEY is not configured")
     return Fernet(key.encode("utf-8"))
 
 

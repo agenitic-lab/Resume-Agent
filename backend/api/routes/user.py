@@ -1,7 +1,7 @@
 # User profile and settings endpoints
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database.connection import get_db
@@ -175,7 +175,27 @@ def set_api_key(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    current_user.encrypted_api_key = encrypt_api_key(data.api_key)
+    if not data.api_key or not data.api_key.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="API key cannot be empty.",
+        )
+    try:
+        encrypted = encrypt_api_key(data.api_key)
+    except RuntimeError as exc:
+        # ENCRYPTION_KEY env var not set on the server
+        logger.error("encrypt_api_key failed: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Encryption service is not configured on the server. Contact the administrator.",
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+    current_user.encrypted_api_key = encrypted
     current_user.api_key_updated_at = datetime.now(timezone.utc)
     db.add(current_user)
     db.commit()
