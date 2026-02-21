@@ -483,3 +483,11 @@ export async function generateProjectBullets(data) {
         body: JSON.stringify(data),
     });
 }
+
+// Missing Skills endpoint
+export async function findMissingSkills(resume, jobDescriptions) {
+    return apiRequest('/api/agent/missing-skills', {
+        method: 'POST',
+        body: JSON.stringify({ resume, job_descriptions: jobDescriptions }),
+    });
+}

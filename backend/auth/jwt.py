@@ -4,17 +4,15 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple
 
 import jwt
-from dotenv import load_dotenv
+from config import settings
 
-load_dotenv()
-
-# Configuration from environment variables
-JWT_SECRET = os.getenv("JWT_SECRET")
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+# Configuration — use central settings (which calls load_dotenv() on import)
+JWT_SECRET = settings.JWT_SECRET_KEY
+JWT_ALGORITHM = settings.JWT_ALGORITHM
 JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 if not JWT_SECRET:
-    raise ValueError("JWT_SECRET is not set in environment variables")
+    raise ValueError("JWT_SECRET_KEY is not set in environment variables")
 
 
 def create_access_token(user_id: str, email: str) -> Tuple[str, int]:
