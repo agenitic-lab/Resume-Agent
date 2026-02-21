@@ -273,33 +273,33 @@ export default function NewOptimization() {
     };
 
     return (
-        <div className="min-h-screen bg-primary text-primary p-8">
+        <div className="min-h-screen bg-bg-primary text-text-primary p-8">
             {/* API Key Warning Banner */}
             {hasApiKey === false && (
                 <div className="max-w-4xl mx-auto mb-8">
-                    <div className="bg-surface border-l-4 border-brand-primary rounded-2xl p-8 shadow-xl shadow-black/5 flex items-start gap-6">
-                        <div className="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <svg className="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-bg-surface border-l-4 border-brand-primary rounded-2xl p-8 shadow-xl shadow-black/5 flex items-start gap-6">
+                        <div className="w-12 h-12 bg-brand-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg className="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-primary mb-1">Groq API Key Required</h3>
-                            <p className="text-secondary font-medium mb-4 leading-relaxed">
+                            <h3 className="text-xl font-black text-text-primary mb-2 italic tracking-tighter uppercase font-black">Groq API Key Required</h3>
+                            <p className="text-text-secondary font-medium mb-4 leading-relaxed">
                                 You need to add your Groq API key to use the resume optimization feature.
                                 Get your free API key from{' '}
                                 <a
                                     href="https://console.groq.com/keys"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-brand hover:underline font-black"
+                                    className="text-brand-primary hover:underline font-black"
                                 >
                                     console.groq.com/keys
                                 </a>
                             </p>
                             <button
                                 onClick={() => navigate('/settings')}
-                                className="px-6 py-2.5 bg-text-primary text-bg-primary rounded-xl font-semibold text-sm tracking-wide transition-all hover:bg-white hover:text-black active:scale-95"
+                                className="px-6 py-2.5 bg-text-primary text-bg-primary rounded-xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-black active:scale-95"
                             >
                                 Go to Settings
                             </button>
@@ -316,19 +316,19 @@ export default function NewOptimization() {
                             <div className="flex flex-col items-center relative z-10 w-32">
                                 <div
                                     className={`w-12 h-12 rounded-xl flex items-center justify-center font-black transition-all duration-500 border-2 ${currentStep === step.number
-                                        ? 'bg-brand border-brand-primary text-black shadow-[0_0_20px_rgba(141,163,74,0.3)] scale-110'
+                                        ? 'bg-brand-primary border-brand-primary text-black shadow-[0_0_20px_rgba(141,163,74,0.3)] scale-110'
                                         : currentStep > step.number
                                             ? 'bg-text-primary border-text-primary text-bg-primary'
-                                            : 'bg-primary border-gray-200 text-gray-500 hover:border-brand-primary/30'
+                                            : 'bg-bg-primary border-border-muted text-text-muted hover:border-brand-primary/30'
                                         }`}
                                 >
                                     <span className="font-mono text-base font-black">0{step.number}</span>
                                 </div>
                                 <div className="mt-4 text-center">
-                                    <div className={`text-xs font-medium mb-1 ${currentStep === step.number ? 'text-brand' : 'text-gray-500'}`}>
+                                    <div className={`text-mono text-[8px] font-bold uppercase tracking-[0.3em] mb-1 ${currentStep === step.number ? 'text-brand-primary' : 'text-text-muted'}`}>
                                         {step.code}
                                     </div>
-                                    <div className={`text-sm font-semibold ${currentStep === step.number ? 'text-primary' : 'text-gray-500'}`}>
+                                    <div className={`text-[9px] font-black uppercase tracking-widest ${currentStep === step.number ? 'text-text-primary' : 'text-text-muted'}`}>
                                         {step.name}
                                     </div>
                                 </div>
@@ -340,7 +340,7 @@ export default function NewOptimization() {
                                         <Motion.div
                                             initial={{ width: "0%" }}
                                             animate={{ width: currentStep > step.number ? "100%" : "0%" }}
-                                            className="absolute inset-0 bg-brand shadow-[0_0_10px_rgba(141,163,74,0.5)]"
+                                            className="absolute inset-0 bg-brand-primary shadow-[0_0_10px_rgba(141,163,74,0.5)]"
                                         />
                                     </div>
                                 </div>
@@ -355,12 +355,12 @@ export default function NewOptimization() {
                 {/* Background Decoration */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute inset-0 cyber-grid opacity-20" />
-                    <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-brand/5 blur-[120px] rounded-full" />
+                    <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-brand-primary/5 blur-[120px] rounded-full" />
                 </div>
 
                 {/* Diagnostic Frame */}
-                <div className="relative z-10 bg-surface/30 backdrop-blur-xl border border-gray-200 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/40">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
+                <div className="relative z-10 bg-bg-surface/30 backdrop-blur-xl border border-border-muted rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/40">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-brand-primary/20" />
 
                     {/* Corner Markers */}
                     <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-brand-primary/30" />
@@ -380,11 +380,11 @@ export default function NewOptimization() {
                                     className="space-y-12"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_01 // ARCHIVE_SELECT</div>
-                                        <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            Select <span className="text-brand">Source.</span>
+                                        <div className="text-mono text-[10px] text-brand-primary font-black uppercase tracking-[0.5em] mb-4">Phase_01 // ARCHIVE_SELECT</div>
+                                        <h2 className="text-4xl md:text-6xl font-black text-text-primary mb-4 italic tracking-tighter uppercase leading-none">
+                                            Select <span className="text-brand-primary">Source.</span>
                                         </h2>
-                                        <p className="text-secondary font-medium tracking-tight opacity-70">
+                                        <p className="text-text-secondary font-medium tracking-tight opacity-70">
                                             Initialize the optimization protocol by selecting your primary professional archive.
                                         </p>
                                     </div>
@@ -398,26 +398,26 @@ export default function NewOptimization() {
                                                 key={opt.id}
                                                 onClick={() => setInputType(opt.id)}
                                                 className={`group relative p-12 rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
-                                                    ? 'border-brand-primary bg-brand/5 shadow-[0_0_40px_rgba(141,163,74,0.1)]'
-                                                    : 'border-gray-200 hover:border-text-secondary hover:bg-white/[0.02]'
+                                                    ? 'border-brand-primary bg-brand-primary/5 shadow-[0_0_40px_rgba(141,163,74,0.1)]'
+                                                    : 'border-border-muted hover:border-text-secondary hover:bg-white/[0.02]'
                                                     }`}
                                             >
                                                 {/* Numeric Anchor */}
-                                                <div className="absolute -bottom-8 -right-4 text-9xl font-black text-primary opacity-[0.03] select-none italic group-hover:opacity-[0.06] transition-opacity">
+                                                <div className="absolute -bottom-8 -right-4 text-9xl font-black text-text-primary opacity-[0.03] select-none italic group-hover:opacity-[0.06] transition-opacity">
                                                     0{opt.id === 'pdf' ? 1 : 2}
                                                 </div>
 
                                                 <div className="relative z-10">
                                                     <div className="flex justify-between items-start mb-8">
-                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${inputType === opt.id ? 'bg-brand text-black' : 'bg-secondary text-gray-500'}`}>
+                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${inputType === opt.id ? 'bg-brand-primary text-black' : 'bg-bg-secondary text-text-muted'}`}>
                                                             {opt.icon}
                                                         </div>
-                                                        <div className="text-mono text-[9px] font-bold text-gray-500 uppercase tracking-widest">{opt.code}</div>
+                                                        <div className="text-mono text-[9px] font-bold text-text-muted uppercase tracking-widest">{opt.code}</div>
                                                     </div>
-                                                    <h3 className={`text-xl font-semibold mb-3 tracking-tight transition-colors ${inputType === opt.id ? 'text-primary' : 'text-secondary'}`}>
+                                                    <h3 className={`text-2xl font-black mb-3 italic tracking-tighter uppercase transition-colors ${inputType === opt.id ? 'text-text-primary' : 'text-text-secondary'}`}>
                                                         {opt.label}
                                                     </h3>
-                                                    <p className={`text-sm font-medium leading-relaxed transition-opacity ${inputType === opt.id ? 'text-brand opacity-100' : 'text-gray-500 opacity-50'}`}>
+                                                    <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed transition-opacity ${inputType === opt.id ? 'text-brand-primary opacity-100' : 'text-text-muted opacity-50'}`}>
                                                         {opt.desc}
                                                     </p>
                                                 </div>
@@ -432,9 +432,9 @@ export default function NewOptimization() {
                                         <button
                                             onClick={handleContinue}
                                             disabled={!canProceedStep1}
-                                            className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep1
-                                                ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
-                                                : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
+                                            className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 ${canProceedStep1
+                                                ? 'bg-brand-primary text-black hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                : 'bg-bg-secondary text-text-muted cursor-not-allowed border border-border-muted/50'
                                                 }`}
                                         >
                                             <span>Initialize Phase 02</span>
@@ -456,11 +456,11 @@ export default function NewOptimization() {
                                     className="space-y-10"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_02 // SOURCE_INJECT</div>
-                                        <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            {inputType === 'pdf' ? 'Archive' : 'Code'} <span className="text-brand">Injection.</span>
+                                        <div className="text-mono text-[10px] text-brand-primary font-black uppercase tracking-[0.5em] mb-4">Phase_02 // SOURCE_INJECT</div>
+                                        <h2 className="text-4xl md:text-6xl font-black text-text-primary mb-4 italic tracking-tighter uppercase leading-none">
+                                            {inputType === 'pdf' ? 'Archive' : 'Code'} <span className="text-brand-primary">Injection.</span>
                                         </h2>
-                                        <p className="text-secondary font-medium tracking-tight opacity-70">
+                                        <p className="text-text-secondary font-medium tracking-tight opacity-70">
                                             {inputType === 'pdf' ? 'Securely upload your professional archive for deconstruction.' : 'Inject your LaTeX source code into the neural parser.'}
                                         </p>
                                     </div>
@@ -472,8 +472,8 @@ export default function NewOptimization() {
                                                 onDragOver={handleDragOver}
                                                 onDragLeave={handleDragLeave}
                                                 className={`relative border border-dashed rounded-[2rem] p-16 text-center transition-all duration-500 overflow-hidden ${isDragging
-                                                    ? 'border-brand-primary bg-brand/10 shadow-[inner_0_0_40px_rgba(141,163,74,0.1)]'
-                                                    : 'border-gray-200 hover:border-brand-primary/30 bg-white/[0.02]'
+                                                    ? 'border-brand-primary bg-brand-primary/10 shadow-[inner_0_0_40px_rgba(141,163,74,0.1)]'
+                                                    : 'border-border-muted hover:border-brand-primary/30 bg-white/[0.02]'
                                                     }`}
                                             >
                                                 <input
@@ -492,8 +492,8 @@ export default function NewOptimization() {
                                                             animate={{ opacity: 1, y: 0 }}
                                                             className="space-y-6"
                                                         >
-                                                            <div className="w-24 h-24 mx-auto bg-brand/10 rounded-3xl flex items-center justify-center relative">
-                                                                <svg className="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <div className="w-24 h-24 mx-auto bg-brand-primary/10 rounded-3xl flex items-center justify-center relative">
+                                                                <svg className="w-10 h-10 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                                 </svg>
                                                                 <Motion.div
@@ -503,8 +503,8 @@ export default function NewOptimization() {
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xl font-semibold text-primary tracking-tight mb-1">{resumeFile.name}</p>
-                                                                <div className="text-mono text-[9px] font-bold text-brand uppercase tracking-[0.3em]">
+                                                                <p className="text-xl font-black text-text-primary tracking-tight mb-1">{resumeFile.name}</p>
+                                                                <div className="text-mono text-[9px] font-bold text-brand-primary uppercase tracking-[0.3em]">
                                                                     {isExtracting ? 'DECONSTRUCTING_DATA...' : 'METADATA_EXTRACTED'}
                                                                 </div>
                                                             </div>
@@ -513,7 +513,7 @@ export default function NewOptimization() {
                                                                     setResumeFile(null);
                                                                     setExtractedText('');
                                                                 }}
-                                                                className="px-8 py-2.5 border border-gray-200 hover:border-red-500/50 hover:bg-red-500/5 text-gray-500 hover:text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                                                                className="px-8 py-2.5 border border-border-muted hover:border-red-500/50 hover:bg-red-500/5 text-text-muted hover:text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                                                             >
                                                                 Reset Archive
                                                             </button>
@@ -525,17 +525,17 @@ export default function NewOptimization() {
                                                             animate={{ opacity: 1 }}
                                                             className="space-y-8"
                                                         >
-                                                            <div className="w-24 h-24 mx-auto bg-brand/5 rounded-[2rem] flex items-center justify-center border border-brand-primary/20">
-                                                                <svg className="w-10 h-10 text-brand/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <div className="w-24 h-24 mx-auto bg-brand-primary/5 rounded-[2rem] flex items-center justify-center border border-brand-primary/20">
+                                                                <svg className="w-10 h-10 text-brand-primary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                                                 </svg>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xl font-semibold text-primary mb-3">Drop PDF Archive</p>
-                                                                <p className="text-gray-500 text-sm mb-8">or click to browse your files</p>
+                                                                <p className="text-2xl font-black text-text-primary mb-3 italic tracking-tighter uppercase">Drop PDF Archive</p>
+                                                                <p className="text-text-muted text-[10px] font-black uppercase tracking-[0.3em] mb-8">or click to initialize local search</p>
                                                                 <label
                                                                     htmlFor="pdf-upload"
-                                                                    className="inline-block px-10 py-4 bg-text-primary text-bg-primary rounded-2xl cursor-pointer font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 shadow-xl"
+                                                                    className="inline-block px-12 py-4 bg-text-primary text-bg-primary rounded-2xl cursor-pointer font-black text-[10px] uppercase tracking-[0.4em] hover:bg-white transition-all active:scale-95 shadow-xl"
                                                                 >
                                                                     Initialize Upload
                                                                 </label>
@@ -552,16 +552,16 @@ export default function NewOptimization() {
                                                     className="space-y-4"
                                                 >
                                                     <div className="flex justify-between items-center">
-                                                        <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">Extracted_Data_Stream // READ_ONLY</label>
-                                                        <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+                                                        <label className="text-mono text-[9px] text-text-muted uppercase tracking-[0.4em]">Extracted_Data_Stream // READ_ONLY</label>
+                                                        <div className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
                                                     </div>
                                                     <div className="relative group">
                                                         <textarea
                                                             value={extractedText}
                                                             readOnly
-                                                            className="w-full h-48 p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-secondary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 transition-all custom-scrollbar"
+                                                            className="w-full h-48 p-8 bg-black/40 border border-border-muted rounded-[2rem] text-text-secondary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 transition-all custom-scrollbar"
                                                         />
-                                                        <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">System_Verify_v4.2</div>
+                                                        <div className="absolute top-4 right-4 text-[8px] text-text-muted/30 font-mono uppercase">System_Verify_v4.2</div>
                                                     </div>
                                                 </Motion.div>
                                             )}
@@ -569,10 +569,10 @@ export default function NewOptimization() {
                                     ) : (
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center">
-                                                <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">LaTeX_Source_Buffer</label>
+                                                <label className="text-mono text-[9px] text-text-muted uppercase tracking-[0.4em]">LaTeX_Source_Buffer</label>
                                                 <div className="flex items-center gap-4">
-                                                    <div className="text-[10px] text-brand font-bold">STABILITY: 100%</div>
-                                                    <div className="w-2 h-2 rounded-full bg-brand" />
+                                                    <div className="text-[10px] text-brand-primary font-bold">STABILITY: 100%</div>
+                                                    <div className="w-2 h-2 rounded-full bg-brand-primary" />
                                                 </div>
                                             </div>
                                             <div className="relative group">
@@ -580,9 +580,9 @@ export default function NewOptimization() {
                                                     value={resumeText}
                                                     onChange={(e) => setResumeText(e.target.value)}
                                                     placeholder="\\documentclass{article}\n\\begin{document}\nPaste high-fidelity source code here...\n\\end{document}"
-                                                    className="w-full h-[400px] p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none custom-scrollbar shadow-inner"
+                                                    className="w-full h-[400px] p-10 bg-black/40 border border-border-muted rounded-[2.5rem] text-text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none custom-scrollbar shadow-inner"
                                                 />
-                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Source_Controller_v1</div>
+                                                <div className="absolute top-4 right-4 text-[8px] text-text-muted/30 font-mono uppercase">Source_Controller_v1</div>
                                             </div>
                                         </div>
                                     )}
@@ -590,7 +590,7 @@ export default function NewOptimization() {
                                     <div className="flex justify-between pt-10 border-t border-white/5">
                                         <button
                                             onClick={handleBack}
-                                            className="px-8 py-4 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-primary rounded-2xl font-medium text-sm transition-all flex items-center gap-4 border border-gray-100"
+                                            className="px-10 py-5 bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 border border-border-subtle"
                                         >
                                             <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
@@ -601,9 +601,9 @@ export default function NewOptimization() {
                                         <button
                                             onClick={handleContinue}
                                             disabled={!canProceedStep2 || isExtracting}
-                                            className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep2 && !isExtracting
-                                                ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
-                                                : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
+                                            className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 ${canProceedStep2 && !isExtracting
+                                                ? 'bg-brand-primary text-black hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                : 'bg-bg-secondary text-text-muted cursor-not-allowed border border-border-muted/50'
                                                 }`}
                                         >
                                             <span>Initialize Phase 03</span>
@@ -625,20 +625,20 @@ export default function NewOptimization() {
                                     className="space-y-10"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_03 // TARGET_PARAMETERS</div>
-                                        <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            Job <span className="text-brand">Description.</span>
+                                        <div className="text-mono text-[10px] text-brand-primary font-black uppercase tracking-[0.5em] mb-4">Phase_03 // TARGET_PARAMETERS</div>
+                                        <h2 className="text-4xl md:text-6xl font-black text-text-primary mb-4 italic tracking-tighter uppercase leading-none">
+                                            Job <span className="text-brand-primary">Nexus.</span>
                                         </h2>
-                                        <p className="text-secondary font-medium tracking-tight opacity-70">
+                                        <p className="text-text-secondary font-medium tracking-tight opacity-70">
                                             Define the target alignment vectors for the neural synthesis engine.
                                         </p>
                                     </div>
 
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">Market_Requirement_Buffer</label>
+                                            <label className="text-mono text-[9px] text-text-muted uppercase tracking-[0.4em]">Market_Requirement_Buffer</label>
                                             <div className="flex items-center gap-4">
-                                                <div className="text-[10px] text-brand font-bold uppercase tracking-widest leading-none">Min Threshold // 50 Units</div>
+                                                <div className="text-[10px] text-brand-primary font-bold uppercase tracking-widest leading-none">Min Threshold // 50 Units</div>
                                             </div>
                                         </div>
                                         <div className="relative">
@@ -646,17 +646,17 @@ export default function NewOptimization() {
                                                 value={jobDescription}
                                                 onChange={(e) => setJobDescription(e.target.value)}
                                                 placeholder="Paste the complete target job description here..."
-                                                className="w-full h-80 p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all resize-none custom-scrollbar shadow-inner text-sm font-medium leading-relaxed"
+                                                className="w-full h-80 p-10 bg-black/40 border border-border-muted rounded-[2.5rem] text-text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all resize-none custom-scrollbar shadow-inner text-sm font-medium leading-relaxed"
                                             />
                                             <div className="absolute bottom-6 right-8 flex items-center gap-4">
                                                 <div className="h-1.5 w-32 rounded-full overflow-hidden bg-white/5 border border-white/5">
                                                     <Motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${Math.min(100, (jobDescription.length / 50) * 100)}%` }}
-                                                        className={`h-full shadow-[0_0_10px_rgba(141,163,74,0.5)] ${jobDescription.length >= 50 ? 'bg-brand' : 'bg-brand/20'}`}
+                                                        className={`h-full shadow-[0_0_10px_rgba(141,163,74,0.5)] ${jobDescription.length >= 50 ? 'bg-brand-primary' : 'bg-brand-primary/20'}`}
                                                     />
                                                 </div>
-                                                <p className={`text-mono text-[9px] font-black uppercase tracking-widest ${jobDescription.length >= 50 ? 'text-brand' : 'text-gray-500'}`}>
+                                                <p className={`text-mono text-[9px] font-black uppercase tracking-widest ${jobDescription.length >= 50 ? 'text-brand-primary' : 'text-text-muted'}`}>
                                                     {String(jobDescription.length).padStart(3, '0')} UNITS
                                                 </p>
                                             </div>
@@ -666,7 +666,7 @@ export default function NewOptimization() {
                                     <div className="flex justify-between pt-10 border-t border-white/5">
                                         <button
                                             onClick={handleBack}
-                                            className="px-8 py-4 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-primary rounded-2xl font-medium text-sm transition-all flex items-center gap-4 border border-gray-100"
+                                            className="px-10 py-5 bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 border border-border-subtle"
                                         >
                                             <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
@@ -677,9 +677,9 @@ export default function NewOptimization() {
                                         <button
                                             onClick={handleContinue}
                                             disabled={!canProceedStep3}
-                                            className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep3
-                                                ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
-                                                : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
+                                            className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-4 ${canProceedStep3
+                                                ? 'bg-brand-primary text-black hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                : 'bg-bg-secondary text-text-muted cursor-not-allowed border border-border-muted/50'
                                                 }`}
                                         >
                                             <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -701,11 +701,11 @@ export default function NewOptimization() {
                                     className="space-y-8"
                                 >
                                     <div className="text-center max-w-2xl mx-auto mb-10">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_04 // NEURAL_SYNTHESIS</div>
-                                        <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            Optimization <span className="text-brand">Output.</span>
+                                        <div className="text-mono text-[10px] text-brand-primary font-black uppercase tracking-[0.5em] mb-4">Phase_04 // NEURAL_SYNTHESIS</div>
+                                        <h2 className="text-4xl md:text-6xl font-black text-text-primary mb-4 italic tracking-tighter uppercase leading-none">
+                                            Optimization <span className="text-brand-primary">Output.</span>
                                         </h2>
-                                        <p className="text-secondary font-medium tracking-tight opacity-70">
+                                        <p className="text-text-secondary font-medium tracking-tight opacity-70">
                                             System deconstruction and synthesis complete. Diagnostic results available below.
                                         </p>
                                     </div>
@@ -724,12 +724,12 @@ export default function NewOptimization() {
                                                     className="absolute inset-4 border border-brand-primary/20 border-b-transparent rounded-full"
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center">
-                                                    <div className="w-2 h-2 bg-brand rounded-full animate-pulse" />
+                                                    <div className="w-2 h-2 bg-brand-primary rounded-full animate-pulse" />
                                                 </div>
                                             </div>
                                             <div className="space-y-6 font-mono max-w-md w-full">
-                                                <div className="text-sm font-black text-primary italic tracking-widest animate-pulse">SYNTHESIZING_OPTIMAL_PATH...</div>
-                                                <div className="grid grid-cols-1 gap-1 text-[8px] text-gray-500 uppercase tracking-[0.2em] text-left">
+                                                <div className="text-sm font-black text-text-primary italic tracking-widest animate-pulse">SYNTHESIZING_OPTIMAL_PATH...</div>
+                                                <div className="grid grid-cols-1 gap-1 text-[8px] text-text-muted uppercase tracking-[0.2em] text-left">
                                                     {[
                                                         { label: 'INITIALIZING_ATS_PARSER', status: 'OK' },
                                                         { label: 'VECTOR_ALIGNMENT_ACTIVE', status: 'RUNNING' },
@@ -744,7 +744,7 @@ export default function NewOptimization() {
                                                             className="flex justify-between border-b border-white/5 py-1"
                                                         >
                                                             <span>[{log.label}]</span>
-                                                            <span className={log.status === 'OK' ? 'text-brand' : 'text-gray-500'}>// {log.status}</span>
+                                                            <span className={log.status === 'OK' ? 'text-brand-primary' : 'text-text-muted'}>// {log.status}</span>
                                                         </Motion.div>
                                                     ))}
                                                 </div>
@@ -758,8 +758,8 @@ export default function NewOptimization() {
                                                 <div className="flex flex-col space-y-4">
                                                     <div className="flex justify-between items-center px-1">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                                                            <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">LaTeX_Source_Editor</label>
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+                                                            <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-text-muted">LaTeX_Source_Editor</label>
                                                         </div>
                                                         <button
                                                             onClick={() => {
@@ -767,7 +767,7 @@ export default function NewOptimization() {
                                                                 setCopyButtonText('Copied');
                                                                 setTimeout(() => setCopyButtonText('Copy'), 2000);
                                                             }}
-                                                            className="text-brand hover:hover:text-red-700 text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
+                                                            className="text-brand-primary hover:text-brand-hover text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand-primary/5"
                                                         >
                                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -779,9 +779,9 @@ export default function NewOptimization() {
                                                         <textarea
                                                             value={optimizedLatex}
                                                             onChange={(e) => setOptimizedLatex(e.target.value)}
-                                                            className="w-full h-full p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
+                                                            className="w-full h-full p-8 bg-black/40 border border-border-muted rounded-[2rem] text-text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
                                                         />
-                                                        <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Write_Mode_Active</div>
+                                                        <div className="absolute top-4 right-4 text-[8px] text-text-muted/30 font-mono uppercase">Write_Mode_Active</div>
                                                     </div>
                                                 </div>
 
@@ -789,14 +789,14 @@ export default function NewOptimization() {
                                                 <div className="flex flex-col space-y-4">
                                                     <div className="flex justify-between items-center px-1">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                                            <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">High_Fidelity_Render</label>
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
+                                                            <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-text-muted">High_Fidelity_Render</label>
                                                         </div>
                                                         <button
                                                             onClick={handleCompileLatex}
                                                             disabled={isCompiling}
                                                             className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isCompiling
-                                                                ? 'bg-white/5 border-white/5 text-gray-500 cursor-not-allowed'
+                                                                ? 'bg-white/5 border-white/5 text-text-muted cursor-not-allowed'
                                                                 : 'bg-text-primary border-text-primary hover:bg-white text-bg-primary shadow-lg'
                                                                 }`}
                                                         >
@@ -817,7 +817,7 @@ export default function NewOptimization() {
                                                     </div>
 
                                                     {/* PDF Viewer Container */}
-                                                    <div className="flex-1 relative bg-black/40 border border-gray-200 rounded-[2rem] overflow-hidden group">
+                                                    <div className="flex-1 relative bg-black/40 border border-border-muted rounded-[2rem] overflow-hidden group">
                                                         {compiledPdfUrl ? (
                                                             <iframe
                                                                 src={`${compiledPdfUrl}#toolbar=0&navpanes=0`}
@@ -825,7 +825,7 @@ export default function NewOptimization() {
                                                                 title="PDF Preview"
                                                             />
                                                         ) : (
-                                                            <div className="flex items-center justify-center h-full text-gray-500">
+                                                            <div className="flex items-center justify-center h-full text-text-muted">
                                                                 {isCompiling ? (
                                                                     <div className="text-center space-y-4">
                                                                         <div className="w-12 h-12 mx-auto relative">
@@ -857,7 +857,7 @@ export default function NewOptimization() {
                                             <div className="flex gap-6 mt-12 justify-between items-center border-t border-white/5 pt-10">
                                                 <button
                                                     onClick={resetForm}
-                                                    className="px-10 py-5 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 border border-gray-100"
+                                                    className="px-10 py-5 bg-white/5 hover:bg-white/10 text-text-muted hover:text-text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 border border-border-subtle"
                                                 >
                                                     <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -868,7 +868,7 @@ export default function NewOptimization() {
                                                 <div className="flex gap-6">
                                                     <button
                                                         onClick={() => navigate('/dashboard')}
-                                                        className="px-8 py-5 text-gray-500 hover:text-primary font-black text-[10px] uppercase tracking-[0.3em] transition-all"
+                                                        className="px-8 py-5 text-text-muted hover:text-text-primary font-black text-[10px] uppercase tracking-[0.3em] transition-all"
                                                     >
                                                         Exit Protocol
                                                     </button>
@@ -877,8 +877,8 @@ export default function NewOptimization() {
                                                         onClick={handleDownloadPdf}
                                                         disabled={!compiledPdfUrl}
                                                         className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 ${compiledPdfUrl
-                                                            ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
-                                                            : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
+                                                            ? 'bg-brand-primary text-black hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                            : 'bg-bg-secondary text-text-muted cursor-not-allowed border border-border-muted/50'
                                                             }`}
                                                     >
                                                         <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
