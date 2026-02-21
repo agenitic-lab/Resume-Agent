@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserRuns, deleteRun } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { Skeleton } from '../components/ui/skeleton';
 
 export default function RunHistory() {
     const navigate = useNavigate();
@@ -66,12 +67,37 @@ export default function RunHistory() {
                 {/* History List */}
                 <div className="space-y-4">
                     {loading ? (
-                        <div className="text-center py-20">
-                            <div className="w-12 h-12 mx-auto relative">
-                                <div className="absolute inset-0 border-4 border-brand-primary/10 rounded-full" />
-                                <div className="absolute inset-0 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
-                            </div>
-                            <p className="text-gray-500 text-sm mt-6">Loading...</p>
+                        <div className="space-y-4">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="bg-surface border border-gray-100 rounded-3xl p-8">
+                                    <div className="flex items-center justify-between gap-8">
+                                        {/* Left – status badge, title, description */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-4 mb-3">
+                                                <Skeleton className="h-6 w-20 rounded-full" />
+                                                <Skeleton className="h-4 w-28" />
+                                            </div>
+                                            <Skeleton className="h-5 w-2/3 mb-2" />
+                                            <Skeleton className="h-4 w-1/2" />
+                                        </div>
+                                        {/* Right – scores + action buttons */}
+                                        <div className="flex items-center gap-8 shrink-0">
+                                            <div className="text-right border-r border-gray-100 pr-8 space-y-2">
+                                                <div className="flex items-center gap-3">
+                                                    <Skeleton className="h-7 w-10" />
+                                                    <Skeleton className="h-4 w-4 rounded-full" />
+                                                    <Skeleton className="h-8 w-12" />
+                                                </div>
+                                                <Skeleton className="h-3 w-24 ml-auto" />
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-12 w-12 rounded-2xl" />
+                                                <Skeleton className="h-12 w-12 rounded-2xl" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : historyItems.length === 0 ? (
                         <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-16 text-center shadow-xl shadow-black/5">
