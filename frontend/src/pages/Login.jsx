@@ -6,6 +6,7 @@ import { login, googleAuth, isAuthenticated } from '../services/api';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Login() {
   const [email, setEmail] = useState('');
