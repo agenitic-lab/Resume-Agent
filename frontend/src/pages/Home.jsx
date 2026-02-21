@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../components/ui/card";
 import { Sparkles, FileText, Target, PenTool } from "lucide-react";
@@ -12,17 +12,17 @@ export default function Home() {
             <section className="flex-1 flex flex-col items-center justify-center pt-32 pb-24 px-6 text-center">
 
                 {/* Top Badge */}
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-100 text-brand text-xs font-bold uppercase tracking-wider mb-8"
                 >
                     <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
                     AI-Powered Optimization
-                </motion.div>
+                </Motion.div>
 
                 {/* Main Headline */}
-                <motion.h1
+                <Motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -30,10 +30,10 @@ export default function Home() {
                 >
                     Land your dream job <br className="hidden md:block" />
                     with a <span className="text-brand">perfect resume.</span>
-                </motion.h1>
+                </Motion.h1>
 
                 {/* Subheadline */}
-                <motion.p
+                <Motion.p
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
@@ -41,10 +41,10 @@ export default function Home() {
                 >
                     Upload your resume, paste the job description, and let our
                     agent optimize it for maximum ATS score and recruiter impact.
-                </motion.p>
+                </Motion.p>
 
                 {/* CTAs */}
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -59,10 +59,10 @@ export default function Home() {
                     <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-14 px-8 rounded-full text-base font-semibold shadow-sm border-gray-200">
                         <a href="#how-it-works">See How It Works</a>
                     </Button>
-                </motion.div>
+                </Motion.div>
 
                 {/* Stats */}
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.4 }}
@@ -76,7 +76,7 @@ export default function Home() {
                         <div className="text-3xl font-extrabold text-primary mb-1">10K+</div>
                         <div className="text-xs font-semibold text-muted uppercase tracking-wider">Resumes Optimized</div>
                     </Card>
-                </motion.div>
+                </Motion.div>
 
             </section>
 
