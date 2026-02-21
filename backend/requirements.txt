@@ -32,6 +32,3 @@ langsmith==0.1.147
 # testing
 pytest==8.0.0
 
-
-# template engine
-jinja2==3.1.3
