@@ -196,7 +196,7 @@ export default function OptimizationResults() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-primary p-8 flex items-center justify-center">
+            <div className="min-h-screen bg-bg-primary p-8 flex items-center justify-center">
                 <div className="w-16 h-16 relative">
                     <div className="absolute inset-0 border-4 border-brand-primary/10 rounded-full" />
                     <div className="absolute inset-0 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
@@ -209,40 +209,40 @@ export default function OptimizationResults() {
         // Special handling for poor_fit rejection
         if (error && typeof error === 'object' && error.type === 'poor_fit') {
             return (
-                <div className="min-h-screen bg-primary p-8">
+                <div className="min-h-screen bg-bg-primary p-8">
                     <div className="max-w-3xl mx-auto">
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-12 shadow-2xl shadow-black/10 relative overflow-hidden text-center cyber-grid">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-brand/20" />
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-12 shadow-2xl shadow-black/10 relative overflow-hidden text-center cyber-grid">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-brand-primary/20" />
 
                             {/* Warning Icon */}
                             <div className="flex items-center justify-center mb-10">
-                                <div className="w-24 h-24 bg-brand/10 rounded-3xl flex items-center justify-center">
-                                    <svg className="w-12 h-12 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-24 h-24 bg-brand-primary/10 rounded-3xl flex items-center justify-center">
+                                    <svg className="w-12 h-12 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
                                 </div>
                             </div>
 
                             {/* Title */}
-                            <h2 className="text-3xl font-bold text-primary mb-4 tracking-tight">
+                            <h2 className="text-4xl font-black text-text-primary mb-4 italic tracking-tighter uppercase">
                                 Optimization Skipped
                             </h2>
 
                             {/* Initial Score */}
                             <div className="mb-10">
-                                <p className="text-gray-500 text-xs mb-2">Initial ATS Score</p>
-                                <p className="text-7xl font-bold text-primary tracking-tight text-mono">{error.score}</p>
+                                <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-2">Initial ATS Impact</p>
+                                <p className="text-7xl font-black text-text-primary italic tracking-tighter text-mono">{error.score}</p>
                             </div>
 
                             {/* Reason */}
-                            <div className="bg-secondary border border-gray-200 rounded-3xl p-8 mb-8 text-left">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-brand mb-4">Analysis Reasoning</h3>
-                                <p className="text-primary font-medium leading-relaxed">{error.reason}</p>
+                            <div className="bg-bg-secondary border border-border-muted rounded-3xl p-8 mb-8 text-left">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">Analysis Reasoning</h3>
+                                <p className="text-text-primary font-medium leading-relaxed">{error.reason}</p>
                             </div>
 
                             {/* Suggestions */}
-                            <div className="bg-surface border border-gray-200 rounded-3xl p-8 mb-10 text-left">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-6">Suggestions</h3>
+                            <div className="bg-bg-surface border border-border-muted rounded-3xl p-8 mb-10 text-left">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-6">Suggestions</h3>
                                 <ul className="space-y-4">
                                     {[
                                         "Try applying for positions that better match your experience and skills",
@@ -250,10 +250,10 @@ export default function OptimizationResults() {
                                         "Look for roles that emphasize your current strengths"
                                     ].map((sug, i) => (
                                         <li key={i} className="flex items-start gap-4">
-                                            <div className="w-5 h-5 bg-brand/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                <div className="w-1.5 h-1.5 bg-brand rounded-full" />
+                                            <div className="w-5 h-5 bg-brand-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" />
                                             </div>
-                                            <span className="text-secondary text-sm font-medium">{sug}</span>
+                                            <span className="text-text-secondary text-sm font-medium">{sug}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -263,13 +263,13 @@ export default function OptimizationResults() {
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => navigate('/new-optimization')}
-                                    className="flex-1 py-4 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-xl shadow-sm hover:hover:bg-red-600 transition-all active:scale-95"
+                                    className="flex-1 py-4 bg-brand-primary text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-brand-primary/20 hover:bg-brand-hover transition-all active:scale-95"
                                 >
                                     New Optimization
                                 </button>
                                 <button
                                     onClick={() => navigate('/history')}
-                                    className="flex-1 py-4 bg-secondary text-gray-500 rounded-2xl font-medium text-sm hover:bg-primary hover:text-primary transition-all active:scale-95 border border-gray-200"
+                                    className="flex-1 py-4 bg-bg-secondary text-text-muted rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-bg-primary hover:text-text-primary transition-all active:scale-95 border border-border-muted"
                                 >
                                     View History
                                 </button>
@@ -282,12 +282,12 @@ export default function OptimizationResults() {
 
         // Generic error display
         return (
-            <div className="min-h-screen bg-primary p-8 flex items-center justify-center">
+            <div className="min-h-screen bg-bg-primary p-8 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-6">{typeof error === 'string' ? error : "Core Data Not Found"}</div>
+                    <div className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-6">{typeof error === 'string' ? error : "Core Data Not Found"}</div>
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="px-8 py-3 bg-secondary text-primary border border-gray-200 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-surface transition-all active:scale-95"
+                        className="px-8 py-3 bg-bg-secondary text-text-primary border border-border-muted rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-bg-surface transition-all active:scale-95"
                     >
                         Back to Hub
                     </button>
@@ -297,20 +297,20 @@ export default function OptimizationResults() {
     }
 
     return (
-        <div className="min-h-screen bg-primary text-primary p-8 cyber-grid">
+        <div className="min-h-screen bg-bg-primary text-text-primary p-8 cyber-grid">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-12">
                     <div>
-                        <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">Optimization Results</h1>
-                        <p className="text-gray-500 text-sm">{resultsData.date}</p>
+                        <h1 className="text-4xl font-black text-text-primary mb-2 italic tracking-tighter uppercase font-black">Optimization Results</h1>
+                        <p className="text-text-muted text-[10px] font-black uppercase tracking-widest text-mono">{resultsData.date}</p>
                     </div>
                     <button
                         onClick={handleDownloadPdf}
                         disabled={!latexCode || isCompiling}
-                        className={`px-8 py-4 rounded-2xl font-semibold text-sm tracking-wide shadow-xl transition-all flex items-center gap-3 ${latexCode && !isCompiling
-                            ? 'bg-brand text-black hover:hover:bg-red-600 shadow-sm active:scale-95'
-                            : 'bg-secondary text-gray-500 cursor-not-allowed shadow-none border border-gray-100'
+                        className={`px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all flex items-center gap-3 ${latexCode && !isCompiling
+                            ? 'bg-brand-primary text-black hover:bg-brand-hover shadow-brand-primary/20 active:scale-95'
+                            : 'bg-bg-secondary text-text-muted cursor-not-allowed shadow-none border border-border-subtle'
                             }`}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,35 +324,35 @@ export default function OptimizationResults() {
                     {/* Left Column - Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Score Section */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 shadow-xl shadow-black/5 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-brand-primary/20" />
                             <div className="grid grid-cols-3 gap-8 mb-10">
                                 <div className="text-center">
-                                    <div className="text-6xl font-bold text-primary mb-2 tracking-tight text-mono">{resultsData.originalScore}</div>
-                                    <div className="text-gray-500 text-xs">Original Score</div>
+                                    <div className="text-6xl font-black text-text-primary mb-2 italic tracking-tighter text-mono">{resultsData.originalScore}</div>
+                                    <div className="text-text-muted text-[9px] font-black uppercase tracking-widest">Initial Reach</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-6xl font-bold text-brand mb-2 tracking-tight text-mono">+{resultsData.improvement}</div>
-                                    <div className="text-gray-500 text-xs">Improvement</div>
+                                    <div className="text-6xl font-black text-brand-primary mb-2 italic tracking-tighter text-mono">+{resultsData.improvement}</div>
+                                    <div className="text-text-muted text-[9px] font-black uppercase tracking-widest">Yield Delta</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-6xl font-bold text-primary mb-2 tracking-tight underline decoration-brand-primary decoration-4 underline-offset-8 text-mono">{resultsData.optimizedScore}</div>
-                                    <div className="text-gray-500 text-xs">Final Score</div>
+                                    <div className="text-6xl font-black text-text-primary mb-2 italic tracking-tighter underline decoration-brand-primary decoration-4 underline-offset-8 text-mono">{resultsData.optimizedScore}</div>
+                                    <div className="text-text-muted text-[9px] font-black uppercase tracking-widest">Final Score</div>
                                 </div>
                             </div>
                             <div className="text-center mb-10">
-                                <p className="text-gray-500/50 text-[10px] font-black uppercase tracking-[0.3em] text-mono">{resultsData.iterations} Alignment Iterations</p>
+                                <p className="text-text-muted/50 text-[10px] font-black uppercase tracking-[0.3em] text-mono">{resultsData.iterations} Alignment Iterations</p>
                             </div>
 
                             {/* Score Progression */}
                             <div>
-                                <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Score Progression</h3>
+                                <h3 className="text-text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Score Progression</h3>
                                 <div className="flex items-center gap-6">
                                     {resultsData.scoreProgression.map((score, index) => (
                                         <React.Fragment key={index}>
                                             <div className={`flex-1 py-4 px-6 rounded-2xl text-center font-black italic tracking-tighter text-2xl transition-all text-mono ${index === resultsData.scoreProgression.length - 1
-                                                ? 'bg-brand text-black shadow-lg shadow-sm scale-105'
-                                                : 'bg-secondary text-gray-500 border border-gray-200'
+                                                ? 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20 scale-105'
+                                                : 'bg-bg-secondary text-text-muted border border-border-muted'
                                                 }`}>
                                                 {score}
                                             </div>
@@ -368,13 +368,13 @@ export default function OptimizationResults() {
                         </div>
 
                         {/* Job Requirements Analysis */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5 cyber-grid">
-                            <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Job Requirements</h2>
-                            <p className="text-gray-500 text-sm mb-8">Extracted from job description</p>
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 shadow-xl shadow-black/5 cyber-grid">
+                            <h2 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">Job Requirements</h2>
+                            <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-8">Extracted from job description</p>
 
                             <div className="space-y-8">
                                 <div key="must-have">
-                                    <h3 className="text-primary font-semibold text-sm mb-4">Key Requirements (Must Have)</h3>
+                                    <h3 className="text-text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Key Requirements (Must Have)</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {resultsData.jobRequirements.mustHave?.map((skill) => (
                                             <span key={skill} className="px-5 py-2 bg-text-primary text-bg-primary rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
@@ -385,10 +385,10 @@ export default function OptimizationResults() {
                                 </div>
 
                                 <div key="nice-to-have">
-                                    <h3 className="text-primary font-semibold text-sm mb-4">Preferred Skills (Nice to Have)</h3>
+                                    <h3 className="text-text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Preferred Skills (Nice to Have)</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {resultsData.jobRequirements.niceToHave?.map((skill) => (
-                                            <span key={skill} className="px-5 py-2 bg-secondary text-secondary border border-gray-200 rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
+                                            <span key={skill} className="px-5 py-2 bg-bg-secondary text-text-secondary border border-border-muted rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
                                                 {skill}
                                             </span>
                                         ))}
@@ -396,36 +396,36 @@ export default function OptimizationResults() {
                                 </div>
 
                                 <div key="keywords">
-                                    <h3 className="text-primary font-semibold text-sm mb-4">Core Keywords</h3>
+                                    <h3 className="text-text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Core Keywords</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {resultsData.jobRequirements.keywords?.map((keyword) => (
-                                            <span key={keyword} className="px-5 py-2 bg-brand/10 text-brand border border-brand-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
+                                            <span key={keyword} className="px-5 py-2 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
                                                 {keyword}
                                             </span>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-gray-200">
-                                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-mono">
-                                        Experience Level: <span className="text-primary ml-2 uppercase">{resultsData.jobRequirements.seniorityLevel}</span>
+                                <div className="pt-4 border-t border-border-muted">
+                                    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest text-mono">
+                                        Experience Level: <span className="text-text-primary ml-2 uppercase">{resultsData.jobRequirements.seniorityLevel}</span>
                                     </p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Resume Analysis */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
-                            <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Resume Analysis</h2>
-                            <p className="text-gray-500 text-sm mb-8">Internal profile audit</p>
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+                            <h2 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">Resume Analysis</h2>
+                            <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-8">Internal profile audit</p>
 
                             <div className="grid grid-cols-2 gap-10">
                                 <div>
-                                    <h3 className="text-brand font-black text-[10px] uppercase tracking-widest mb-6 italic">Strong Areas (Present)</h3>
+                                    <h3 className="text-brand-primary font-black text-[10px] uppercase tracking-widest mb-6 italic">Strong Areas (Present)</h3>
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.skillsPresent?.map((skill) => (
-                                            <li key={skill} className="text-primary text-sm font-medium flex items-center gap-4">
-                                                <div className="w-2 h-2 bg-brand rounded-full shadow-[0_0_8px_rgba(var(--brand-primary-rgb),0.3)]" />
+                                            <li key={skill} className="text-text-primary text-sm font-medium flex items-center gap-4">
+                                                <div className="w-2 h-2 bg-brand-primary rounded-full shadow-[0_0_8px_rgba(var(--brand-primary-rgb),0.3)]" />
                                                 {skill}
                                             </li>
                                         ))}
@@ -436,7 +436,7 @@ export default function OptimizationResults() {
                                     <h3 className="text-red-500 font-black text-[10px] uppercase tracking-widest mb-6 italic">Missing Keywords</h3>
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.skillsMissing?.map((skill) => (
-                                            <li key={skill} className="text-gray-500 text-sm font-medium flex items-center gap-4">
+                                            <li key={skill} className="text-text-muted text-sm font-medium flex items-center gap-4">
                                                 <div className="w-2 h-2 bg-red-500/30 rounded-full" />
                                                 {skill}
                                             </li>
@@ -445,11 +445,11 @@ export default function OptimizationResults() {
                                 </div>
 
                                 <div>
-                                    <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-6 italic">Proficient Sections</h3>
+                                    <h3 className="text-text-primary font-black text-[10px] uppercase tracking-widest mb-6 italic">Proficient Sections</h3>
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.strongSections?.map((section) => (
-                                            <li key={section} className="text-secondary text-sm font-medium flex items-center gap-4">
-                                                <div className="w-4 h-[2px] bg-brand/30" />
+                                            <li key={section} className="text-text-secondary text-sm font-medium flex items-center gap-4">
+                                                <div className="w-4 h-[2px] bg-brand-primary/30" />
                                                 {section}
                                             </li>
                                         ))}
@@ -457,10 +457,10 @@ export default function OptimizationResults() {
                                 </div>
 
                                 <div>
-                                    <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-6 italic">Areas to Improve</h3>
+                                    <h3 className="text-text-primary font-black text-[10px] uppercase tracking-widest mb-6 italic">Areas to Improve</h3>
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.weakSections?.map((section) => (
-                                            <li key={section} className="text-secondary text-sm font-medium flex items-center gap-4">
+                                            <li key={section} className="text-text-secondary text-sm font-medium flex items-center gap-4">
                                                 <div className="w-4 h-[2px] bg-red-500/20" />
                                                 {section}
                                             </li>
@@ -471,23 +471,23 @@ export default function OptimizationResults() {
                         </div>
 
                         {/* Changes Applied */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
-                            <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Optimization Steps</h2>
-                            <p className="text-gray-500 text-sm mb-8">Adjustments made to improve results</p>
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+                            <h2 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">Optimization Steps</h2>
+                            <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-8">Adjustments made to improve results</p>
 
                             <div className="space-y-6">
                                 {resultsData.changes.map((change) => (
-                                    <div key={change.id} className="bg-secondary rounded-3xl p-8 border border-gray-100 group transition-all hover:bg-surface hover:shadow-xl hover:shadow-black/10">
+                                    <div key={change.id} className="bg-bg-secondary rounded-3xl p-8 border border-border-subtle group transition-all hover:bg-bg-surface hover:shadow-xl hover:shadow-black/10">
                                         <div className="flex items-start gap-6">
-                                            <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-black font-black italic tracking-tighter text-lg flex-shrink-0 shadow-lg shadow-sm group-hover:scale-110 transition-transform">
+                                            <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center text-black font-black italic tracking-tighter text-lg flex-shrink-0 shadow-lg shadow-brand-primary/20 group-hover:scale-110 transition-transform">
                                                 {change.id}
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="text-primary font-semibold text-base mb-2">{change.title}</h3>
-                                                <p className="text-secondary text-sm leading-relaxed mb-4">{change.description}</p>
+                                                <h3 className="text-text-primary font-black text-lg mb-2 italic tracking-tighter uppercase">{change.title}</h3>
+                                                <p className="text-text-secondary text-sm leading-relaxed mb-4">{change.description}</p>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Reasoning:</span>
-                                                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">{change.reason}</p>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-text-muted italic">Reasoning:</span>
+                                                    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">{change.reason}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -498,18 +498,18 @@ export default function OptimizationResults() {
 
                         {/* Optimized Resume - LaTeX Editor + PDF Preview */}
                         {latexCode && (
-                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
-                                <h2 className="text-2xl font-black text-primary mb-2 italic tracking-tighter uppercase">Final Optimized Resume</h2>
-                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-8">LaTeX source and visual rendering</p>
+                            <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+                                <h2 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">Final Optimized Resume</h2>
+                                <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-8">LaTeX source and visual rendering</p>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* LaTeX Editor */}
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Latex Code</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-text-muted italic">Latex Code</label>
                                             <button
                                                 onClick={handleCopyLatex}
-                                                className="text-brand hover:hover:text-red-700 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
+                                                className="text-brand-primary hover:text-brand-hover text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -520,19 +520,19 @@ export default function OptimizationResults() {
                                         <textarea
                                             value={latexCode}
                                             onChange={(e) => setLatexCode(e.target.value)}
-                                            className="w-full h-[600px] p-8 bg-secondary border border-gray-100 rounded-3xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none shadow-inner"
+                                            className="w-full h-[600px] p-8 bg-bg-secondary border border-border-subtle rounded-3xl text-text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none shadow-inner"
                                         />
                                     </div>
 
                                     {/* PDF Preview */}
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Visual Preview</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-text-muted italic">Visual Preview</label>
                                             <button
                                                 onClick={handleRecompile}
                                                 disabled={isCompiling}
                                                 className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompiling
-                                                    ? 'bg-secondary text-gray-500 cursor-not-allowed'
+                                                    ? 'bg-bg-secondary text-text-muted cursor-not-allowed'
                                                     : 'bg-text-primary hover:bg-white text-bg-primary shadow-lg shadow-black/10'
                                                     }`}
                                             >
@@ -552,7 +552,7 @@ export default function OptimizationResults() {
                                             </button>
                                         </div>
 
-                                        <div className="relative h-[600px] bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-inner">
+                                        <div className="relative h-[600px] bg-white border border-border-subtle rounded-3xl overflow-hidden shadow-inner">
                                             {compiledPdfUrl ? (
                                                 <iframe
                                                     src={compiledPdfUrl}
@@ -560,7 +560,7 @@ export default function OptimizationResults() {
                                                     title="PDF Preview"
                                                 />
                                             ) : (
-                                                <div className="flex items-center justify-center h-full text-gray-500">
+                                                <div className="flex items-center justify-center h-full text-text-muted">
                                                     {isCompiling ? (
                                                         <div className="text-center">
                                                             <div className="w-16 h-16 mx-auto mb-6 relative">
@@ -588,9 +588,9 @@ export default function OptimizationResults() {
                                     <button
                                         onClick={handleDownloadPdf}
                                         disabled={!compiledPdfUrl || isCompiling}
-                                        className={`px-8 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-3 ${compiledPdfUrl && !isCompiling
-                                            ? 'bg-brand text-black hover:hover:bg-red-600 shadow-xl shadow-sm active:scale-95'
-                                            : 'bg-secondary text-gray-500 cursor-not-allowed shadow-none border border-gray-100'
+                                        className={`px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 ${compiledPdfUrl && !isCompiling
+                                            ? 'bg-brand-primary text-black hover:bg-brand-hover shadow-xl shadow-brand-primary/20 active:scale-95'
+                                            : 'bg-bg-secondary text-text-muted cursor-not-allowed shadow-none border border-border-subtle'
                                             }`}
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -605,12 +605,12 @@ export default function OptimizationResults() {
 
                     {/* Right Column - Cover Letter */}
                     <div className="lg:col-span-1">
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 sticky top-8 shadow-xl shadow-black/5">
-                            <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Cover Letter</h2>
-                            <p className="text-gray-500 text-sm mb-8">AI-generated cover letter</p>
+                        <div className="bg-bg-surface border border-border-muted rounded-[2.5rem] p-10 sticky top-8 shadow-xl shadow-black/5">
+                            <h2 className="text-2xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">Cover Letter</h2>
+                            <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-8">System generated cover letter</p>
 
-                            <div className="bg-secondary rounded-3xl p-8 mb-8 max-h-[500px] overflow-y-auto border border-gray-100 shadow-inner">
-                                <pre className="text-secondary text-sm whitespace-pre-wrap font-medium leading-relaxed">
+                            <div className="bg-bg-secondary rounded-3xl p-8 mb-8 max-h-[500px] overflow-y-auto border border-border-subtle shadow-inner">
+                                <pre className="text-text-secondary text-sm whitespace-pre-wrap font-medium leading-relaxed">
                                     {resultsData.coverLetter}
                                 </pre>
                             </div>
@@ -618,7 +618,7 @@ export default function OptimizationResults() {
                             <div className="space-y-4">
                                 <button
                                     onClick={handleCopyCoverLetter}
-                                    className="w-full py-4 bg-text-primary text-bg-primary font-semibold text-sm tracking-wide rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-white active:scale-95"
+                                    className="w-full py-4 bg-text-primary text-bg-primary font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-white active:scale-95"
                                 >
                                     {coverLetterCopied ? (
                                         <>
@@ -637,7 +637,7 @@ export default function OptimizationResults() {
                                     )}
                                 </button>
 
-                                <button className="w-full py-4 bg-secondary text-gray-500 font-medium text-sm rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-primary hover:text-primary border border-gray-100 active:scale-95">
+                                <button className="w-full py-4 bg-bg-secondary text-text-muted font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-bg-primary hover:text-text-primary border border-border-subtle active:scale-95">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>
@@ -652,7 +652,7 @@ export default function OptimizationResults() {
                 <div className="flex gap-6 mt-16">
                     <button
                         onClick={() => navigate('/new-optimization')}
-                        className="px-10 py-4 bg-brand text-black rounded-[2rem] font-semibold text-sm tracking-wide shadow-2xl shadow-sm hover:hover:bg-red-600 transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+                        className="px-12 py-5 bg-brand-primary text-black rounded-[2rem] font-black text-[10px] uppercase tracking-[0.25em] shadow-2xl shadow-brand-primary/30 hover:bg-brand-hover transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
                     >
                         <span>New Optimization</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -661,7 +661,7 @@ export default function OptimizationResults() {
                     </button>
                     <button
                         onClick={() => navigate('/history')}
-                        className="px-10 py-4 bg-secondary border border-gray-100 text-gray-500 hover:text-primary rounded-[2rem] font-medium text-sm shadow-xl shadow-black/5 transition-all hover:bg-surface active:scale-95"
+                        className="px-12 py-5 bg-bg-secondary border border-border-subtle text-text-muted hover:text-text-primary rounded-[2rem] font-black text-[10px] uppercase tracking-[0.25em] shadow-xl shadow-black/5 transition-all hover:bg-bg-surface active:scale-95"
                     >
                         Return to History
                     </button>
