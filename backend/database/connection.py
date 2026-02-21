@@ -59,9 +59,10 @@ def ensure_runtime_schema():
     # Import models lazily to avoid circular import at module load time.
     from database.models.user import User
     from database.models.run import Run
+    from database.models.missing_skills_run import MissingSkillsRun
 
     # Ensure core tables exist (safe with checkfirst behavior).
-    Base.metadata.create_all(bind=engine, tables=[User.__table__, Run.__table__])
+    Base.metadata.create_all(bind=engine, tables=[User.__table__, Run.__table__, MissingSkillsRun.__table__])
 
     # Ensure incremental user columns exist for BYOK.
     ensure_user_api_key_columns()
