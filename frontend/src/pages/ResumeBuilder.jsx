@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createResume, getResumePreview, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus } from '../services/api';
 import toast from 'react-hot-toast';
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
 
 // ─── Job Title Suggestions ─────────────────────────────────────────────────
 const JOB_TITLE_SUGGESTIONS = [
@@ -508,7 +510,7 @@ export default function ResumeBuilder() {
     ) : null;
 
     const inputClass = (key) =>
-        `w-full p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all ${errors[key] ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'
+        `w-full px-5 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900 outline-none transition-all text-sm ${errors[key] ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200'
         }`;
     const handleSaveAndPreview = async () => {
         setLoading(true);
@@ -638,13 +640,13 @@ export default function ResumeBuilder() {
 
     // ── AI Button ──
     const AIButton = ({ onClick, label = "AI Generate" }) => (
-        <button onClick={onClick}
-            className="flex items-center gap-1 text-xs bg-purple-500/10 text-purple-400 px-2.5 py-1.5 rounded-lg font-bold uppercase hover:bg-purple-500/20 transition-colors border border-purple-500/20">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <Button onClick={onClick} variant="outline" size="sm" type="button"
+            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide border-gray-200 hover:bg-brand/10 hover:text-brand hover:border-brand/30 transition-all rounded-lg">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             {label}
-        </button>
+        </Button>
     );
 
     // ── Template Preview Component (CSS-based) ──
@@ -1147,10 +1149,10 @@ export default function ResumeBuilder() {
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {suggestions.slice(0, 16).map((s, i) => (
-                                        <button key={i} onClick={() => addSkill(s)}
-                                            className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-secondary hover:border-brand-primary hover:text-brand hover:bg-brand/5 transition-all font-medium">
+                                        <Button variant="outline" size="sm" key={i} onClick={() => addSkill(s)}
+                                            className="text-xs rounded-full border-gray-200 text-gray-500 hover:border-brand hover:text-brand hover:bg-brand/5 border shadow-none font-medium">
                                             + {s}
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             </div>
@@ -1191,10 +1193,10 @@ export default function ResumeBuilder() {
                         ))}
                     </div>
 
-                    <button onClick={handleSaveAndPreview} disabled={loading}
-                        className="w-full py-4 bg-brand text-black rounded-xl font-black uppercase tracking-widest hover:hover:bg-red-600 transition-all shadow-xl shadow-sm disabled:opacity-50">
+                    <Button size="lg" onClick={handleSaveAndPreview} disabled={loading}
+                        className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-white shadow-xl disabled:opacity-50">
                         {loading ? 'Generating...' : '✨ Generate Preview'}
-                    </button>
+                    </Button>
 
                     {resumeId && (
                         <div className="animate-fade-in space-y-4">
@@ -1205,19 +1207,19 @@ export default function ResumeBuilder() {
                             <div className="h-[600px] border border-gray-200 rounded-2xl overflow-hidden bg-secondary">
                                 {previewHtml && <iframe srcDoc={previewHtml} className="w-full h-full" title="Preview" />}
                             </div>
-                            <button onClick={handlePrint}
-                                className="w-full py-4 bg-brand text-black rounded-xl font-black uppercase tracking-widest hover:hover:bg-red-600 transition-all shadow-xl shadow-sm flex items-center justify-center gap-2">
+                            <Button size="lg" onClick={handlePrint}
+                                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2">
                                 🖨️ Print / Save as PDF (Browser)
-                            </button>
+                            </Button>
                             <div className="relative flex items-center py-1">
                                 <div className="flex-grow border-t border-gray-200"></div>
                                 <span className="flex-shrink mx-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">or try</span>
                                 <div className="flex-grow border-t border-gray-200"></div>
                             </div>
-                            <button onClick={handleDownload}
-                                className="w-full py-3 border-2 border-gray-200 text-gray-500 rounded-xl font-bold uppercase tracking-widest hover:border-text-primary hover:text-primary transition-all text-xs flex items-center justify-center gap-2">
+                            <Button variant="outline" size="lg" onClick={handleDownload}
+                                className="w-full h-14 border-2 rounded-xl font-bold uppercase tracking-widest text-gray-500 hover:text-primary transition-all text-xs flex items-center justify-center gap-2">
                                 📥 Native PDF Download
-                            </button>
+                            </Button>
                             <p className="text-[10px] text-gray-500 text-center px-4 leading-relaxed">
                                 💡 <b>Recommended:</b> Use the "Print" button. <br />
                                 <b>Important:</b> In the print window, uncheck <b>"Headers and footers"</b> to get a clean PDF.
@@ -1236,9 +1238,9 @@ export default function ResumeBuilder() {
             {/* API Key Warning Banner */}
             {hasApiKey === false && (
                 <div className="w-full px-6 pt-6">
-                    <div className="max-w-2xl mx-auto bg-bg-surface border-l-4 border-brand-primary rounded-2xl p-6 shadow-xl shadow-black/5 flex items-start gap-5">
-                        <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <svg className="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <Card className="max-w-2xl mx-auto border-l-4 border-l-brand rounded-2xl p-6 shadow-xl shadow-black/5 flex items-start gap-5">
+                        <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
@@ -1252,13 +1254,14 @@ export default function ResumeBuilder() {
                                     console.groq.com/keys
                                 </a>
                             </p>
-                            <button
+                            <Button
                                 onClick={() => navigate('/settings')}
-                                className="px-5 py-2 bg-text-primary text-bg-primary rounded-xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-white hover:text-black active:scale-95">
+                                variant="outline"
+                                className="rounded-xl font-black text-[10px] uppercase tracking-widest">
                                 Go to Settings
-                            </button>
+                            </Button>
                         </div>
-                    </div>
+                    </Card>
                 </div>
             )}
 
@@ -1287,17 +1290,18 @@ export default function ResumeBuilder() {
                         </p>
                     </div>
 
-                    <div className="bg-surface rounded-3xl p-8 shadow-xl shadow-black/5 border border-gray-200 mb-8">
+                    <Card className="rounded-3xl p-8 shadow-xl shadow-black/5 mb-8">
                         {steps[currentStep].render()}
-                    </div>
+                    </Card>
 
                     <div className="flex justify-between items-center px-4">
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
                             disabled={currentStep === 0}
-                            className={`font-bold text-gray-500 uppercase tracking-widest text-xs hover:text-primary transition-colors ${currentStep === 0 ? 'opacity-0 cursor-default' : ''}`}>
+                            className={`font-bold text-gray-500 uppercase tracking-widest text-xs hover:text-gray-900 transition-colors ${currentStep === 0 ? 'opacity-0 cursor-default' : ''}`}>
                             ← Back
-                        </button>
+                        </Button>
 
                         <div className="flex gap-1.5">
                             {steps.map((_, idx) => (
@@ -1308,11 +1312,11 @@ export default function ResumeBuilder() {
                         </div>
 
                         {!isLastStep ? (
-                            <button
+                            <Button
                                 onClick={handleNext}
-                                className="bg-brand text-black px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs hover:hover:bg-red-600 transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-sm">
+                                className="rounded-full px-8 py-6 font-bold uppercase tracking-widest text-xs text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
                                 Next →
-                            </button>
+                            </Button>
                         ) : (
                             <div className="w-24" />
                         )}
