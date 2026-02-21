@@ -67,6 +67,15 @@ export default function Sidebar() {
             path: '/resume-builder'
         },
         {
+            name: 'Missing Skills',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+            ),
+            path: '/missing-skills'
+        },
+        {
             name: 'Templates',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,15 +99,15 @@ export default function Sidebar() {
     const isActive = (path) => location.pathname === path;
 
     return (
-        <div className="w-64 h-screen bg-bg-surface border-r border-border-muted hidden md:flex flex-col">
+        <div className="w-64 h-screen bg-surface border-r border-gray-200 hidden md:flex flex-col">
             {/* Logo */}
-            <div className="p-6 flex items-center gap-3 border-b border-border-subtle">
-                <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/10">
+            <div className="p-6 flex items-center gap-3 border-b border-gray-100">
+                <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center shadow-lg shadow-brand-primary/10">
                     <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
-                <span className="text-xl font-black text-text-primary tracking-tighter italic">
+                <span className="text-lg font-semibold text-primary tracking-tight">
                     ResumeAgent
                 </span>
             </div>
@@ -110,23 +119,23 @@ export default function Sidebar() {
                         key={item.path}
                         to={item.path}
                         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive(item.path)
-                            ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/10'
-                            : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                            ? 'bg-brand/10 text-brand border border-brand-primary/10'
+                            : 'text-secondary hover:bg-secondary hover:text-primary'
                             }`}
                     >
                         {item.icon}
-                        <span className="font-black uppercase text-[10px] tracking-widest">{item.name}</span>
+                        <span className="text-sm font-medium">{item.name}</span>
                         {isActive(item.path) && (
-                            <div className="ml-auto w-2 h-2 bg-brand-primary rounded-full shadow-[0_0_8px_rgba(141,163,74,0.4)]" />
+                            <div className="ml-auto w-2 h-2 bg-brand rounded-full shadow-[0_0_8px_rgba(141,163,74,0.4)]" />
                         )}
                     </Link>
                 ))}
             </nav>
 
             {/* User Profile */}
-            <div className="p-4 border-t border-border-muted/50">
-                <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg mb-3">
-                    <div className="w-10 h-10 bg-brand-primary rounded-full flex items-center justify-center text-black font-black flex-shrink-0 shadow-lg shadow-brand-primary/10">
+            <div className="p-4 border-t border-gray-200/50">
+                <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg mb-3">
+                    <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-black font-black flex-shrink-0 shadow-lg shadow-brand-primary/10">
                         {user?.profile_picture ? (
                             <img src={user.profile_picture} alt="Profile" className="w-full h-full rounded-full object-cover" />
                         ) : (
@@ -134,10 +143,10 @@ export default function Sidebar() {
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-text-primary truncate tracking-tighter uppercase italic">
+                        <p className="text-sm font-semibold text-primary truncate">
                             {user?.full_name || user?.email?.split('@')[0] || 'User'}
                         </p>
-                        <p className="text-xs text-text-muted truncate font-medium">
+                        <p className="text-xs text-gray-500 truncate">
                             {user?.email || 'Loading...'}
                         </p>
                     </div>
@@ -146,12 +155,12 @@ export default function Sidebar() {
                 {/* Sign Out */}
                 <button
                     onClick={() => setShowLogoutDialog(true)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-text-muted hover:text-red-400 hover:bg-red-950/20 rounded-lg transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-red-400 hover:bg-red-950/20 rounded-lg transition-all"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span className="font-black uppercase text-[10px] tracking-widest">Sign Out</span>
+                    <span className="text-sm font-medium">Sign Out</span>
                 </button>
             </div>
 

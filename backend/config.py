@@ -1,6 +1,10 @@
 # All app config in one place - loaded from environment variables
 import os
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load .env before any os.getenv() call
+load_dotenv()
 
 
 class Settings:

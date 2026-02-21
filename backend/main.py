@@ -20,6 +20,7 @@ except ImportError:
 
 from api.routes.agent import router as agent_router
 from api.routes.resume_builder import router as resume_builder_router
+from api.routes.missing_skills import router as missing_skills_router
 
 AGENT_AVAILABLE = True
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ if AGENT_AVAILABLE:
     app.include_router(agent_router)
 
 app.include_router(resume_builder_router)
+app.include_router(missing_skills_router)
 
 
 @app.on_event("startup")

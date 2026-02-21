@@ -95,7 +95,7 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-bg-primary text-text-primary overflow-hidden font-sans selection:bg-brand-primary/30 flex flex-col items-center justify-center p-6 pt-32">
+    <div className="relative min-h-screen bg-primary text-primary overflow-hidden font-sans selection:bg-brand/30 flex flex-col items-center justify-center p-6 pt-32">
       <style>{`
         @keyframes scan {
           from { transform: rotate(0deg); }
@@ -132,9 +132,9 @@ export default function NotFound() {
         {/* Radar Scanner Visual */}
         <div className="relative w-64 h-64 md:w-96 md:h-96 mb-12">
           {/* Main Circle */}
-          <div className="absolute inset-0 rounded-full border border-border-muted bg-bg-surface/50 backdrop-blur-xl" />
-          <div className="absolute inset-8 rounded-full border border-border-subtle/50" />
-          <div className="absolute inset-20 rounded-full border border-border-subtle/30" />
+          <div className="absolute inset-0 rounded-full border border-gray-200 bg-surface/50 backdrop-blur-xl" />
+          <div className="absolute inset-8 rounded-full border border-gray-100/50" />
+          <div className="absolute inset-20 rounded-full border border-gray-100/30" />
 
           {/* Scanning Line */}
           <div className="absolute inset-0 rounded-full flex items-center justify-center animate-scan pointer-events-none">
@@ -146,11 +146,11 @@ export default function NotFound() {
             <Motion.h1
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-8xl md:text-9xl font-black italic tracking-tighter text-text-primary/90 drop-shadow-[0_0_20px_rgba(141,163,74,0.15)] animate-glitch"
+              className="text-8xl md:text-9xl font-black italic tracking-tighter text-primary/90 drop-shadow-[0_0_20px_rgba(141,163,74,0.15)] animate-glitch"
             >
               404
             </Motion.h1>
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary/60 mt-2">
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-brand/60 mt-2">
               Void Protocol Active
             </div>
           </div>
@@ -188,18 +188,18 @@ export default function NotFound() {
           </Motion.div>
 
           {/* Technical Metadata */}
-          <div className="flex justify-center gap-8 py-4 border-y border-border-muted/50">
+          <div className="flex justify-center gap-8 py-4 border-y border-gray-200/50">
             <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-1">Status</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Status</div>
               <div className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none">Lost in Void</div>
             </div>
             <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-1">Vector</div>
-              <div className="text-[10px] font-black text-text-primary uppercase tracking-widest leading-none">0x000F4</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Vector</div>
+              <div className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">0x000F4</div>
             </div>
             <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-text-muted mb-1">Signal</div>
-              <div className="text-[10px] font-black text-brand-primary uppercase tracking-widest leading-none italic">Unstable</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Signal</div>
+              <div className="text-[10px] font-black text-brand uppercase tracking-widest leading-none italic">Unstable</div>
             </div>
           </div>
 
