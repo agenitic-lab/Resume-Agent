@@ -4,7 +4,6 @@ import { motion as Motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "../components/ui/card";
 import { Sparkles, FileText, Target, PenTool } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function Home() {
     return (
