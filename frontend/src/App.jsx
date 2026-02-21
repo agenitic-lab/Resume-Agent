@@ -27,7 +27,7 @@ function AppContent() {
   const showNavbar = !isDashboardRoute;
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary transition-colors duration-300">
+    <div className="min-h-screen bg-primary text-primary">
       {showNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -40,7 +40,7 @@ function AppContent() {
         <Route path="/new-optimization" element={<ProtectedRoute><DashboardLayout><NewOptimization /></DashboardLayout></ProtectedRoute>} />
         <Route path="/optimization/:id" element={<ProtectedRoute><DashboardLayout><OptimizationResults /></DashboardLayout></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><DashboardLayout><RunHistory /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/templates" element={<ProtectedRoute><DashboardLayout><div className="p-12"><h1 className="text-4xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">Templates</h1><p className="text-text-secondary text-[10px] font-black uppercase tracking-widest">Library of optimized resume frameworks - Coming Soon</p></div></DashboardLayout></ProtectedRoute>} />
+        <Route path="/templates" element={<ProtectedRoute><DashboardLayout><div className="p-12"><h1 className="text-4xl font-black text-primary mb-2 italic tracking-tighter uppercase">Templates</h1><p className="text-secondary text-[10px] font-black uppercase tracking-widest">Library of optimized resume frameworks - Coming Soon</p></div></DashboardLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Settings /></DashboardLayout></ProtectedRoute>} />
         <Route path="/resume-builder" element={<ProtectedRoute><DashboardLayout><ResumeBuilder /></DashboardLayout></ProtectedRoute>} />
 
