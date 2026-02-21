@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
 import { register, googleAuth, isAuthenticated } from '../services/api';
@@ -69,7 +70,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-primary flex flex-col pt-20">
       <div className="flex-1 flex items-center justify-center p-6">
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md bg-white border border-gray-100 rounded-3xl p-8 sm:p-10 shadow-sm"
@@ -182,7 +183,7 @@ export default function Register() {
               Already a member? <Link to="/login" className="text-brand font-semibold hover:underline">Sign In</Link>
             </p>
           </form>
-        </motion.div>
+        </Motion.div>
       </div>
     </div>
   );
