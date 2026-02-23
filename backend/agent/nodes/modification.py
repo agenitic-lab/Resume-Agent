@@ -46,17 +46,22 @@ def modify_resume(state: Dict) -> Dict:
 
     prompt = f"""You are an expert resume writer and LaTeX typesetter.
 
-Your task: Convert and optimize the resume below into a professional LaTeX document that is tailored to the job requirements.
+Your task: Optimize the resume below into a professional LaTeX document tailored to the job requirements.
 
-RULES:
-- Output a COMPLETE, compilable LaTeX document starting with \\documentclass
-- Use only standard LaTeX packages (geometry, enumitem, hyperref, titlesec)
-- Apply the improvement plan to strengthen the resume
-- Incorporate relevant keywords from the job requirements naturally
-- Do NOT invent experience or skills the candidate doesn't have
-- Do NOT remove existing valid content
-- Improve clarity, keywords, and phrasing to match the job description
-- Use clean, professional formatting with proper sections
+CRITICAL RULES (MUST FOLLOW):
+1. PAGE LENGTH: The resume MUST fit on exactly 1 page. If the candidate has extensive experience (10+ years), 2 pages maximum. Use compact formatting - small margins (0.5in), concise bullet points, and efficient spacing. NEVER exceed 2 pages.
+2. NO INVENTED CONTENT: ONLY use information that exists in the original resume. Do NOT add, fabricate, or invent ANY experiences, jobs, projects, skills, certifications, or achievements that are not already present. You may REPHRASE existing content to better match keywords, but NEVER create new entries.
+3. PRESERVE ORIGINAL STRUCTURE: Keep the same sections that exist in the original resume (e.g., if it has Education, Experience, Projects, Skills - keep those same sections). Do not add new sections that weren't in the original.
+4. CLEAN PROFESSIONAL DESIGN: Use a clean, minimal, black-and-white professional template. NO colored backgrounds, NO colored text, NO shading, NO dark themes. Use standard black text on white background.
+5. Output a COMPLETE, compilable LaTeX document starting with \\documentclass
+6. Use only standard LaTeX packages (geometry, enumitem, hyperref, titlesec, fontenc, inputenc)
+7. Apply the improvement plan to strengthen existing content through better phrasing and keyword integration
+8. Incorporate relevant keywords from the job requirements NATURALLY into existing content
+9. Do NOT remove existing valid content - optimize it instead
+10. Use \\documentclass[10pt]{{article}} with \\usepackage[margin=0.5in]{{geometry}} for compact single-page layout
+11. Use \\pagestyle{{empty}} to remove page numbers and headers/footers
+12. Keep bullet points concise (1-2 lines each, max 3-4 bullets per experience entry)
+13. Use \\small or \\footnotesize for body text if needed to fit on one page
 
 Original Resume:
 ---

@@ -72,7 +72,11 @@ Create a resume improvement plan with the following JSON structure:
 Rules:
 - Be specific
 - Be realistic
-- Do NOT invent skills
+- Do NOT invent skills or experiences that the candidate doesn't already have
+- Only suggest rephrasing or emphasizing EXISTING skills and experiences
+- "skill_additions" should ONLY list skills already present in the resume that need more emphasis
+- Do NOT suggest adding new job entries, projects, or certifications
+- Focus on keyword optimization, better phrasing, and structural improvements
 - Return ONLY valid JSON
 """
 

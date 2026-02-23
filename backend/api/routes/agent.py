@@ -102,7 +102,8 @@ def run_agent_workflow(
             job_requirements=result.get("job_requirements"),
             resume_analysis=result.get("resume_analysis"),
             improvement_plan=result.get("improvement_plan"),
-            decision_log=result.get("decision_log")
+            decision_log=result.get("decision_log"),
+            score_history=result.get("score_history")
         )
         
     except Exception as e:

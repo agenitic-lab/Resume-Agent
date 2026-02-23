@@ -23,6 +23,10 @@ export default function NewOptimization() {
     const [toast, setToast] = useState(null);
     const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = status
+    const [optimizationData, setOptimizationData] = useState(null); // full optimization response
+    const [activeResultTab, setActiveResultTab] = useState('resume'); // 'resume' | 'details' | 'coverLetter'
+    const [coverLetterCopied, setCoverLetterCopied] = useState(false);
+    const [warningDismissed, setWarningDismissed] = useState(false);
 
     // check API key status on mount
     useEffect(() => {
@@ -187,10 +191,15 @@ export default function NewOptimization() {
         setOptimizedLatex('');
         setCompiledPdfUrl(null);
         setCurrentStep(1);
+        setOptimizationData(null);
+        setActiveResultTab('resume');
+        setCoverLetterCopied(false);
+        setWarningDismissed(false);
     };
 
     const simulateAgentOptimization = async () => {
         setIsOptimizing(true);
+        setWarningDismissed(false);
         try {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
 
@@ -211,6 +220,60 @@ export default function NewOptimization() {
                 setCurrentStep(3);
                 return;
             }
+
+            // Store the full optimization results
+            const plan = data.improvement_plan || {};
+            const planChanges = Array.isArray(plan)
+                ? plan.map((change, index) => ({
+                    id: index + 1,
+                    title: change.area || 'Improvement',
+                    description: change.suggestion || change.description || '',
+                    reason: change.reason || 'To improve ATS score'
+                }))
+                : (plan.priority_changes || []).map((change, index) => ({
+                    id: index + 1,
+                    title: `Change ${index + 1}`,
+                    description: typeof change === 'string' ? change : (change.suggestion || change.description || ''),
+                    reason: plan.reasoning || 'To improve ATS score'
+                }));
+
+            const reqs = data.job_requirements || {};
+            const analysis = data.resume_analysis || {};
+
+            const rawHistory = data.score_history || [];
+            const scoreProgression = rawHistory.length >= 2
+                ? rawHistory.map(s => Math.round(s))
+                : [
+                    Math.round(data.ats_score_before || 0),
+                    Math.round(data.ats_score_after || 0)
+                ];
+
+            setOptimizationData({
+                originalScore: Math.round(data.ats_score_before || 0),
+                optimizedScore: Math.round(data.ats_score_after || 0),
+                improvement: Math.round(data.improvement_delta || 0),
+                iterations: data.iteration_count || 1,
+                scoreProgression,
+                jobRequirements: {
+                    mustHave: reqs.required_skills || [],
+                    niceToHave: reqs.preferred_skills || [],
+                    keywords: reqs.key_keywords || [],
+                    seniorityLevel: reqs.experience_years
+                        ? `${reqs.experience_years}+ years`
+                        : 'Not specified'
+                },
+                resumeAnalysis: {
+                    skillsPresent: analysis.strengths || [],
+                    skillsMissing: analysis.missing_keywords || [],
+                    strongSections: analysis.suggestions || [],
+                    weakSections: analysis.weaknesses || []
+                },
+                changes: planChanges,
+                coverLetter: data.cover_letter || "Cover letter not available for this run.",
+                fitDecision: data.fit_decision,
+                fitReason: data.fit_reason,
+                fitConfidence: data.fit_confidence,
+            });
 
             if (data.modified_resume && data.modified_resume.trim()) {
                 const optimizedLatexCode = data.modified_resume;
@@ -752,106 +815,382 @@ export default function NewOptimization() {
                                         </div>
                                     ) : (
                                         <>
-                                            {/* Split Pane Layout */}
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[650px]">
-                                                {/* Left: LaTeX Editor */}
-                                                <div className="flex flex-col space-y-4">
-                                                    <div className="flex justify-between items-center px-1">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                                                            <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">LaTeX_Source_Editor</label>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(optimizedLatex);
-                                                                setCopyButtonText('Copied');
-                                                                setTimeout(() => setCopyButtonText('Copy'), 2000);
-                                                            }}
-                                                            className="text-brand hover:hover:text-red-700 text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
-                                                        >
-                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                            </svg>
-                                                            {copyButtonText}
-                                                        </button>
+                                            {/* Warning Banner - Issue 6 */}
+                                            {!warningDismissed && (
+                                                <Motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 flex items-start gap-4"
+                                                >
+                                                    <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                        <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                        </svg>
                                                     </div>
-                                                    <div className="flex-1 relative group">
-                                                        <textarea
-                                                            value={optimizedLatex}
-                                                            onChange={(e) => setOptimizedLatex(e.target.value)}
-                                                            className="w-full h-full p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
-                                                        />
-                                                        <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Write_Mode_Active</div>
+                                                    <div className="flex-1">
+                                                        <h4 className="text-yellow-500 font-bold text-sm mb-1">Review Before Using</h4>
+                                                        <p className="text-secondary text-sm leading-relaxed">
+                                                            The generated output may contain skills or keywords that you don't actually possess. Please carefully review the optimized resume, edit it in the LaTeX editor as needed, and click <strong>"Refresh View"</strong> to recompile before downloading.
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setWarningDismissed(true)}
+                                                        className="text-gray-500 hover:text-primary transition-colors flex-shrink-0 mt-1"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </Motion.div>
+                                            )}
+
+                                            {/* Score Summary - Issue 4 */}
+                                            {optimizationData && (
+                                                <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                    <div className="grid grid-cols-3 gap-8 text-center">
+                                                        <div>
+                                                            <div className="text-4xl font-bold text-primary mb-1 tracking-tight text-mono">{optimizationData.originalScore}</div>
+                                                            <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Original Score</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-4xl font-bold text-brand mb-1 tracking-tight text-mono">+{optimizationData.improvement}</div>
+                                                            <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Improvement</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-4xl font-bold text-primary mb-1 tracking-tight underline decoration-brand-primary decoration-4 underline-offset-4 text-mono">{optimizationData.optimizedScore}</div>
+                                                            <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Final Score</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-center mt-4">
+                                                        <span className="text-gray-500/50 text-[9px] font-black uppercase tracking-[0.3em] text-mono">{optimizationData.iterations} Alignment Iterations</span>
                                                     </div>
                                                 </div>
+                                            )}
 
-                                                {/* Right: PDF Preview */}
-                                                <div className="flex flex-col space-y-4">
-                                                    <div className="flex justify-between items-center px-1">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                                            <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">High_Fidelity_Render</label>
-                                                        </div>
-                                                        <button
-                                                            onClick={handleCompileLatex}
-                                                            disabled={isCompiling}
-                                                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isCompiling
-                                                                ? 'bg-white/5 border-white/5 text-gray-500 cursor-not-allowed'
-                                                                : 'bg-text-primary border-text-primary hover:bg-white text-bg-primary shadow-lg'
-                                                                }`}
-                                                        >
-                                                            {isCompiling ? (
-                                                                <>
-                                                                    <div className="w-2.5 h-2.5 border-2 border-text-muted border-t-transparent rounded-full animate-spin" />
-                                                                    <span>RE_RENDERING...</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            {/* Tab Navigation - Issue 4 */}
+                                            <div className="flex gap-2 border-b border-gray-200 pb-0">
+                                                {[
+                                                    { id: 'resume', label: 'Resume Output', icon: '📄' },
+                                                    { id: 'details', label: 'Analysis Details', icon: '📊' },
+                                                    { id: 'coverLetter', label: 'Cover Letter', icon: '✉️' },
+                                                ].map((tab) => (
+                                                    <button
+                                                        key={tab.id}
+                                                        onClick={() => setActiveResultTab(tab.id)}
+                                                        className={`px-6 py-3 text-sm font-semibold tracking-tight transition-all rounded-t-xl border border-b-0 ${activeResultTab === tab.id
+                                                            ? 'bg-surface border-gray-200 text-primary -mb-[1px]'
+                                                            : 'border-transparent text-gray-500 hover:text-primary hover:bg-white/5'
+                                                        }`}
+                                                    >
+                                                        <span className="mr-2">{tab.icon}</span>
+                                                        {tab.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Tab Content: Resume Output */}
+                                            {activeResultTab === 'resume' && (
+                                                <Motion.div
+                                                    key="tab-resume"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="space-y-8"
+                                                >
+                                                    {/* Split Pane Layout */}
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[650px]">
+                                                        {/* Left: LaTeX Editor */}
+                                                        <div className="flex flex-col space-y-4">
+                                                            <div className="flex justify-between items-center px-1">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand" />
+                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">LaTeX_Source_Editor</label>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(optimizedLatex);
+                                                                        setCopyButtonText('Copied');
+                                                                        setTimeout(() => setCopyButtonText('Copy'), 2000);
+                                                                    }}
+                                                                    className="text-brand hover:hover:text-red-700 text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
+                                                                >
+                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                                     </svg>
-                                                                    <span>Refresh View</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    </div>
+                                                                    {copyButtonText}
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex-1 relative group">
+                                                                <textarea
+                                                                    value={optimizedLatex}
+                                                                    onChange={(e) => setOptimizedLatex(e.target.value)}
+                                                                    className="w-full h-full p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
+                                                                />
+                                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Write_Mode_Active</div>
+                                                            </div>
+                                                        </div>
 
-                                                    {/* PDF Viewer Container */}
-                                                    <div className="flex-1 relative bg-black/40 border border-gray-200 rounded-[2rem] overflow-hidden group">
-                                                        {compiledPdfUrl ? (
-                                                            <iframe
-                                                                src={`${compiledPdfUrl}#toolbar=0&navpanes=0`}
-                                                                className="w-full h-full invert opacity-80 group-hover:opacity-100 transition-opacity"
-                                                                title="PDF Preview"
-                                                            />
-                                                        ) : (
-                                                            <div className="flex items-center justify-center h-full text-gray-500">
-                                                                {isCompiling ? (
-                                                                    <div className="text-center space-y-4">
-                                                                        <div className="w-12 h-12 mx-auto relative">
-                                                                            <Motion.div
-                                                                                animate={{ rotate: 360 }}
-                                                                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                                                                className="absolute inset-0 border-2 border-brand-primary border-t-transparent rounded-full"
-                                                                            />
-                                                                        </div>
-                                                                        <p className="text-mono text-[8px] font-black uppercase tracking-widest">Rendering_Visuals</p>
-                                                                    </div>
+                                                        {/* Right: PDF Preview */}
+                                                        <div className="flex flex-col space-y-4">
+                                                            <div className="flex justify-between items-center px-1">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">High_Fidelity_Render</label>
+                                                                </div>
+                                                                <button
+                                                                    onClick={handleCompileLatex}
+                                                                    disabled={isCompiling}
+                                                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isCompiling
+                                                                        ? 'bg-white/5 border-white/5 text-gray-500 cursor-not-allowed'
+                                                                        : 'bg-text-primary border-text-primary hover:bg-white text-bg-primary shadow-lg'
+                                                                    }`}
+                                                                >
+                                                                    {isCompiling ? (
+                                                                        <>
+                                                                            <div className="w-2.5 h-2.5 border-2 border-text-muted border-t-transparent rounded-full animate-spin" />
+                                                                            <span>RE_RENDERING...</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                                            </svg>
+                                                                            <span>Refresh View</span>
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+
+                                                            {/* PDF Viewer Container */}
+                                                            <div className="flex-1 relative bg-white border border-gray-200 rounded-[2rem] overflow-hidden group">
+                                                                {compiledPdfUrl ? (
+                                                                    <iframe
+                                                                        src={`${compiledPdfUrl}#toolbar=0&navpanes=0`}
+                                                                        className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
+                                                                        style={{ backgroundColor: 'white' }}
+                                                                        title="PDF Preview"
+                                                                    />
                                                                 ) : (
-                                                                    <div className="text-center px-10 space-y-6">
-                                                                        <svg className="w-16 h-16 mx-auto text-white/5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                                        </svg>
-                                                                        <p className="text-mono text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed max-w-[200px] mx-auto opacity-40">System requires manual synchronization. <br />Initialize "Refresh View" above.</p>
+                                                                    <div className="flex items-center justify-center h-full text-gray-500">
+                                                                        {isCompiling ? (
+                                                                            <div className="text-center space-y-4">
+                                                                                <div className="w-12 h-12 mx-auto relative">
+                                                                                    <Motion.div
+                                                                                        animate={{ rotate: 360 }}
+                                                                                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                                                                        className="absolute inset-0 border-2 border-brand-primary border-t-transparent rounded-full"
+                                                                                    />
+                                                                                </div>
+                                                                                <p className="text-mono text-[8px] font-black uppercase tracking-widest">Rendering_Visuals</p>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-center px-10 space-y-6">
+                                                                                <svg className="w-16 h-16 mx-auto text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                                </svg>
+                                                                                <p className="text-mono text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed max-w-[200px] mx-auto opacity-40">System requires manual synchronization. <br />Initialize "Refresh View" above.</p>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                        )}
-                                                        {/* Preview Overlay */}
-                                                        <div className="absolute inset-0 pointer-events-none border-[20px] border-black/5" />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                </Motion.div>
+                                            )}
+
+                                            {/* Tab Content: Analysis Details - Issue 4 */}
+                                            {activeResultTab === 'details' && optimizationData && (
+                                                <Motion.div
+                                                    key="tab-details"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="space-y-8"
+                                                >
+                                                    {/* Score Progression */}
+                                                    {optimizationData.scoreProgression.length > 1 && (
+                                                        <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                            <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Score Progression</h3>
+                                                            <div className="flex items-center gap-4">
+                                                                {optimizationData.scoreProgression.map((score, index) => (
+                                                                    <React.Fragment key={index}>
+                                                                        <div className={`flex-1 py-3 px-4 rounded-xl text-center font-black italic tracking-tighter text-xl text-mono ${index === optimizationData.scoreProgression.length - 1
+                                                                            ? 'bg-brand text-black shadow-lg scale-105'
+                                                                            : 'bg-secondary text-gray-500 border border-gray-200'
+                                                                        }`}>
+                                                                            {score}
+                                                                        </div>
+                                                                        {index < optimizationData.scoreProgression.length - 1 && (
+                                                                            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                                            </svg>
+                                                                        )}
+                                                                    </React.Fragment>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Job Requirements */}
+                                                    <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                        <h3 className="text-lg font-semibold text-primary mb-1 tracking-tight">Job Requirements</h3>
+                                                        <p className="text-gray-500 text-sm mb-6">Extracted from job description</p>
+                                                        <div className="space-y-6">
+                                                            <div>
+                                                                <h4 className="text-primary font-semibold text-sm mb-3">Key Requirements (Must Have)</h4>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {optimizationData.jobRequirements.mustHave?.map((skill) => (
+                                                                        <span key={skill} className="px-4 py-1.5 bg-text-primary text-bg-primary rounded-full text-[10px] font-black uppercase tracking-widest text-mono">{skill}</span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-primary font-semibold text-sm mb-3">Preferred Skills</h4>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {optimizationData.jobRequirements.niceToHave?.map((skill) => (
+                                                                        <span key={skill} className="px-4 py-1.5 bg-secondary text-secondary border border-gray-200 rounded-full text-[10px] font-black uppercase tracking-widest text-mono">{skill}</span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-primary font-semibold text-sm mb-3">Core Keywords</h4>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {optimizationData.jobRequirements.keywords?.map((keyword) => (
+                                                                        <span key={keyword} className="px-4 py-1.5 bg-brand/10 text-brand border border-brand-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest text-mono">{keyword}</span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div className="pt-3 border-t border-gray-200">
+                                                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest text-mono">
+                                                                    Experience Level: <span className="text-primary ml-2">{optimizationData.jobRequirements.seniorityLevel}</span>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Resume Analysis */}
+                                                    <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                        <h3 className="text-lg font-semibold text-primary mb-1 tracking-tight">Resume Analysis</h3>
+                                                        <p className="text-gray-500 text-sm mb-6">Internal profile audit</p>
+                                                        <div className="grid grid-cols-2 gap-8">
+                                                            <div>
+                                                                <h4 className="text-brand font-black text-[10px] uppercase tracking-widest mb-4 italic">Strengths</h4>
+                                                                <ul className="space-y-2">
+                                                                    {optimizationData.resumeAnalysis.skillsPresent?.map((skill) => (
+                                                                        <li key={skill} className="text-primary text-sm font-medium flex items-center gap-3">
+                                                                            <div className="w-1.5 h-1.5 bg-brand rounded-full" />
+                                                                            {skill}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-red-500 font-black text-[10px] uppercase tracking-widest mb-4 italic">Missing Keywords</h4>
+                                                                <ul className="space-y-2">
+                                                                    {optimizationData.resumeAnalysis.skillsMissing?.map((skill) => (
+                                                                        <li key={skill} className="text-gray-500 text-sm font-medium flex items-center gap-3">
+                                                                            <div className="w-1.5 h-1.5 bg-red-500/30 rounded-full" />
+                                                                            {skill}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Suggestions</h4>
+                                                                <ul className="space-y-2">
+                                                                    {optimizationData.resumeAnalysis.strongSections?.map((s) => (
+                                                                        <li key={s} className="text-secondary text-sm font-medium flex items-center gap-3">
+                                                                            <div className="w-3 h-[2px] bg-brand/30" />
+                                                                            {s}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Areas to Improve</h4>
+                                                                <ul className="space-y-2">
+                                                                    {optimizationData.resumeAnalysis.weakSections?.map((s) => (
+                                                                        <li key={s} className="text-secondary text-sm font-medium flex items-center gap-3">
+                                                                            <div className="w-3 h-[2px] bg-red-500/20" />
+                                                                            {s}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Optimization Steps/Changes */}
+                                                    {optimizationData.changes.length > 0 && (
+                                                        <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                            <h3 className="text-lg font-semibold text-primary mb-1 tracking-tight">Optimization Steps</h3>
+                                                            <p className="text-gray-500 text-sm mb-6">Adjustments made to improve results</p>
+                                                            <div className="space-y-4">
+                                                                {optimizationData.changes.map((change) => (
+                                                                    <div key={change.id} className="bg-secondary rounded-2xl p-6 border border-gray-100 transition-all hover:bg-surface">
+                                                                        <div className="flex items-start gap-4">
+                                                                            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center text-black font-black italic text-sm flex-shrink-0">
+                                                                                {change.id}
+                                                                            </div>
+                                                                            <div className="flex-1">
+                                                                                <h4 className="text-primary font-semibold text-sm mb-1">{change.title}</h4>
+                                                                                <p className="text-secondary text-sm leading-relaxed">{change.description}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </Motion.div>
+                                            )}
+
+                                            {/* Tab Content: Cover Letter - Issue 4 */}
+                                            {activeResultTab === 'coverLetter' && optimizationData && (
+                                                <Motion.div
+                                                    key="tab-coverletter"
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="space-y-6"
+                                                >
+                                                    <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div>
+                                                                <h3 className="text-lg font-semibold text-primary mb-1 tracking-tight">Cover Letter</h3>
+                                                                <p className="text-gray-500 text-sm">AI-generated cover letter tailored to the job</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(optimizationData.coverLetter);
+                                                                    setCoverLetterCopied(true);
+                                                                    setTimeout(() => setCoverLetterCopied(false), 2000);
+                                                                }}
+                                                                className="px-5 py-2 bg-text-primary text-bg-primary rounded-xl font-semibold text-sm tracking-wide transition-all flex items-center gap-2 hover:bg-white active:scale-95"
+                                                            >
+                                                                {coverLetterCopied ? (
+                                                                    <>
+                                                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                        <span className="text-green-500">Copied!</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                        </svg>
+                                                                        <span>Copy</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                        <div className="bg-secondary rounded-2xl p-8 border border-gray-100">
+                                                            <pre className="text-secondary text-sm whitespace-pre-wrap font-medium leading-relaxed">
+                                                                {optimizationData.coverLetter}
+                                                            </pre>
+                                                        </div>
+                                                    </div>
+                                                </Motion.div>
+                                            )}
 
                                             {/* Bottom Actions */}
                                             <div className="flex gap-6 mt-12 justify-between items-center border-t border-white/5 pt-10">
@@ -879,7 +1218,7 @@ export default function NewOptimization() {
                                                         className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 ${compiledPdfUrl
                                                             ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
                                                             : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
-                                                            }`}
+                                                        }`}
                                                     >
                                                         <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
