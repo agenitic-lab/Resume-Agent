@@ -454,16 +454,13 @@ export default function ResumeBuilder() {
                 if (!formData.field.trim()) newErrors.field = 'Target job title is required';
                 if (!formData.experience_level) newErrors.experience_level = 'Please select an experience level';
                 break;
-            case 3: // Links
+            case 4: // Links
                 if (formData.contact.linkedin && !urlRegex.test(formData.contact.linkedin)) newErrors.linkedin = 'Invalid LinkedIn URL';
                 if (formData.contact.portfolio && !urlRegex.test(formData.contact.portfolio)) newErrors.portfolio = 'Invalid Portfolio URL';
                 if (formData.contact.github && !urlRegex.test(formData.contact.github)) newErrors.github = 'Invalid GitHub URL';
                 if (formData.contact.twitter && !urlRegex.test(formData.contact.twitter)) newErrors.twitter = 'Invalid Twitter URL';
                 if (formData.contact.behance && !urlRegex.test(formData.contact.behance)) newErrors.behance = 'Invalid Behance URL';
                 if (formData.contact.medium && !urlRegex.test(formData.contact.medium)) newErrors.medium = 'Invalid Medium URL';
-                break;
-            case 4: // Summary
-                if (formData.contact.summary.trim().length < 50) newErrors.summary = 'Summary should be at least 50 characters for a professional look.';
                 break;
             case 5: // Experience
                 formData.experience.forEach((exp, i) => {
@@ -485,6 +482,9 @@ export default function ResumeBuilder() {
                 break;
             case 8: // Skills
                 if (formData.skills.length === 0) newErrors.skills = 'Please add at least one skill';
+                break;
+            case 9: // Summary
+                if (formData.contact.summary.trim().length < 50) newErrors.summary = 'Summary should be at least 50 characters for a professional look.';
                 break;
             default:
                 break;
@@ -510,7 +510,7 @@ export default function ResumeBuilder() {
     ) : null;
 
     const inputClass = (key) =>
-        `w-full px-5 py-3.5 bg-white border rounded-xl focus:ring-2 focus:ring-brand focus:border-transparent text-gray-900 outline-none transition-all text-sm ${errors[key] ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-200'
+        `w-full px-5 py-4 bg-white border rounded-xl focus:ring-2 focus:ring-brand focus:border-transparent text-primary outline-none transition-all text-base font-medium ${errors[key] ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-100'
         }`;
     const handleSaveAndPreview = async () => {
         setLoading(true);
@@ -571,7 +571,11 @@ export default function ResumeBuilder() {
             const data = await generateResumeSummary({
                 current_role: formData.field,
                 experience_level: formData.experience_level || "Mid",
-                keywords: formData.skills
+                keywords: formData.skills,
+                experience: formData.experience,
+                projects: formData.projects,
+                education: formData.education,
+                skills: formData.skills
             });
             if (data.summary) {
                 updateField('contact.summary', data.summary);
@@ -788,13 +792,13 @@ export default function ResumeBuilder() {
             title: "Welcome! Let's build your resume.",
             subtitle: "We'll guide you through each section. It only takes a few minutes.",
             render: () => (
-                <div className="text-center space-y-6 py-4">
-                    <div className="text-6xl">📄</div>
-                    <p className="text-secondary leading-relaxed">Create a professional, ATS-optimized resume for any field. Fill in each section and use the AI buttons to generate content automatically.</p>
-                    <div className="grid grid-cols-3 gap-3 text-xs text-gray-500 font-bold uppercase tracking-widest">
-                        <div className="p-3 bg-secondary rounded-xl border border-gray-100">✨ AI-Powered</div>
-                        <div className="p-3 bg-secondary rounded-xl border border-gray-100">🎯 ATS-Friendly</div>
-                        <div className="p-3 bg-secondary rounded-xl border border-gray-100">📥 PDF Export</div>
+                <div className="text-center space-y-8 py-6">
+                    <div className="text-7xl animate-bounce duration-[3s]">📄</div>
+                    <p className="text-slate-600 text-lg leading-relaxed font-medium">Create a professional, ATS-optimized resume for any field. Fill in each section and use the AI buttons to generate content automatically.</p>
+                    <div className="grid grid-cols-3 gap-4 text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">
+                        <div className="p-4 bg-secondary rounded-2xl border border-gray-100 shadow-sm">✨ AI-Powered</div>
+                        <div className="p-4 bg-secondary rounded-2xl border border-gray-100 shadow-sm">🎯 ATS-Friendly</div>
+                        <div className="p-4 bg-secondary rounded-2xl border border-gray-100 shadow-sm">📥 PDF Export</div>
                     </div>
                 </div>
             )
@@ -803,24 +807,28 @@ export default function ResumeBuilder() {
             title: "Who are you?",
             subtitle: "Let's start with your contact details.",
             render: () => (
-                <div className="space-y-4">
-                    <div>
-                        <input placeholder="Full Name *" value={formData.contact.name} onChange={e => updateField('contact.name', e.target.value)}
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
+                        <input placeholder="e.g. John Doe" value={formData.contact.name} onChange={e => updateField('contact.name', e.target.value)}
                             className={inputClass('name')} />
                         {err('name')}
                     </div>
-                    <div>
-                        <input placeholder="Email Address *" type="email" value={formData.contact.email} onChange={e => updateField('contact.email', e.target.value)}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                        <input placeholder="e.g. john@example.com" type="email" value={formData.contact.email} onChange={e => updateField('contact.email', e.target.value)}
                             className={inputClass('email')} />
                         {err('email')}
                     </div>
-                    <div>
-                        <input placeholder="Phone Number *" value={formData.contact.phone} onChange={e => updateField('contact.phone', e.target.value)}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+                        <input placeholder="e.g. +1 (555) 000-0000" value={formData.contact.phone} onChange={e => updateField('contact.phone', e.target.value)}
                             className={inputClass('phone')} />
                         {err('phone')}
                     </div>
-                    <div>
-                        <input placeholder="City, Country *" value={formData.contact.location} onChange={e => updateField('contact.location', e.target.value)}
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Current Location</label>
+                        <input placeholder="e.g. New York, USA" value={formData.contact.location} onChange={e => updateField('contact.location', e.target.value)}
                             className={inputClass('location')} />
                         {err('location')}
                     </div>
@@ -831,21 +839,23 @@ export default function ResumeBuilder() {
             title: "What's your target role?",
             subtitle: "This helps us tailor suggestions and content.",
             render: () => (
-                <div className="space-y-4">
-                    <div>
+                <div className="space-y-6 text-left">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Target Job Title</label>
                         <AutocompleteInput
                             value={formData.field}
                             onChange={val => updateField('field', val)}
-                            placeholder="Target Job Title * (e.g. Full Stack Developer, Nurse, Teacher)"
+                            placeholder="e.g. Full Stack Developer"
                             className={inputClass('field')}
                             suggestions={JOB_TITLE_SUGGESTIONS}
                         />
                         {err('field')}
                     </div>
-                    <div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Experience Level</label>
                         <select value={formData.experience_level} onChange={e => updateField('experience_level', e.target.value)}
                             className={inputClass('experience_level')}>
-                            <option value="">Select Experience Level *</option>
+                            <option value="">Select Level...</option>
                             <option value="Entry">Entry Level (0-2 years)</option>
                             <option value="Mid">Mid Level (3-5 years)</option>
                             <option value="Senior">Senior Level (5+ years)</option>
@@ -867,143 +877,178 @@ export default function ResumeBuilder() {
                 const isWriter = ["writer", "content", "journalist", "blogger", "medium"].some(k => role.includes(k));
 
                 return (
-                    <div className="space-y-3">
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-lg">🔗</span>
-                                <div className="flex-1 flex gap-2">
-                                    <input placeholder="LinkedIn URL" value={formData.contact.linkedin} onChange={e => updateField('contact.linkedin', e.target.value)}
-                                        className={`flex-1 p-3 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm ${errors.linkedin ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
-                                    <input placeholder="Display Text (e.g. LinkedIn)" value={formData.contact.linkedin_label} onChange={e => updateField('contact.linkedin_label', e.target.value)}
-                                        className="w-1/3 p-3 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm" />
-                                </div>
+                    <div className="space-y-5 text-left">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">LinkedIn Profile</label>
+                            <div className="flex gap-2">
+                                <input placeholder="Profile URL" value={formData.contact.linkedin} onChange={e => updateField('contact.linkedin', e.target.value)}
+                                    className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.linkedin ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
+                                <input placeholder="Label" value={formData.contact.linkedin_label} onChange={e => updateField('contact.linkedin_label', e.target.value)}
+                                    className="w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                             </div>
                             {err('linkedin')}
                         </div>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-lg">🌐</span>
-                                <div className="flex-1 flex gap-2">
-                                    <input placeholder="Portfolio / Website URL" value={formData.contact.portfolio} onChange={e => updateField('contact.portfolio', e.target.value)}
-                                        className={`flex-1 p-3 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm ${errors.portfolio ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
-                                    <input placeholder="Display Text (e.g. Website)" value={formData.contact.portfolio_label} onChange={e => updateField('contact.portfolio_label', e.target.value)}
-                                        className="w-1/3 p-3 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm" />
-                                </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Portfolio / Personal Website</label>
+                            <div className="flex gap-2">
+                                <input placeholder="Website URL" value={formData.contact.portfolio} onChange={e => updateField('contact.portfolio', e.target.value)}
+                                    className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.portfolio ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
+                                <input placeholder="Label" value={formData.contact.portfolio_label} onChange={e => updateField('contact.portfolio_label', e.target.value)}
+                                    className="w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                             </div>
                             {err('portfolio')}
                         </div>
                         {(isTech || !role) && (
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-lg">🐙</span>
-                                    <div className="flex-1 flex gap-2">
-                                        <input placeholder="GitHub URL" value={formData.contact.github} onChange={e => updateField('contact.github', e.target.value)}
-                                            className={`flex-1 p-3 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm ${errors.github ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
-                                        <input placeholder="Display Text (e.g. GitHub)" value={formData.contact.github_label} onChange={e => updateField('contact.github_label', e.target.value)}
-                                            className="w-1/3 p-3 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm" />
-                                    </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">GitHub Repository</label>
+                                <div className="flex gap-2">
+                                    <input placeholder="GitHub URL" value={formData.contact.github} onChange={e => updateField('contact.github', e.target.value)}
+                                        className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.github ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
+                                    <input placeholder="Label" value={formData.contact.github_label} onChange={e => updateField('contact.github_label', e.target.value)}
+                                        className="w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                                 </div>
                                 {err('github')}
                             </div>
                         )}
                         {isDesign && (
-                            <div className="flex items-center gap-3 ml-11">
-                                <input placeholder="Behance URL" value={formData.contact.behance} onChange={e => updateField('contact.behance', e.target.value)} className="flex-1 p-3 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm" />
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Behance Portfolio</label>
+                                <input placeholder="Behance URL" value={formData.contact.behance} onChange={e => updateField('contact.behance', e.target.value)} className="w-full p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                             </div>
                         )}
                         {(isWriter || !role) && (
-                            <div className="flex items-center gap-3 ml-11">
-                                <input placeholder="Medium / Blog URL" value={formData.contact.medium} onChange={e => updateField('contact.medium', e.target.value)} className="flex-1 p-3 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm" />
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Medium / Blog</label>
+                                <input placeholder="Medium URL" value={formData.contact.medium} onChange={e => updateField('contact.medium', e.target.value)} className="w-full p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                             </div>
                         )}
-                        <div className="flex items-center gap-3 ml-11">
-                            <input placeholder="Twitter / X URL (optional)" value={formData.contact.twitter} onChange={e => updateField('contact.twitter', e.target.value)} className="flex-1 p-3 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-sm" />
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Social / Other (Twitter, etc.)</label>
+                            <input placeholder="Profile URL" value={formData.contact.twitter} onChange={e => updateField('contact.twitter', e.target.value)} className="w-full p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                         </div>
                         {!role && (
-                            <p className="text-xs text-gray-500 mt-2">💡 Set your Target Job Title (Step 3) to see role-specific link suggestions.</p>
+                            <p className="text-xs text-slate-500 mt-2 font-medium italic">💡 Set your Target Job Title to see role-specific suggestions.</p>
                         )}
                     </div>
                 );
             }
         },
         {
-            title: "Professional Summary",
-            subtitle: "A brief overview of your career and value.",
-            render: () => (
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <label className="text-sm font-bold text-secondary">Summary</label>
-                        <AIButton onClick={handleGenerateSummary} label="AI Auto-Write" />
-                    </div>
-                    <div>
-                        <textarea
-                            value={formData.contact.summary}
-                            onChange={e => updateField('contact.summary', e.target.value)}
-                            placeholder="e.g. Results-oriented professional with 3+ years of experience..."
-                            className={`w-full p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all h-36 leading-relaxed resize-none ${errors.summary ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`}
-                        />
-                        {err('summary')}
-                    </div>
-                    <p className="text-xs text-gray-500">💡 Click "AI Auto-Write" to generate a strong summary based on your target role and skills.</p>
-                </div>
-            )
-        },
-        {
             title: "Work Experience",
             subtitle: "Add your relevant job history.",
             render: () => (
-                <div className="space-y-6">
+                <div className="space-y-10">
                     {formData.experience.map((exp, idx) => (
-                        <div key={idx} className="p-4 bg-secondary border border-gray-200 rounded-xl shadow-sm relative">
-                            <button onClick={() => removeExperience(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-500 font-bold p-2">✕</button>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                            {/* Card Header */}
+                            <div className="flex justify-between items-start mb-8">
                                 <div>
+                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-brand bg-brand/5 px-3 py-1 rounded-full mb-3 inline-block">
+                                        Work Experience #{idx + 1}
+                                    </span>
+                                    <h3 className="text-2xl font-black text-primary tracking-tight">
+                                        {exp.title || "Job Title"}
+                                    </h3>
+                                    <p className="text-slate-500 font-semibold mt-1">
+                                        {exp.company || "Company Name"}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => removeExperience(idx)}
+                                    className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                    title="Remove Experience"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* Form Grid */}
+                            <div className="grid grid-cols-2 gap-5 mb-8">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Job Title</label>
                                     <AutocompleteInput
                                         value={exp.title}
                                         onChange={val => updateExperience(idx, 'title', val)}
-                                        placeholder="Job Title *"
-                                        className={`p-2 bg-surface rounded-lg border w-full text-sm ${errors[`exp_title_${idx}`] ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200'}`}
+                                        placeholder="e.g. Software Engineer"
+                                        className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`exp_title_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                         suggestions={JOB_TITLE_SUGGESTIONS}
                                     />
                                     {err(`exp_title_${idx}`)}
                                 </div>
-                                <div>
-                                    <input placeholder="Company / Organization *" value={exp.company} onChange={e => updateExperience(idx, 'company', e.target.value)}
-                                        className={`p-2 bg-surface rounded-lg border w-full text-sm ${errors[`exp_company_${idx}`] ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200'}`} />
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Company</label>
+                                    <input
+                                        placeholder="e.g. Google"
+                                        value={exp.company}
+                                        onChange={e => updateExperience(idx, 'company', e.target.value)}
+                                        className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`exp_company_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
+                                    />
                                     {err(`exp_company_${idx}`)}
                                 </div>
-                                <div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
                                     <MonthYearPicker
                                         value={exp.start_date}
                                         onChange={val => updateExperience(idx, 'start_date', val)}
-                                        placeholder="Start Date *"
+                                        placeholder="Select Date"
                                     />
                                     {err(`exp_start_${idx}`)}
                                 </div>
-                                <MonthYearPicker
-                                    value={exp.end_date}
-                                    onChange={val => updateExperience(idx, 'end_date', val)}
-                                    placeholder="End Date"
-                                    allowPresent={true}
-                                />
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">End Date</label>
+                                    <MonthYearPicker
+                                        value={exp.end_date}
+                                        onChange={val => updateExperience(idx, 'end_date', val)}
+                                        placeholder="Present"
+                                        allowPresent={true}
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2 pl-4 border-l-2 border-gray-200">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold text-gray-500 uppercase">Responsibilities / Achievements</span>
+
+                            {/* Detail Section */}
+                            <div className="pt-8 border-t border-gray-100 space-y-6">
+                                <div className="flex justify-between items-end pb-2">
+                                    <div>
+                                        <h4 className="text-sm font-black text-secondary uppercase tracking-[0.15em] mb-1">Impact & Responsibilities</h4>
+                                        <p className="text-xs text-slate-500 font-medium italic">Describe your key achievements using action verbs.</p>
+                                    </div>
                                     <AIButton onClick={() => handleGenerateBullets(idx)} />
                                 </div>
-                                {exp.details.map((detail, dIdx) => (
-                                    <div key={dIdx} className="flex gap-2">
-                                        <input placeholder="• Key achievement or responsibility" value={detail} onChange={e => updateExperienceDetail(idx, dIdx, e.target.value)} className="flex-1 p-2 bg-surface rounded-lg border border-gray-200 text-sm text-primary" />
-                                        <button onClick={() => removeExperienceDetail(idx, dIdx)} className="text-red-400 hover:text-red-600 px-1 transition-colors">✕</button>
-                                    </div>
-                                ))}
-                                <button onClick={() => addExperienceDetail(idx)} className="text-xs text-brand font-bold uppercase tracking-wide hover:underline">+ Add Bullet Point</button>
+
+                                <div className="space-y-4">
+                                    {exp.details.map((detail, dIdx) => (
+                                        <div key={dIdx} className="group flex gap-3 items-center animate-in fade-in slide-in-from-left-2 duration-300">
+                                            <div className="w-2 h-2 rounded-full bg-brand/30 shrink-0 group-hover:bg-brand transition-colors" />
+                                            <input
+                                                placeholder="e.g. Optimized database queries reducing latency by 40%"
+                                                value={detail}
+                                                onChange={e => updateExperienceDetail(idx, dIdx, e.target.value)}
+                                                className="flex-1 p-4 bg-secondary/70 rounded-xl border border-transparent hover:border-gray-200 focus:border-brand/30 focus:bg-white text-base text-primary transition-all outline-none font-medium"
+                                            />
+                                            <button
+                                                onClick={() => removeExperienceDetail(idx, dIdx)}
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all font-bold"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => addExperienceDetail(idx)}
+                                    className="w-full py-5 mt-2 border-2 border-dotted border-gray-200 rounded-xl text-xs font-black text-slate-400 uppercase tracking-widest hover:border-brand/30 hover:text-brand hover:bg-brand/5 transition-all shadow-sm"
+                                >
+                                    + Add Bullet Point
+                                </button>
                             </div>
                         </div>
                     ))}
-                    <button onClick={addExperience} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 font-bold hover:border-brand-primary hover:text-brand transition-all">
-                        + Add Job
+                    <button
+                        onClick={addExperience}
+                        className="w-full py-6 border-2 border-dashed border-gray-200 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                    >
+                        <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add New Work Experience
                     </button>
                 </div>
             )
@@ -1012,41 +1057,116 @@ export default function ResumeBuilder() {
             title: "Projects",
             subtitle: "Showcase your key projects — great for any field.",
             render: () => (
-                <div className="space-y-6">
+                <div className="space-y-10">
                     {formData.projects.map((proj, idx) => (
-                        <div key={idx} className="p-4 bg-secondary border border-gray-200 rounded-xl shadow-sm relative">
-                            <button onClick={() => removeProject(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-500 font-bold p-2">✕</button>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                            {/* Card Header */}
+                            <div className="flex justify-between items-start mb-8">
                                 <div>
-                                    <input placeholder="Project / Initiative Name *" value={proj.title} onChange={e => updateProject(idx, 'title', e.target.value)}
-                                        className={`p-2 bg-surface rounded-lg border w-full text-sm ${errors[`proj_title_${idx}`] ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200'}`} />
+                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 bg-purple-50 px-3 py-1 rounded-full mb-3 inline-block">
+                                        Project / Initiative #{idx + 1}
+                                    </span>
+                                    <h3 className="text-2xl font-black text-primary tracking-tight">
+                                        {proj.title || "Project Title"}
+                                    </h3>
+                                    <p className="text-slate-500 font-semibold mt-1">
+                                        {proj.role || "Your Role"}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => removeProject(idx)}
+                                    className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                    title="Remove Project"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* Form Grid */}
+                            <div className="grid grid-cols-2 gap-5 mb-8">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Project Name</label>
+                                    <input
+                                        placeholder="e.g. AI Portfolio Generator"
+                                        value={proj.title}
+                                        onChange={e => updateProject(idx, 'title', e.target.value)}
+                                        className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-purple-500/20 ${errors[`proj_title_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
+                                    />
                                     {err(`proj_title_${idx}`)}
                                 </div>
-                                <input placeholder="Your Role (e.g. Lead Developer)" value={proj.role} onChange={e => updateProject(idx, 'role', e.target.value)} className="p-2 bg-surface rounded-lg border border-gray-200 w-full text-sm text-primary" />
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Your Role</label>
+                                    <input
+                                        placeholder="e.g. Lead Frontend Engineer"
+                                        value={proj.role}
+                                        onChange={e => updateProject(idx, 'role', e.target.value)}
+                                        className="p-4 bg-secondary rounded-xl border border-gray-100 hover:border-gray-200 w-full text-base font-medium transition-all focus:ring-2 focus:ring-purple-500/20"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Project Category</label>
+                                    <input
+                                        placeholder="e.g. E-commerce, Mobile App"
+                                        value={proj.type}
+                                        onChange={e => updateProject(idx, 'type', e.target.value)}
+                                        className="p-4 bg-secondary rounded-xl border border-gray-100 hover:border-gray-200 w-full text-base font-medium transition-all focus:ring-2 focus:ring-purple-500/20"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Stack / Tools</label>
+                                    <input
+                                        placeholder="e.g. React, Node.js, AWS"
+                                        value={proj.tools}
+                                        onChange={e => updateProject(idx, 'tools', e.target.value)}
+                                        className="p-4 bg-secondary rounded-xl border border-gray-100 hover:border-gray-200 w-full text-base font-medium transition-all focus:ring-2 focus:ring-purple-500/20"
+                                    />
+                                </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
-                                <input placeholder="Project Type (e.g. E-commerce, SaaS)" value={proj.type} onChange={e => updateProject(idx, 'type', e.target.value)}
-                                    className="p-2 bg-surface rounded-lg border border-gray-200 w-full text-sm text-primary" />
-                                <input placeholder="Technologies used (e.g. React, Node.js)" value={proj.tools} onChange={e => updateProject(idx, 'tools', e.target.value)}
-                                    className="p-2 bg-surface rounded-lg border border-gray-200 w-full text-sm text-primary" />
-                            </div>
-                            <div className="space-y-2 pl-4 border-l-2 border-purple-500/30">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold text-gray-500 uppercase">Project Highlights</span>
+
+                            {/* Detail Section */}
+                            <div className="pt-8 border-t border-gray-100 space-y-6">
+                                <div className="flex justify-between items-end pb-2">
+                                    <div>
+                                        <h4 className="text-sm font-black text-secondary uppercase tracking-[0.15em] mb-1">Highlights & Achievements</h4>
+                                        <p className="text-xs text-slate-500 font-medium italic">Describe what you built and the impact it had.</p>
+                                    </div>
                                     <AIButton onClick={() => handleGenerateProjectBullets(idx)} label="AI Describe" />
                                 </div>
-                                {proj.details.map((detail, dIdx) => (
-                                    <div key={dIdx} className="flex gap-2">
-                                        <input placeholder="• What you built and its impact" value={detail} onChange={e => updateProjectDetail(idx, dIdx, e.target.value)} className="flex-1 p-2 bg-surface rounded-lg border border-gray-200 text-sm text-primary" />
-                                        <button onClick={() => removeProjectDetail(idx, dIdx)} className="text-red-400 hover:text-red-600 px-1 transition-colors">✕</button>
-                                    </div>
-                                ))}
-                                <button onClick={() => addProjectDetail(idx)} className="text-xs text-purple-400 font-bold uppercase tracking-wide hover:underline">+ Add Point</button>
+
+                                <div className="space-y-4">
+                                    {proj.details.map((detail, dIdx) => (
+                                        <div key={dIdx} className="group flex gap-3 items-center animate-in fade-in slide-in-from-left-2 duration-300">
+                                            <div className="w-2 h-2 rounded-full bg-purple-500/30 shrink-0 group-hover:bg-purple-500 transition-colors" />
+                                            <input
+                                                placeholder="e.g. Scaled system to handle 10k+ concurrent users"
+                                                value={detail}
+                                                onChange={e => updateProjectDetail(idx, dIdx, e.target.value)}
+                                                className="flex-1 p-4 bg-secondary/70 rounded-xl border border-transparent hover:border-gray-200 focus:border-purple-500/30 focus:bg-white text-base text-primary transition-all outline-none font-medium"
+                                            />
+                                            <button
+                                                onClick={() => removeProjectDetail(idx, dIdx)}
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all font-bold"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => addProjectDetail(idx)}
+                                    className="w-full py-5 mt-2 border-2 border-dotted border-gray-200 rounded-xl text-xs font-black text-slate-400 uppercase tracking-widest hover:border-purple-500/30 hover:text-purple-500 hover:bg-purple-50/5 transition-all shadow-sm"
+                                >
+                                    + Add Detail Point
+                                </button>
                             </div>
                         </div>
                     ))}
-                    <button onClick={addProject} className="w-full py-3 border-2 border-dashed border-purple-500/20 rounded-xl text-purple-400 font-bold hover:border-purple-400 hover:text-purple-300 transition-all">
-                        + Add Project / Initiative
+                    <button
+                        onClick={addProject}
+                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-purple-500 hover:text-purple-500 hover:bg-purple-50/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                    >
+                        <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add New Project / Initiative
                     </button>
                 </div>
             )
@@ -1055,47 +1175,68 @@ export default function ResumeBuilder() {
             title: "Education",
             subtitle: "Your academic background.",
             render: () => (
-                <div className="space-y-4">
+                <div className="space-y-8">
                     {formData.education.map((edu, idx) => (
-                        <div key={idx} className="p-4 bg-secondary border border-gray-200 rounded-xl shadow-sm relative">
-                            <button onClick={() => removeEducation(idx)} className="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold px-2 transition-colors">✕</button>
-                            <div className="grid grid-cols-1 gap-3">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                            {/* Card Header */}
+                            <div className="flex justify-between items-start mb-8">
                                 <div>
+                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-brand bg-brand/5 px-3 py-1 rounded-full mb-3 inline-block">
+                                        Education #{idx + 1}
+                                    </span>
+                                    <h3 className="text-2xl font-black text-primary tracking-tight">
+                                        {edu.degree || "Degree / Certification"}
+                                    </h3>
+                                    <p className="text-slate-500 font-semibold mt-1">
+                                        {edu.school || "University / Institution"}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => removeEducation(idx)}
+                                    className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                    title="Remove Education"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Degree / Course</label>
                                     <input
-                                        placeholder="Degree / Certification (e.g. B.Sc. Computer Science)"
+                                        placeholder="e.g. B.Sc. Computer Science"
                                         value={edu.degree}
                                         onChange={e => updateEducation(idx, 'degree', e.target.value)}
-                                        className={`p-2 bg-surface rounded-lg border w-full text-sm text-primary ${errors[`edu_degree_${idx}`] ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200'
-                                            }`}
+                                        className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`edu_degree_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                     />
-                                    {errors[`edu_degree_${idx}`] && <p className="text-xs text-red-400 mt-1">{errors[`edu_degree_${idx}`]}</p>}
+                                    {errors[`edu_degree_${idx}`] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_degree_${idx}`]}</p>}
                                 </div>
-                                <div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Institution</label>
                                     <input
-                                        placeholder="University / Institution"
+                                        placeholder="e.g. Stanford University"
                                         value={edu.school}
                                         onChange={e => updateEducation(idx, 'school', e.target.value)}
-                                        className={`p-2 bg-surface rounded-lg border w-full text-sm text-primary ${errors[`edu_school_${idx}`] ? 'border-red-500/50 bg-red-500/5' : 'border-gray-200'
-                                            }`}
+                                        className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`edu_school_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                     />
-                                    {errors[`edu_school_${idx}`] && <p className="text-xs text-red-400 mt-1">{errors[`edu_school_${idx}`]}</p>}
+                                    {errors[`edu_school_${idx}`] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_school_${idx}`]}</p>}
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Start Year *</label>
+                                <div className="grid grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Start Year</label>
                                         <YearPicker
                                             value={edu.start_year}
                                             onChange={val => updateEducation(idx, 'start_year', val)}
-                                            placeholder="Start Year *"
+                                            placeholder="YYYY"
                                         />
                                         {err(`edu_start_${idx}`)}
                                     </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">End Year / Graduation</label>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">End Year / Expected</label>
                                         <YearPicker
                                             value={edu.end_year}
                                             onChange={val => updateEducation(idx, 'end_year', val)}
-                                            placeholder="End Year"
+                                            placeholder="YYYY"
                                             allowPresent={true}
                                         />
                                     </div>
@@ -1103,8 +1244,11 @@ export default function ResumeBuilder() {
                             </div>
                         </div>
                     ))}
-                    <button onClick={addEducation} className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 font-bold hover:border-brand-primary hover:text-brand transition-all">
-                        + Add Education
+                    <button
+                        onClick={addEducation}
+                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                    >
+                        <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add Education Entry
                     </button>
                 </div>
             )
@@ -1143,14 +1287,14 @@ export default function ResumeBuilder() {
 
                         {/* Suggestions */}
                         {suggestions.length > 0 && (
-                            <div>
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                            <div className="pt-4">
+                                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">
                                     💡 Suggested for <span className="text-brand">{formData.field || 'your role'}</span>
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {suggestions.slice(0, 16).map((s, i) => (
                                         <Button variant="outline" size="sm" key={i} onClick={() => addSkill(s)}
-                                            className="text-xs rounded-full border-gray-200 text-gray-500 hover:border-brand hover:text-brand hover:bg-brand/5 border shadow-none font-medium">
+                                            className="text-xs rounded-full border-gray-200 text-slate-600 hover:border-brand hover:text-brand hover:bg-brand/5 border shadow-none font-semibold px-4 py-2">
                                             + {s}
                                         </Button>
                                     ))}
@@ -1160,6 +1304,33 @@ export default function ResumeBuilder() {
                     </div>
                 );
             }
+        },
+        {
+            title: "Professional Summary",
+            subtitle: "A brief overview of your career and value.",
+            render: () => (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-end">
+                        <div className="space-y-1">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Summary</label>
+                            <p className="text-xs text-slate-500 font-medium italic">A brief overview of your career and value.</p>
+                        </div>
+                        <AIButton onClick={handleGenerateSummary} label="AI Auto-Write" />
+                    </div>
+                    <div>
+                        <textarea
+                            value={formData.contact.summary}
+                            onChange={e => updateField('contact.summary', e.target.value)}
+                            placeholder="e.g. Results-oriented professional with 3+ years of experience..."
+                            className={`w-full p-5 bg-secondary border rounded-2xl focus:border-brand-primary text-primary outline-none transition-all h-48 leading-relaxed resize-none text-base font-medium ${errors.summary ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100 hover:border-gray-200'}`}
+                        />
+                        {err('summary')}
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium bg-secondary/50 p-3 rounded-lg border border-gray-100 flex items-center gap-2">
+                        <span>💡</span> Click "AI Auto-Write" to generate a detailed summary based on your experience and skills.
+                    </p>
+                </div>
+            )
         },
         {
             title: "Review & Generate",
@@ -1187,7 +1358,7 @@ export default function ResumeBuilder() {
                                         <span className="font-bold text-sm truncate text-primary">{t.name}</span>
                                         {selectedTemplate === t.id && <span className="text-brand text-[10px] font-black shrink-0">✓</span>}
                                     </div>
-                                    <div className="text-[10px] text-gray-500 leading-tight line-clamp-2">{t.desc}</div>
+                                    <div className="text-xs text-slate-500 leading-snug line-clamp-2 mt-0.5 font-medium">{t.desc}</div>
                                 </div>
                             </button>
                         ))}
@@ -1220,9 +1391,9 @@ export default function ResumeBuilder() {
                                 className="w-full h-14 border-2 rounded-xl font-bold uppercase tracking-widest text-gray-500 hover:text-primary transition-all text-xs flex items-center justify-center gap-2">
                                 📥 Native PDF Download
                             </Button>
-                            <p className="text-[10px] text-gray-500 text-center px-4 leading-relaxed">
-                                💡 <b>Recommended:</b> Use the "Print" button. <br />
-                                <b>Important:</b> In the print window, uncheck <b>"Headers and footers"</b> to get a clean PDF.
+                            <p className="text-xs text-slate-500 text-center px-4 leading-relaxed font-medium">
+                                💡 <b className="text-slate-700">Recommended:</b> Use the "Print" button. <br />
+                                <b className="text-slate-700">Important:</b> In the print window, uncheck <b>"Headers and footers"</b> to get a clean PDF.
                             </p>
                         </div>
                     )}

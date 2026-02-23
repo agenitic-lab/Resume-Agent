@@ -4,7 +4,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 # Load .env before any os.getenv() call
-load_dotenv()
+load_dotenv(override=True)
 
 
 class Settings:
@@ -25,6 +25,10 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     
     ENCRYPTION_KEY: Optional[str] = os.getenv("ENCRYPTION_KEY")
+    if ENCRYPTION_KEY:
+        print(f"DEBUG: ENCRYPTION_KEY loaded, length: {len(ENCRYPTION_KEY)}")
+    else:
+        print("DEBUG: ENCRYPTION_KEY NOT found in environment")
     
     # Google OAuth (optional)
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
