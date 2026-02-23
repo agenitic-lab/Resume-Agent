@@ -70,18 +70,18 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-primary text-primary p-8">
+    <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">Account Settings</h1>
           <p className="text-gray-500 text-sm">Manage your API configuration and account session</p>
         </div>
 
-        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5 mb-8 overflow-hidden relative">
+        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 mb-8 overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
           <h2 className="text-lg font-semibold text-primary mb-4">Groq API Key</h2>
           <p className="text-secondary text-sm leading-relaxed mb-8 font-medium">
-            This system utilizes Groq's high-performance inference engine for optimization. Secure your free access key from{' '}
+            This system utilizes Groq's API for AI resume optimization. Secure your free API key from{' '}
             <a
               href="https://console.groq.com/keys"
               target="_blank"
@@ -90,7 +90,7 @@ export default function Settings() {
             >
               console.groq.com/keys
             </a>
-            . Optimization protocols are disabled until a valid key is integrated.
+            . Resume optimization requires a valid API key.
           </p>
 
           {loading ? (
@@ -131,10 +131,10 @@ export default function Settings() {
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter secondary key manifest"
+                    placeholder="Enter your Groq API key"
                     className="w-full px-6 py-4 bg-secondary border border-gray-100 rounded-2xl text-primary placeholder-text-muted/50 focus:outline-none focus:border-brand-primary/30 transition-all font-medium text-sm"
                   />
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <button
                       onClick={handleSaveKey}
                       disabled={!apiKey.trim()}
@@ -146,12 +146,12 @@ export default function Settings() {
                       onClick={() => { setShowKeyInput(false); setApiKey(''); }}
                       className="px-8 py-3 bg-secondary text-gray-500 rounded-2xl font-medium text-sm hover:bg-primary transition-all active:scale-95 border border-gray-100"
                     >
-                      Abort
+                      Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => setShowKeyInput(true)}
                     className="px-8 py-3 bg-text-primary text-bg-primary rounded-2xl font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95"
@@ -173,7 +173,7 @@ export default function Settings() {
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Paste your primary key manifest"
+                placeholder="Paste your Groq API key"
                 className="w-full px-6 py-4 bg-neutral-50 border border-neutral-100 rounded-2xl text-neutral-900 placeholder-neutral-300 focus:outline-none focus:border-[#606c38]/30 transition-all font-medium text-sm"
               />
               <button
@@ -187,7 +187,7 @@ export default function Settings() {
           )}
         </div>
 
-        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
           <h2 className="text-lg font-semibold text-primary mb-2">Account Session</h2>
           <p className="text-gray-500 text-sm mb-8">Sign out of your active user session</p>
           <button

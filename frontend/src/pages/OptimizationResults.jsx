@@ -253,7 +253,7 @@ export default function OptimizationResults() {
         // Special handling for poor_fit rejection
         if (error && typeof error === 'object' && error.type === 'poor_fit') {
             return (
-                <div className="min-h-screen bg-primary p-8">
+                <div className="min-h-screen bg-primary p-4 md:p-8">
                     <div className="max-w-3xl mx-auto">
                         <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-12 shadow-2xl shadow-black/10 relative overflow-hidden text-center cyber-grid">
                             <div className="absolute top-0 left-0 w-full h-2 bg-brand/20" />
@@ -341,7 +341,7 @@ export default function OptimizationResults() {
     }
 
     return (
-        <div className="min-h-screen bg-primary text-primary p-8 cyber-grid">
+        <div className="min-h-screen bg-primary text-primary p-4 md:p-8 cyber-grid">
             <div className="max-w-6xl mx-auto">
                 {/* Warning Banner */}
                 {!warningDismissed && (
@@ -393,9 +393,9 @@ export default function OptimizationResults() {
                     {/* Left Column - Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Score Section */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5 relative overflow-hidden">
+                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
-                            <div className="grid grid-cols-3 gap-8 mb-10">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-10">
                                 <div className="text-center">
                                     <div className="text-6xl font-bold text-primary mb-2 tracking-tight text-mono">{resultsData.originalScore}</div>
                                     <div className="text-gray-500 text-xs">Original Score</div>
@@ -410,13 +410,13 @@ export default function OptimizationResults() {
                                 </div>
                             </div>
                             <div className="text-center mb-10">
-                                <p className="text-gray-500/50 text-[10px] font-black uppercase tracking-[0.3em] text-mono">{resultsData.iterations} Alignment Iterations</p>
+                                <p className="text-gray-500/50 text-[10px] font-black uppercase tracking-[0.3em] text-mono">{resultsData.iterations} Iterations</p>
                             </div>
 
                             {/* Score Progression */}
                             <div>
                                 <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4 italic">Score Progression</h3>
-                                <div className="flex items-center gap-6">
+                                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                                     {resultsData.scoreProgression.map((score, index) => (
                                         <React.Fragment key={index}>
                                             <div className={`flex-1 py-4 px-6 rounded-2xl text-center font-black italic tracking-tighter text-2xl transition-all text-mono ${index === resultsData.scoreProgression.length - 1
@@ -437,7 +437,7 @@ export default function OptimizationResults() {
                         </div>
 
                         {/* Job Requirements Analysis */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5 cyber-grid">
+                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 cyber-grid">
                             <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Job Requirements</h2>
                             <p className="text-gray-500 text-sm mb-8">Extracted from job description</p>
 
@@ -484,11 +484,11 @@ export default function OptimizationResults() {
                         </div>
 
                         {/* Resume Analysis */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
                             <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Resume Analysis</h2>
                             <p className="text-gray-500 text-sm mb-8">Internal profile audit</p>
 
-                            <div className="grid grid-cols-2 gap-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
                                 <div>
                                     <h3 className="text-brand font-black text-[10px] uppercase tracking-widest mb-6 italic">Strong Areas (Present)</h3>
                                     <ul className="space-y-4">
@@ -540,14 +540,14 @@ export default function OptimizationResults() {
                         </div>
 
                         {/* Changes Applied */}
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
                             <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Optimization Steps</h2>
                             <p className="text-gray-500 text-sm mb-8">Adjustments made to improve results</p>
 
                             <div className="space-y-6">
                                 {resultsData.changes.map((change) => (
-                                    <div key={change.id} className="bg-secondary rounded-3xl p-8 border border-gray-100 group transition-all hover:bg-surface hover:shadow-xl hover:shadow-black/10">
-                                        <div className="flex items-start gap-6">
+                                    <div key={change.id} className="bg-secondary rounded-3xl p-6 md:p-8 border border-gray-100 group transition-all hover:bg-surface hover:shadow-xl hover:shadow-black/10">
+                                        <div className="flex items-start gap-4 md:gap-6">
                                             <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-black font-black italic tracking-tighter text-lg flex-shrink-0 shadow-lg shadow-sm group-hover:scale-110 transition-transform">
                                                 {change.id}
                                             </div>
@@ -567,15 +567,15 @@ export default function OptimizationResults() {
 
                         {/* Optimized Resume - LaTeX Editor + PDF Preview */}
                         {latexCode && (
-                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 shadow-xl shadow-black/5">
+                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
                                 <h2 className="text-2xl font-black text-primary mb-2 italic tracking-tighter uppercase">Final Optimized Resume</h2>
-                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-8">LaTeX source and visual rendering</p>
+                                <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-8">Resume editor and visual preview</p>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* LaTeX Editor */}
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Latex Code</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Resume Editor</label>
                                             <button
                                                 onClick={handleCopyLatex}
                                                 className="text-brand hover:hover:text-red-700 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
@@ -589,7 +589,7 @@ export default function OptimizationResults() {
                                         <textarea
                                             value={latexCode}
                                             onChange={(e) => setLatexCode(e.target.value)}
-                                            className="w-full h-[600px] p-8 bg-secondary border border-gray-100 rounded-3xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none shadow-inner"
+                                            className="w-full h-[400px] md:h-[600px] p-6 md:p-8 bg-secondary border border-gray-100 rounded-3xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none shadow-inner"
                                         />
                                     </div>
 
@@ -621,7 +621,7 @@ export default function OptimizationResults() {
                                             </button>
                                         </div>
 
-                                        <div className="relative h-[600px] bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-inner">
+                                        <div className="relative h-[400px] md:h-[600px] bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-inner">
                                             {compiledPdfUrl ? (
                                                 <iframe
                                                     src={compiledPdfUrl}
@@ -653,7 +653,7 @@ export default function OptimizationResults() {
                                                             <svg className="w-16 h-16 mx-auto mb-6 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                             </svg>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Synchronization Required. <br />Refresh view above.</p>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Preview not ready. <br />Click "Refresh View" above.</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -684,9 +684,9 @@ export default function OptimizationResults() {
 
                     {/* Right Column - Cover Letter */}
                     <div className="lg:col-span-1">
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-10 sticky top-8 shadow-xl shadow-black/5">
+                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 sticky top-8 shadow-xl shadow-black/5">
                             <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Cover Letter</h2>
-                            <p className="text-gray-500 text-sm mb-8">AI-generated cover letter</p>
+                            <p className="text-gray-500 text-sm mb-8">Generated cover letter</p>
 
                             <div className="bg-secondary rounded-3xl p-8 mb-8 max-h-[500px] overflow-y-auto border border-gray-100 shadow-inner">
                                 <pre className="text-secondary text-sm whitespace-pre-wrap font-medium leading-relaxed">
@@ -728,10 +728,10 @@ export default function OptimizationResults() {
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="flex gap-6 mt-16">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-16">
                     <button
                         onClick={() => navigate('/new-optimization')}
-                        className="px-10 py-4 bg-brand text-black rounded-[2rem] font-semibold text-sm tracking-wide shadow-2xl shadow-sm hover:hover:bg-red-600 transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+                        className="px-8 py-4 bg-brand text-black rounded-[2rem] font-semibold text-sm tracking-wide shadow-2xl shadow-sm hover:hover:bg-red-600 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
                     >
                         <span>New Optimization</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -740,7 +740,7 @@ export default function OptimizationResults() {
                     </button>
                     <button
                         onClick={() => navigate('/history')}
-                        className="px-10 py-4 bg-secondary border border-gray-100 text-gray-500 hover:text-primary rounded-[2rem] font-medium text-sm shadow-xl shadow-black/5 transition-all hover:bg-surface active:scale-95"
+                        className="px-8 py-4 bg-secondary border border-gray-100 text-gray-500 hover:text-primary rounded-[2rem] font-medium text-sm shadow-xl shadow-black/5 transition-all hover:bg-surface active:scale-95 flex items-center justify-center"
                     >
                         Return to History
                     </button>

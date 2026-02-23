@@ -151,7 +151,7 @@ export default function NotFound() {
               404
             </Motion.h1>
             <div className="text-[10px] font-black uppercase tracking-[0.4em] text-brand/60 mt-2">
-              Void Protocol Active
+              Page Not Found
             </div>
           </div>
 
@@ -180,10 +180,10 @@ export default function NotFound() {
             transition={{ delay: 0.2 }}
           >
             <h2 className="text-3xl font-black text-neutral-900 italic tracking-tighter mb-4 uppercase">
-              Coordinate Mismatch.
+              Page Not Found.
             </h2>
             <p className="text-neutral-500 font-medium leading-relaxed">
-              The requested executive entity does not exist in this sector. The intelligence engine has mapped a void at this address.
+              The page you are looking for doesn't exist or has been moved. Let's get you back on track.
             </p>
           </Motion.div>
 
@@ -191,15 +191,15 @@ export default function NotFound() {
           <div className="flex justify-center gap-8 py-4 border-y border-gray-200/50">
             <div className="text-left">
               <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Status</div>
-              <div className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none">Lost in Void</div>
+              <div className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none">Not Found</div>
             </div>
             <div className="text-left">
               <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Vector</div>
-              <div className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">0x000F4</div>
+              <div className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">-</div>
             </div>
             <div className="text-left">
               <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Signal</div>
-              <div className="text-[10px] font-black text-brand uppercase tracking-widest leading-none italic">Unstable</div>
+              <div className="text-[10px] font-black text-brand uppercase tracking-widest leading-none italic">None</div>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export default function NotFound() {
               to="/"
               className="inline-flex items-center px-12 py-4 bg-[#606c38] text-white font-black text-[11px] uppercase tracking-[0.25em] rounded-2xl hover:bg-[#4a532b] transition-all active:scale-95 shadow-xl shadow-olive-500/10"
             >
-              Re-establish Uplink
+              Return Home
             </Link>
           </Motion.div>
         </div>

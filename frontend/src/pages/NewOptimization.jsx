@@ -59,10 +59,10 @@ export default function NewOptimization() {
     }, [compiledPdfUrl]);
 
     const steps = [
-        { number: 1, name: 'Archive Select', code: 'PROT_01', icon: '📝' },
-        { number: 2, name: 'Source Inject', code: 'PROT_02', icon: '📄' },
-        { number: 3, name: 'Target Parameter', code: 'PROT_03', icon: '💼' },
-        { number: 4, name: 'Neural Sync', code: 'PROT_04', icon: '⚡' }
+        { number: 1, name: 'Select Resume', code: 'STEP_01', icon: '📝' },
+        { number: 2, name: 'Upload & Extract', code: 'STEP_02', icon: '📄' },
+        { number: 3, name: 'Job Details', code: 'STEP_03', icon: '💼' },
+        { number: 4, name: 'Optimize', code: 'STEP_04', icon: '⚡' }
     ];
 
     const handleFileUpload = async (e) => {
@@ -421,7 +421,7 @@ export default function NewOptimization() {
                     <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-brand/5 blur-[120px] rounded-full" />
                 </div>
 
-                {/* Diagnostic Frame */}
+                {/* Main Container */}
                 <div className="relative z-10 bg-surface/30 backdrop-blur-xl border border-gray-200 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/40">
                     <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
 
@@ -431,7 +431,7 @@ export default function NewOptimization() {
                     <div className="absolute bottom-4 left-4 w-4 h-4 border-b border-l border-brand-primary/30" />
                     <div className="absolute bottom-4 right-4 w-4 h-4 border-b border-r border-brand-primary/30" />
 
-                    <div className="p-12">
+                    <div className="p-6 md:p-12">
                         <AnimatePresence mode="wait">
                             {/* Step 1: Archive Select */}
                             {currentStep === 1 && (
@@ -443,24 +443,24 @@ export default function NewOptimization() {
                                     className="space-y-12"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_01 // ARCHIVE_SELECT</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_01 // SELECT_RESUME</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            Select <span className="text-brand">Source.</span>
+                                            Select <span className="text-brand">Resume.</span>
                                         </h2>
                                         <p className="text-secondary font-medium tracking-tight opacity-70">
-                                            Initialize the optimization protocol by selecting your primary professional archive.
+                                            Start by selecting how you want to provide your resume.
                                         </p>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         {[
-                                            { id: 'pdf', label: 'PDF Archive', desc: 'Binary file ingestion for existing resumes.', code: 'SRC_TYPE_01', icon: '📄' },
-                                            { id: 'latex', label: 'LaTeX Source', desc: 'Direct code injection for maximum structural control.', code: 'SRC_TYPE_02', icon: '📝' }
+                                            { id: 'pdf', label: 'Upload PDF', desc: 'Upload your existing PDF resume.', code: 'OPTION_01', icon: '📄' },
+                                            { id: 'latex', label: 'Paste LaTeX', desc: 'Paste your LaTeX source code directly.', code: 'OPTION_02', icon: '📝' }
                                         ].map((opt) => (
                                             <button
                                                 key={opt.id}
                                                 onClick={() => setInputType(opt.id)}
-                                                className={`group relative p-12 rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
+                                                className={`group relative p-8 md:p-12 rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
                                                     ? 'border-brand-primary bg-brand/5 shadow-[0_0_40px_rgba(141,163,74,0.1)]'
                                                     : 'border-gray-200 hover:border-text-secondary hover:bg-white/[0.02]'
                                                     }`}
@@ -500,7 +500,7 @@ export default function NewOptimization() {
                                                 : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
                                                 }`}
                                         >
-                                            <span>Initialize Phase 02</span>
+                                            <span>Continue to Upload</span>
                                             <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                             </svg>
@@ -509,7 +509,7 @@ export default function NewOptimization() {
                                 </Motion.div>
                             )}
 
-                            {/* Step 2: Source Inject */}
+                            {/* Step 2: Upload Files */}
                             {currentStep === 2 && (
                                 <Motion.div
                                     key="step2"
@@ -519,12 +519,12 @@ export default function NewOptimization() {
                                     className="space-y-10"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_02 // SOURCE_INJECT</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_02 // UPLOAD_&_EXTRACT</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            {inputType === 'pdf' ? 'Archive' : 'Code'} <span className="text-brand">Injection.</span>
+                                            {inputType === 'pdf' ? 'Upload' : 'Paste'} <span className="text-brand">{inputType === 'pdf' ? 'Resume.' : 'Code.'}</span>
                                         </h2>
                                         <p className="text-secondary font-medium tracking-tight opacity-70">
-                                            {inputType === 'pdf' ? 'Securely upload your professional archive for deconstruction.' : 'Inject your LaTeX source code into the neural parser.'}
+                                            {inputType === 'pdf' ? 'Upload your resume to extract its content.' : 'Paste your LaTeX source code to begin.'}
                                         </p>
                                     </div>
 
@@ -534,7 +534,7 @@ export default function NewOptimization() {
                                                 onDrop={handleDrop}
                                                 onDragOver={handleDragOver}
                                                 onDragLeave={handleDragLeave}
-                                                className={`relative border border-dashed rounded-[2rem] p-16 text-center transition-all duration-500 overflow-hidden ${isDragging
+                                                className={`relative border border-dashed rounded-[2rem] p-8 md:p-16 text-center transition-all duration-500 overflow-hidden ${isDragging
                                                     ? 'border-brand-primary bg-brand/10 shadow-[inner_0_0_40px_rgba(141,163,74,0.1)]'
                                                     : 'border-gray-200 hover:border-brand-primary/30 bg-white/[0.02]'
                                                     }`}
@@ -568,7 +568,7 @@ export default function NewOptimization() {
                                                             <div>
                                                                 <p className="text-xl font-semibold text-primary tracking-tight mb-1">{resumeFile.name}</p>
                                                                 <div className="text-mono text-[9px] font-bold text-brand uppercase tracking-[0.3em]">
-                                                                    {isExtracting ? 'DECONSTRUCTING_DATA...' : 'METADATA_EXTRACTED'}
+                                                                    {isExtracting ? 'EXTRACTING_TEXT...' : 'TEXT_EXTRACTED'}
                                                                 </div>
                                                             </div>
                                                             <button
@@ -578,7 +578,7 @@ export default function NewOptimization() {
                                                                 }}
                                                                 className="px-8 py-2.5 border border-gray-200 hover:border-red-500/50 hover:bg-red-500/5 text-gray-500 hover:text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                                                             >
-                                                                Reset Archive
+                                                                Remove File
                                                             </button>
                                                         </Motion.div>
                                                     ) : (
@@ -594,13 +594,13 @@ export default function NewOptimization() {
                                                                 </svg>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xl font-semibold text-primary mb-3">Drop PDF Archive</p>
+                                                                <p className="text-xl font-semibold text-primary mb-3">Drop PDF Resume</p>
                                                                 <p className="text-gray-500 text-sm mb-8">or click to browse your files</p>
                                                                 <label
                                                                     htmlFor="pdf-upload"
                                                                     className="inline-block px-10 py-4 bg-text-primary text-bg-primary rounded-2xl cursor-pointer font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 shadow-xl"
                                                                 >
-                                                                    Initialize Upload
+                                                                    Browse Files
                                                                 </label>
                                                             </div>
                                                         </Motion.div>
@@ -615,16 +615,16 @@ export default function NewOptimization() {
                                                     className="space-y-4"
                                                 >
                                                     <div className="flex justify-between items-center">
-                                                        <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">Extracted_Data_Stream // READ_ONLY</label>
+                                                        <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">Extracted_Text // READ_ONLY</label>
                                                         <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
                                                     </div>
                                                     <div className="relative group">
                                                         <textarea
                                                             value={extractedText}
                                                             readOnly
-                                                            className="w-full h-48 p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-secondary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 transition-all custom-scrollbar"
+                                                            className="w-full h-48 p-6 md:p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-secondary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 transition-all custom-scrollbar"
                                                         />
-                                                        <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">System_Verify_v4.2</div>
+                                                        <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Read_Only</div>
                                                     </div>
                                                 </Motion.div>
                                             )}
@@ -632,9 +632,9 @@ export default function NewOptimization() {
                                     ) : (
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center">
-                                                <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">LaTeX_Source_Buffer</label>
+                                                <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">LaTeX_Source_Code</label>
                                                 <div className="flex items-center gap-4">
-                                                    <div className="text-[10px] text-brand font-bold">STABILITY: 100%</div>
+                                                    <div className="text-[10px] text-brand font-bold">READY</div>
                                                     <div className="w-2 h-2 rounded-full bg-brand" />
                                                 </div>
                                             </div>
@@ -643,9 +643,9 @@ export default function NewOptimization() {
                                                     value={resumeText}
                                                     onChange={(e) => setResumeText(e.target.value)}
                                                     placeholder="\\documentclass{article}\n\\begin{document}\nPaste high-fidelity source code here...\n\\end{document}"
-                                                    className="w-full h-[400px] p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none custom-scrollbar shadow-inner"
+                                                    className="w-full h-[400px] p-6 md:p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none custom-scrollbar shadow-inner"
                                                 />
-                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Source_Controller_v1</div>
+                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Code_Editor</div>
                                             </div>
                                         </div>
                                     )}
@@ -658,7 +658,7 @@ export default function NewOptimization() {
                                             <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
                                             </svg>
-                                            <span>Abandon Phase</span>
+                                            <span>Back</span>
                                         </button>
 
                                         <button
@@ -669,7 +669,7 @@ export default function NewOptimization() {
                                                 : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
                                                 }`}
                                         >
-                                            <span>Initialize Phase 03</span>
+                                            <span>Continue to Job Details</span>
                                             <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                             </svg>
@@ -688,20 +688,20 @@ export default function NewOptimization() {
                                     className="space-y-10"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_03 // TARGET_PARAMETERS</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_03 // JOB_DETAILS</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
                                             Job <span className="text-brand">Description.</span>
                                         </h2>
                                         <p className="text-secondary font-medium tracking-tight opacity-70">
-                                            Define the target alignment vectors for the neural synthesis engine.
+                                            Provide the description of the job you are applying for.
                                         </p>
                                     </div>
 
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">Market_Requirement_Buffer</label>
+                                            <label className="text-mono text-[9px] text-gray-500 uppercase tracking-[0.4em]">Job_Requirements</label>
                                             <div className="flex items-center gap-4">
-                                                <div className="text-[10px] text-brand font-bold uppercase tracking-widest leading-none">Min Threshold // 50 Units</div>
+                                                <div className="text-[10px] text-brand font-bold uppercase tracking-widest leading-none">Minimum Length // 50 Chars</div>
                                             </div>
                                         </div>
                                         <div className="relative">
@@ -709,7 +709,7 @@ export default function NewOptimization() {
                                                 value={jobDescription}
                                                 onChange={(e) => setJobDescription(e.target.value)}
                                                 placeholder="Paste the complete target job description here..."
-                                                className="w-full h-80 p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all resize-none custom-scrollbar shadow-inner text-sm font-medium leading-relaxed"
+                                                className="w-full h-[600px] md:h-80 p-6 md:p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all resize-none custom-scrollbar shadow-inner text-sm font-medium leading-relaxed"
                                             />
                                             <div className="absolute bottom-6 right-8 flex items-center gap-4">
                                                 <div className="h-1.5 w-32 rounded-full overflow-hidden bg-white/5 border border-white/5">
@@ -720,7 +720,7 @@ export default function NewOptimization() {
                                                     />
                                                 </div>
                                                 <p className={`text-mono text-[9px] font-black uppercase tracking-widest ${jobDescription.length >= 50 ? 'text-brand' : 'text-gray-500'}`}>
-                                                    {String(jobDescription.length).padStart(3, '0')} UNITS
+                                                    {String(jobDescription.length).padStart(3, '0')} CHARS
                                                 </p>
                                             </div>
                                         </div>
@@ -734,7 +734,7 @@ export default function NewOptimization() {
                                             <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
                                             </svg>
-                                            <span>Withdraw Phase</span>
+                                            <span>Back</span>
                                         </button>
 
                                         <button
@@ -748,7 +748,7 @@ export default function NewOptimization() {
                                             <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                             </svg>
-                                            <span>Execute Neural Sync</span>
+                                            <span>Start Optimization</span>
                                         </button>
                                     </div>
                                 </Motion.div>
@@ -764,12 +764,12 @@ export default function NewOptimization() {
                                     className="space-y-8"
                                 >
                                     <div className="text-center max-w-2xl mx-auto mb-10">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">Phase_04 // NEURAL_SYNTHESIS</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_04 // RESULTS</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
-                                            Optimization <span className="text-brand">Output.</span>
+                                            Optimized <span className="text-brand">Resume.</span>
                                         </h2>
                                         <p className="text-secondary font-medium tracking-tight opacity-70">
-                                            System deconstruction and synthesis complete. Diagnostic results available below.
+                                            Your resume has been optimized. Review the results below.
                                         </p>
                                     </div>
 
@@ -791,13 +791,13 @@ export default function NewOptimization() {
                                                 </div>
                                             </div>
                                             <div className="space-y-6 font-mono max-w-md w-full">
-                                                <div className="text-sm font-black text-primary italic tracking-widest animate-pulse">SYNTHESIZING_OPTIMAL_PATH...</div>
+                                                <div className="text-sm font-black text-primary italic tracking-widest animate-pulse">OPTIMIZING_RESUME...</div>
                                                 <div className="grid grid-cols-1 gap-1 text-[8px] text-gray-500 uppercase tracking-[0.2em] text-left">
                                                     {[
-                                                        { label: 'INITIALIZING_ATS_PARSER', status: 'OK' },
-                                                        { label: 'VECTOR_ALIGNMENT_ACTIVE', status: 'RUNNING' },
-                                                        { label: 'SURGICAL_KEYWORD_INJECTION', status: 'PENDING' },
-                                                        { label: 'HEURISTIC_SCORE_CALCULATION', status: 'PENDING' }
+                                                        { label: 'ANALYZING_JOB_DESCRIPTION', status: 'OK' },
+                                                        { label: 'MATCHING_SKILLS', status: 'RUNNING' },
+                                                        { label: 'OPTIMIZING_CONTENT', status: 'PENDING' },
+                                                        { label: 'FINALIZING_STRUCTURE', status: 'PENDING' }
                                                     ].map((log, i) => (
                                                         <Motion.div
                                                             key={log.label}
@@ -897,13 +897,13 @@ export default function NewOptimization() {
                                                     className="space-y-8"
                                                 >
                                                     {/* Split Pane Layout */}
-                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[650px]">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:h-[650px]">
                                                         {/* Left: LaTeX Editor */}
-                                                        <div className="flex flex-col space-y-4">
+                                                        <div className="flex flex-col space-y-4 h-[400px] lg:h-auto">
                                                             <div className="flex justify-between items-center px-1">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">LaTeX_Source_Editor</label>
+                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">LaTeX_Editor</label>
                                                                 </div>
                                                                 <button
                                                                     onClick={() => {
@@ -923,18 +923,18 @@ export default function NewOptimization() {
                                                                 <textarea
                                                                     value={optimizedLatex}
                                                                     onChange={(e) => setOptimizedLatex(e.target.value)}
-                                                                    className="w-full h-full p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
+                                                                    className="w-full h-full p-6 md:p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
                                                                 />
-                                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Write_Mode_Active</div>
+                                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Editable</div>
                                                             </div>
                                                         </div>
 
                                                         {/* Right: PDF Preview */}
-                                                        <div className="flex flex-col space-y-4">
+                                                        <div className="flex flex-col space-y-4 h-[500px] lg:h-auto">
                                                             <div className="flex justify-between items-center px-1">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">High_Fidelity_Render</label>
+                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">PDF_Preview</label>
                                                                 </div>
                                                                 <button
                                                                     onClick={handleCompileLatex}
@@ -947,7 +947,7 @@ export default function NewOptimization() {
                                                                     {isCompiling ? (
                                                                         <>
                                                                             <div className="w-2.5 h-2.5 border-2 border-text-muted border-t-transparent rounded-full animate-spin" />
-                                                                            <span>RE_RENDERING...</span>
+                                                                            <span>Loading...</span>
                                                                         </>
                                                                     ) : (
                                                                         <>
@@ -980,14 +980,14 @@ export default function NewOptimization() {
                                                                                         className="absolute inset-0 border-2 border-brand-primary border-t-transparent rounded-full"
                                                                                     />
                                                                                 </div>
-                                                                                <p className="text-mono text-[8px] font-black uppercase tracking-widest">Rendering_Visuals</p>
+                                                                                <p className="text-mono text-[8px] font-black uppercase tracking-widest">Loading Preview</p>
                                                                             </div>
                                                                         ) : (
                                                                             <div className="text-center px-10 space-y-6">
                                                                                 <svg className="w-16 h-16 mx-auto text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                                                 </svg>
-                                                                                <p className="text-mono text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed max-w-[200px] mx-auto opacity-40">System requires manual synchronization. <br />Initialize "Refresh View" above.</p>
+                                                                                <p className="text-mono text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed max-w-[200px] mx-auto opacity-40">Click "Refresh View" above to <br />preview your resume.</p>
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -1193,7 +1193,7 @@ export default function NewOptimization() {
                                             )}
 
                                             {/* Bottom Actions */}
-                                            <div className="flex gap-6 mt-12 justify-between items-center border-t border-white/5 pt-10">
+                                            <div className="flex flex-col sm:flex-row gap-6 mt-12 justify-between items-center border-t border-white/5 pt-10">
                                                 <button
                                                     onClick={resetForm}
                                                     className="px-10 py-5 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 border border-gray-100"
@@ -1201,15 +1201,15 @@ export default function NewOptimization() {
                                                     <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                                     </svg>
-                                                    <span>Cold Restart</span>
+                                                    <span>Start Over</span>
                                                 </button>
 
-                                                <div className="flex gap-6">
+                                                <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
                                                     <button
                                                         onClick={() => navigate('/dashboard')}
                                                         className="px-8 py-5 text-gray-500 hover:text-primary font-black text-[10px] uppercase tracking-[0.3em] transition-all"
                                                     >
-                                                        Exit Protocol
+                                                        Exit
                                                     </button>
 
                                                     <button
@@ -1223,7 +1223,7 @@ export default function NewOptimization() {
                                                         <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                         </svg>
-                                                        <span>Download Artifact</span>
+                                                        <span>Download PDF</span>
                                                     </button>
                                                 </div>
                                             </div>
