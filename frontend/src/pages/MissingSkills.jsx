@@ -183,7 +183,7 @@ export default function MissingSkills() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-6 md:p-8">
+    <div className="min-h-screen bg-bg-primary text-text-primary p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
 
         {/* Page header */}
@@ -228,11 +228,10 @@ export default function MissingSkills() {
                   <button
                     key={t}
                     onClick={() => setResumeInputType(t)}
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
-                      resumeInputType === t
+                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${resumeInputType === t
                         ? 'bg-brand-primary text-black'
                         : 'text-text-muted hover:text-text-primary'
-                    }`}
+                      }`}
                   >
                     {t === 'text' ? 'Paste Text' : 'Upload PDF'}
                   </button>
@@ -461,7 +460,7 @@ export default function MissingSkills() {
             <div className="bg-bg-surface border border-border-muted rounded-[2rem] p-6 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-0.5 bg-brand-primary/30" />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-6 flex-wrap">
+                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                   <div>
                     <p className="text-4xl font-black text-brand-primary italic">{result.total_missing}</p>
                     <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">Missing Skills</p>
