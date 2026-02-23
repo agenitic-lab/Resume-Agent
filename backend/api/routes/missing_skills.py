@@ -5,8 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 import asyncio
 import json
+import uuid
 
-from database.models import User
+from sqlalchemy.orm import Session
+from database.models import User, MissingSkillsRun
+from database.connection import get_db
 from auth.dependencies import get_current_user
 from core.security import decrypt_api_key
 from openai import OpenAI, RateLimitError, APIStatusError
@@ -72,6 +75,7 @@ class MissingSkillsResponse(BaseModel):
 async def find_missing_skills(
     request: MissingSkillsRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Analyse multiple job descriptions against a single resume and return
@@ -305,7 +309,7 @@ Rules:
             "Try shortening your JDs or submitting them in smaller batches."
         )
 
-    return {
+    response_data = {
         "missing_skills": result,
         "total_missing": total,
         "jds_analyzed": jds_analyzed,
@@ -315,3 +319,77 @@ Rules:
         "rate_limit_type": rate_limit_type,
         "warning": warning,
     }
+
+    # ── Persist the result to DB ──────────────────────────────────────────
+    try:
+        run_record = MissingSkillsRun(
+            id=uuid.uuid4(),
+            user_id=current_user.id,
+            resume_snippet=request.resume[:200] if request.resume else "",
+            jds_count=len(request.job_descriptions),
+            jds_analyzed=jds_analyzed,
+            total_missing=total,
+            result_json=response_data,
+        )
+        db.add(run_record)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        print(f"[missing_skills] Failed to persist run: {exc}")
+
+    return response_data
+
+
+# ── History endpoints ─────────────────────────────────────────────────────
+
+@router.get("/missing-skills/history")
+async def get_missing_skills_history(
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the user's past missing-skills analysis runs, newest first."""
+    runs = (
+        db.query(MissingSkillsRun)
+        .filter(MissingSkillsRun.user_id == current_user.id)
+        .order_by(MissingSkillsRun.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": str(run.id),
+            "resume_snippet": run.resume_snippet,
+            "jds_count": run.jds_count,
+            "jds_analyzed": run.jds_analyzed,
+            "total_missing": run.total_missing,
+            "result_json": run.result_json,
+            "created_at": run.created_at.isoformat() if run.created_at else None,
+        }
+        for run in runs
+    ]
+
+
+@router.delete("/missing-skills/{run_id}")
+async def delete_missing_skills_run(
+    run_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a specific missing-skills run belonging to the current user."""
+    try:
+        run_uuid = uuid.UUID(run_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid run ID format.")
+
+    run = (
+        db.query(MissingSkillsRun)
+        .filter(MissingSkillsRun.id == run_uuid, MissingSkillsRun.user_id == current_user.id)
+        .first()
+    )
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found.")
+
+    db.delete(run)
+    db.commit()
+    return {"detail": "Deleted successfully."}

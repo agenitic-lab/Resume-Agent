@@ -491,3 +491,14 @@ export async function findMissingSkills(resume, jobDescriptions) {
         body: JSON.stringify({ resume, job_descriptions: jobDescriptions }),
     });
 }
+
+// Missing Skills History endpoints
+export async function getMissingSkillsHistory(limit = 50) {
+    return apiRequest(`/api/agent/missing-skills/history?limit=${limit}`);
+}
+
+export async function deleteMissingSkillsRun(runId) {
+    return apiRequest(`/api/agent/missing-skills/${runId}`, {
+        method: 'DELETE',
+    });
+}
