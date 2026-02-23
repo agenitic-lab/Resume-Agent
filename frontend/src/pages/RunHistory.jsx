@@ -185,7 +185,7 @@ export default function RunHistory() {
                                                     {item.status}
                                                 </span>
                                                 <span className="text-gray-500 text-xs">
-                                                    {new Date(item.created_at).toLocaleDateString()}
+                                                    {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Unknown'}
                                                 </span>
                                             </div>
                                             <h3 className="text-lg font-semibold text-primary mb-1 truncate">
@@ -275,7 +275,7 @@ export default function RunHistory() {
                                                             Completed
                                                         </span>
                                                         <span className="text-gray-500 text-xs">
-                                                            {new Date(item.created_at).toLocaleDateString()}
+                                                            {item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Unknown'}
                                                         </span>
                                                     </div>
                                                     <h3 className="text-lg font-semibold text-primary mb-1 truncate">

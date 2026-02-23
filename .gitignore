@@ -64,3 +64,9 @@ Desktop.ini
 # Logs
 *.log
 logs/
+
+
+#local-test-templates
+templates1.tex
+templates2.tex
+templates3.tex

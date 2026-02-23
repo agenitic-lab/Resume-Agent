@@ -333,48 +333,61 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent) {
     let buffer = '';
     let finalResult = null;
 
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+    try {
+        while (true) {
+            let readResult;
+            try {
+                readResult = await reader.read();
+            } catch (streamError) {
+                console.error('Stream read error:', streamError);
+                if (finalResult) break;
+                throw new Error('Connection to server lost during optimization. Please try again.');
+            }
 
-        buffer += decoder.decode(value, { stream: true });
-        const chunks = buffer.split('\n\n');
-        buffer = chunks.pop() || '';
+            const { done, value } = readResult;
+            if (done) break;
 
-        for (const chunk of chunks) {
-            const lines = chunk.split('\n').map((line) => line.trim()).filter(Boolean);
-            let eventName = 'message';
-            let dataText = '';
+            buffer += decoder.decode(value, { stream: true });
+            const chunks = buffer.split('\n\n');
+            buffer = chunks.pop() || '';
 
-            for (const line of lines) {
-                if (line.startsWith('event:')) {
-                    eventName = line.slice(6).trim();
-                } else if (line.startsWith('data:')) {
-                    dataText += line.slice(5).trim();
+            for (const chunk of chunks) {
+                const lines = chunk.split('\n').map((line) => line.trim()).filter(Boolean);
+                let eventName = 'message';
+                let dataText = '';
+
+                for (const line of lines) {
+                    if (line.startsWith('event:')) {
+                        eventName = line.slice(6).trim();
+                    } else if (line.startsWith('data:')) {
+                        dataText += line.slice(5).trim();
+                    }
+                }
+
+                if (!dataText) continue;
+
+                let payload = {};
+                try {
+                    payload = JSON.parse(dataText);
+                } catch {
+                    payload = { raw: dataText };
+                }
+
+                if (typeof onEvent === 'function') {
+                    onEvent({ event: eventName, data: payload });
+                }
+
+                if (eventName === 'completed' && payload.result) {
+                    finalResult = payload.result;
+                }
+
+                if (eventName === 'error') {
+                    throw new Error(payload.message || 'Optimization failed');
                 }
             }
-
-            if (!dataText) continue;
-
-            let payload = {};
-            try {
-                payload = JSON.parse(dataText);
-            } catch {
-                payload = { raw: dataText };
-            }
-
-            if (typeof onEvent === 'function') {
-                onEvent({ event: eventName, data: payload });
-            }
-
-            if (eventName === 'completed' && payload.result) {
-                finalResult = payload.result;
-            }
-
-            if (eventName === 'error') {
-                throw new Error(payload.message || 'Optimization failed');
-            }
         }
+    } finally {
+        try { reader.releaseLock(); } catch { /* ignore */ }
     }
 
     if (!finalResult) {
@@ -499,6 +512,53 @@ export async function getMissingSkillsHistory(limit = 50) {
 
 export async function deleteMissingSkillsRun(runId) {
     return apiRequest(`/api/agent/missing-skills/${runId}`, {
+        method: 'DELETE',
+    });
+}
+
+// --- Template Preference Endpoints ---
+
+export async function getTemplates() {
+    return apiRequest('/api/agent/templates');
+}
+
+export function getTemplatePreviewUrl(templateId) {
+    return `${API_URL}/api/agent/template-preview/${templateId}`;
+}
+
+export async function getTemplatePreference() {
+    return apiRequest('/api/user/template-preference');
+}
+
+export async function setTemplatePreference(templateId) {
+    return apiRequest('/api/user/template-preference', {
+        method: 'POST',
+        body: JSON.stringify({ template_id: templateId }),
+    });
+}
+
+export async function resetTemplatePreference() {
+    return apiRequest('/api/user/template-preference', {
+        method: 'DELETE',
+    });
+}
+
+export async function addCustomTemplate(name, latex) {
+    return apiRequest('/api/user/custom-template', {
+        method: 'POST',
+        body: JSON.stringify({ name, latex }),
+    });
+}
+
+export async function updateCustomTemplate(index, name, latex) {
+    return apiRequest(`/api/user/custom-template/${index}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, latex }),
+    });
+}
+
+export async function deleteCustomTemplate(index) {
+    return apiRequest(`/api/user/custom-template/${index}`, {
         method: 'DELETE',
     });
 }

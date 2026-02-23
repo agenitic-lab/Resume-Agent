@@ -55,6 +55,29 @@ def ensure_user_api_key_columns():
             conn.execute(text(stmt))
 
 
+def ensure_user_template_columns():
+    inspector = inspect(engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing = {col["name"] for col in inspector.get_columns("users")}
+    statements = []
+
+    if "default_template" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN default_template VARCHAR")
+    if "custom_template_latex" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN custom_template_latex TEXT")
+    if "custom_templates" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN custom_templates JSONB")
+
+    if not statements:
+        return
+
+    with engine.begin() as conn:
+        for stmt in statements:
+            conn.execute(text(stmt))
+
+
 def ensure_runtime_schema():
     # Import models lazily to avoid circular import at module load time.
     from database.models.user import User
@@ -66,3 +89,6 @@ def ensure_runtime_schema():
 
     # Ensure incremental user columns exist for BYOK.
     ensure_user_api_key_columns()
+
+    # Ensure template preference columns exist.
+    ensure_user_template_columns()

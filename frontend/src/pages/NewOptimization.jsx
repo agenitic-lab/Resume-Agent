@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Toast from '../components/Toast';
-import { runOptimization, getApiKeyStatus } from '../services/api';
+import { optimizeResumeStream, getApiKeyStatus } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -27,6 +27,7 @@ export default function NewOptimization() {
     const [activeResultTab, setActiveResultTab] = useState('resume'); // 'resume' | 'details' | 'coverLetter'
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
+    const [liveStatusLogs, setLiveStatusLogs] = useState([]);
 
     // check API key status on mount
     useEffect(() => {
@@ -97,7 +98,7 @@ export default function NewOptimization() {
             }
 
             const data = await response.json();
-            setExtractedText(data.text);
+            setExtractedText(data.text || '');
         } catch (error) {
             setToast({ message: `Failed to extract text from PDF: ${error.message}`, type: 'error' });
         } finally {
@@ -138,7 +139,12 @@ export default function NewOptimization() {
             });
 
             if (!response.ok) {
-                throw new Error('LaTeX compilation failed');
+                let detail = 'LaTeX compilation failed';
+                try {
+                    const errData = await response.json();
+                    detail = errData.detail || errData.message || detail;
+                } catch { /* non-JSON response */ }
+                throw new Error(detail);
             }
 
             const blob = await response.blob();
@@ -200,10 +206,33 @@ export default function NewOptimization() {
     const simulateAgentOptimization = async () => {
         setIsOptimizing(true);
         setWarningDismissed(false);
+        setLiveStatusLogs([]);
         try {
             const resumeContent = inputType === 'pdf' ? extractedText : resumeText;
 
-            const data = await runOptimization(jobDescription, resumeContent);
+            const data = await optimizeResumeStream(jobDescription, resumeContent, ({ event, data: eventData }) => {
+                if (event === 'run_started') {
+                    setLiveStatusLogs([{ label: 'INITIALIZING', detail: 'Starting optimization workflow', status: 'OK' }]);
+                } else if (event === 'node_started') {
+                    const label = eventData.label || eventData.node || 'Processing';
+                    const detail = eventData.detail || '';
+                    setLiveStatusLogs(prev => {
+                        // Mark all previous items as OK, add new one as RUNNING
+                        const updated = prev.map(item => ({ ...item, status: 'OK' }));
+                        return [...updated, { label: label.toUpperCase().replace(/\s+/g, '_'), detail, status: 'RUNNING' }];
+                    });
+                } else if (event === 'node_completed') {
+                    setLiveStatusLogs(prev => {
+                        // Mark the last item as OK
+                        if (prev.length === 0) return prev;
+                        const updated = [...prev];
+                        updated[updated.length - 1] = { ...updated[updated.length - 1], status: 'OK' };
+                        return updated;
+                    });
+                } else if (event === 'run_completed') {
+                    setLiveStatusLogs(prev => prev.map(item => ({ ...item, status: 'OK' })));
+                }
+            });
             console.log('Optimization response:', {
                 final_status: data.final_status,
                 fit_decision: data.fit_decision,
@@ -221,21 +250,33 @@ export default function NewOptimization() {
                 return;
             }
 
-            // Store the full optimization results
-            const plan = data.improvement_plan || {};
-            const planChanges = Array.isArray(plan)
-                ? plan.map((change, index) => ({
+            // Build optimization steps from decision_log (real agent steps) or fall back to improvement_plan
+            const decisionLog = data.decision_log || [];
+            let optimizationSteps;
+
+            if (decisionLog.length > 0) {
+                optimizationSteps = decisionLog.map((entry, index) => ({
                     id: index + 1,
-                    title: change.area || 'Improvement',
-                    description: change.suggestion || change.description || '',
-                    reason: change.reason || 'To improve ATS score'
-                }))
-                : (plan.priority_changes || []).map((change, index) => ({
-                    id: index + 1,
-                    title: `Change ${index + 1}`,
-                    description: typeof change === 'string' ? change : (change.suggestion || change.description || ''),
-                    reason: plan.reasoning || 'To improve ATS score'
+                    title: entry.node || entry.label || `Step ${index + 1}`,
+                    description: entry.detail || entry.summary || '',
+                    reason: entry.reason || '',
                 }));
+            } else {
+                const plan = data.improvement_plan || {};
+                optimizationSteps = Array.isArray(plan)
+                    ? plan.map((change, index) => ({
+                        id: index + 1,
+                        title: change.area || 'Improvement',
+                        description: change.suggestion || change.description || '',
+                        reason: change.reason || 'To improve ATS score'
+                    }))
+                    : (plan.priority_changes || []).map((change, index) => ({
+                        id: index + 1,
+                        title: `Change ${index + 1}`,
+                        description: typeof change === 'string' ? change : (change.suggestion || change.description || ''),
+                        reason: plan.reasoning || 'To improve ATS score'
+                    }));
+            }
 
             const reqs = data.job_requirements || {};
             const analysis = data.resume_analysis || {};
@@ -268,7 +309,7 @@ export default function NewOptimization() {
                     strongSections: analysis.suggestions || [],
                     weakSections: analysis.weaknesses || []
                 },
-                changes: planChanges,
+                changes: optimizationSteps,
                 coverLetter: data.cover_letter || "Cover letter not available for this run.",
                 fitDecision: data.fit_decision,
                 fitReason: data.fit_reason,
@@ -296,7 +337,13 @@ export default function NewOptimization() {
                         setCompiledPdfUrl(url);
                         setToast({ message: 'Optimization completed successfully!', type: 'success' });
                     } else {
-                        throw new Error('LaTeX compilation failed');
+                        let detail = 'LaTeX compilation failed';
+                        try {
+                            const errData = await response.json();
+                            detail = errData.detail || errData.message || detail;
+                        } catch { /* non-JSON response */ }
+                        console.error('Compile response error:', detail);
+                        throw new Error(detail);
                     }
                 } catch (compileError) {
                     console.error('Compilation error:', compileError);
@@ -622,7 +669,7 @@ export default function NewOptimization() {
                                                         <textarea
                                                             value={extractedText}
                                                             readOnly
-                                                            className="w-full h-48 p-6 md:p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-secondary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 transition-all custom-scrollbar"
+                                                            className="w-full h-48 p-6 md:p-8 bg-secondary border border-gray-200 rounded-[2rem] text-primary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all custom-scrollbar"
                                                         />
                                                         <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Read_Only</div>
                                                     </div>
@@ -643,7 +690,7 @@ export default function NewOptimization() {
                                                     value={resumeText}
                                                     onChange={(e) => setResumeText(e.target.value)}
                                                     placeholder="\\documentclass{article}\n\\begin{document}\nPaste high-fidelity source code here...\n\\end{document}"
-                                                    className="w-full h-[400px] p-6 md:p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none custom-scrollbar shadow-inner"
+                                                    className="w-full h-[400px] p-6 md:p-10 bg-secondary border border-gray-200 rounded-[2.5rem] text-primary placeholder-gray-400 focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-sm resize-none custom-scrollbar"
                                                 />
                                                 <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Code_Editor</div>
                                             </div>
@@ -709,7 +756,7 @@ export default function NewOptimization() {
                                                 value={jobDescription}
                                                 onChange={(e) => setJobDescription(e.target.value)}
                                                 placeholder="Paste the complete target job description here..."
-                                                className="w-full h-[600px] md:h-80 p-6 md:p-10 bg-black/40 border border-gray-200 rounded-[2.5rem] text-primary placeholder-text-muted/30 focus:outline-none focus:border-brand-primary/30 transition-all resize-none custom-scrollbar shadow-inner text-sm font-medium leading-relaxed"
+                                                className="w-full h-[600px] md:h-80 p-6 md:p-10 bg-secondary border border-gray-200 rounded-[2.5rem] text-primary placeholder-gray-400 focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all resize-none custom-scrollbar text-sm font-medium leading-relaxed"
                                             />
                                             <div className="absolute bottom-6 right-8 flex items-center gap-4">
                                                 <div className="h-1.5 w-32 rounded-full overflow-hidden bg-white/5 border border-white/5">
@@ -793,21 +840,18 @@ export default function NewOptimization() {
                                             <div className="space-y-6 font-mono max-w-md w-full">
                                                 <div className="text-sm font-black text-primary italic tracking-widest animate-pulse">OPTIMIZING_RESUME...</div>
                                                 <div className="grid grid-cols-1 gap-1 text-[8px] text-gray-500 uppercase tracking-[0.2em] text-left">
-                                                    {[
-                                                        { label: 'ANALYZING_JOB_DESCRIPTION', status: 'OK' },
-                                                        { label: 'MATCHING_SKILLS', status: 'RUNNING' },
-                                                        { label: 'OPTIMIZING_CONTENT', status: 'PENDING' },
-                                                        { label: 'FINALIZING_STRUCTURE', status: 'PENDING' }
-                                                    ].map((log, i) => (
+                                                    {(liveStatusLogs.length > 0 ? liveStatusLogs : [
+                                                        { label: 'WAITING_FOR_SERVER', status: 'RUNNING' }
+                                                    ]).map((log, i) => (
                                                         <Motion.div
-                                                            key={log.label}
+                                                            key={`${log.label}-${i}`}
                                                             initial={{ opacity: 0, x: -10 }}
                                                             animate={{ opacity: 1, x: 0 }}
-                                                            transition={{ delay: i * 0.4 }}
+                                                            transition={{ delay: 0.05 }}
                                                             className="flex justify-between border-b border-white/5 py-1"
                                                         >
-                                                            <span>[{log.label}]</span>
-                                                            <span className={log.status === 'OK' ? 'text-brand' : 'text-gray-500'}>// {log.status}</span>
+                                                            <span className="truncate mr-2">[{log.label}]</span>
+                                                            <span className={log.status === 'OK' ? 'text-brand' : log.status === 'RUNNING' ? 'text-yellow-500 animate-pulse' : 'text-gray-500'}>// {log.status}</span>
                                                         </Motion.div>
                                                     ))}
                                                 </div>
@@ -923,7 +967,7 @@ export default function NewOptimization() {
                                                                 <textarea
                                                                     value={optimizedLatex}
                                                                     onChange={(e) => setOptimizedLatex(e.target.value)}
-                                                                    className="w-full h-full p-6 md:p-8 bg-black/40 border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs resize-none custom-scrollbar"
+                                                                    className="w-full h-full p-6 md:p-8 bg-secondary border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-xs resize-none custom-scrollbar"
                                                                 />
                                                                 <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Editable</div>
                                                             </div>
@@ -1123,17 +1167,22 @@ export default function NewOptimization() {
                                                     {optimizationData.changes.length > 0 && (
                                                         <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
                                                             <h3 className="text-lg font-semibold text-primary mb-1 tracking-tight">Optimization Steps</h3>
-                                                            <p className="text-gray-500 text-sm mb-6">Adjustments made to improve results</p>
-                                                            <div className="space-y-4">
+                                                            <p className="text-gray-500 text-sm mb-6">Real agent node-by-node decisions during optimization</p>
+                                                            <div className="space-y-3">
                                                                 {optimizationData.changes.map((change) => (
-                                                                    <div key={change.id} className="bg-secondary rounded-2xl p-6 border border-gray-100 transition-all hover:bg-surface">
+                                                                    <div key={change.id} className="bg-secondary rounded-2xl p-5 border border-gray-100 transition-all hover:bg-surface">
                                                                         <div className="flex items-start gap-4">
-                                                                            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center text-black font-black italic text-sm flex-shrink-0">
-                                                                                {change.id}
+                                                                            <div className="w-8 h-8 bg-brand/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                                                <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                                                </svg>
                                                                             </div>
-                                                                            <div className="flex-1">
-                                                                                <h4 className="text-primary font-semibold text-sm mb-1">{change.title}</h4>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <h4 className="text-primary font-semibold text-sm mb-0.5">{change.title}</h4>
                                                                                 <p className="text-secondary text-sm leading-relaxed">{change.description}</p>
+                                                                                {change.reason && (
+                                                                                    <p className="text-gray-400 text-xs mt-1 italic">{change.reason}</p>
+                                                                                )}
                                                                             </div>
                                                                         </div>
                                                                     </div>

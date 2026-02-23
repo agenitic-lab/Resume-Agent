@@ -48,20 +48,33 @@ export default function OptimizationResults() {
                     return;
                 }
 
-                const plan = data.improvement_plan || {};
-                const planChanges = Array.isArray(plan)
-                    ? plan.map((change, index) => ({
+                // Build optimization steps from decision_log (real agent steps) or fall back to improvement_plan
+                const decisionLog = data.decision_log || [];
+                let optimizationSteps;
+
+                if (decisionLog.length > 0) {
+                    optimizationSteps = decisionLog.map((entry, index) => ({
                         id: index + 1,
-                        title: change.area || 'Improvement',
-                        description: change.suggestion || change.description || '',
-                        reason: change.reason || 'To improve ATS score'
-                    }))
-                    : (plan.priority_changes || []).map((change, index) => ({
-                        id: index + 1,
-                        title: `Change ${index + 1}`,
-                        description: typeof change === 'string' ? change : (change.suggestion || change.description || ''),
-                        reason: plan.reasoning || 'To improve ATS score'
+                        title: entry.node || entry.label || `Step ${index + 1}`,
+                        description: entry.detail || entry.summary || '',
+                        reason: entry.reason || '',
                     }));
+                } else {
+                    const plan = data.improvement_plan || {};
+                    optimizationSteps = Array.isArray(plan)
+                        ? plan.map((change, index) => ({
+                            id: index + 1,
+                            title: change.area || 'Improvement',
+                            description: change.suggestion || change.description || '',
+                            reason: change.reason || 'To improve ATS score'
+                        }))
+                        : (plan.priority_changes || []).map((change, index) => ({
+                            id: index + 1,
+                            title: `Change ${index + 1}`,
+                            description: typeof change === 'string' ? change : (change.suggestion || change.description || ''),
+                            reason: plan.reasoning || 'To improve ATS score'
+                        }));
+                }
 
                 const reqs = data.job_requirements || {};
                 const analysis = data.resume_analysis || {};
@@ -75,7 +88,7 @@ export default function OptimizationResults() {
                     ];
 
                 const transformedData = {
-                    date: new Date(data.created_at).toLocaleDateString(),
+                    date: data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown date',
                     originalScore: Math.round(data.ats_score_before || 0),
                     optimizedScore: Math.round(data.ats_score_after || 0),
                     improvement: Math.round(data.improvement_delta || 0),
@@ -95,7 +108,7 @@ export default function OptimizationResults() {
                         strongSections: analysis.suggestions || [],
                         weakSections: analysis.weaknesses || []
                     },
-                    changes: planChanges,
+                    changes: optimizationSteps,
                     coverLetter: data.cover_letter || "Cover letter not available for this run.",
                     modifiedResume: data.modified_resume || ''
                 };
@@ -126,7 +139,12 @@ export default function OptimizationResults() {
             });
 
             if (!response.ok) {
-                throw new Error('LaTeX compilation failed');
+                let detail = 'LaTeX compilation failed';
+                try {
+                    const errData = await response.json();
+                    detail = errData.detail || errData.message || detail;
+                } catch { /* non-JSON response */ }
+                throw new Error(detail);
             }
 
             const blob = await response.blob();
@@ -165,7 +183,14 @@ export default function OptimizationResults() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ latex_code: latexCode }),
                 });
-                if (!response.ok) throw new Error('Compilation failed');
+                if (!response.ok) {
+                    let detail = 'Compilation failed';
+                    try {
+                        const errData = await response.json();
+                        detail = errData.detail || errData.message || detail;
+                    } catch { /* non-JSON response */ }
+                    throw new Error(detail);
+                }
                 const blob = await response.blob();
                 url = window.URL.createObjectURL(blob);
                 setCompiledPdfUrl(url);
@@ -542,22 +567,23 @@ export default function OptimizationResults() {
                         {/* Changes Applied */}
                         <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
                             <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Optimization Steps</h2>
-                            <p className="text-gray-500 text-sm mb-8">Adjustments made to improve results</p>
+                            <p className="text-gray-500 text-sm mb-8">Real agent node-by-node decisions during optimization</p>
 
-                            <div className="space-y-6">
+                            <div className="space-y-4">
                                 {resultsData.changes.map((change) => (
                                     <div key={change.id} className="bg-secondary rounded-3xl p-6 md:p-8 border border-gray-100 group transition-all hover:bg-surface hover:shadow-xl hover:shadow-black/10">
                                         <div className="flex items-start gap-4 md:gap-6">
-                                            <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-black font-black italic tracking-tighter text-lg flex-shrink-0 shadow-lg shadow-sm group-hover:scale-110 transition-transform">
-                                                {change.id}
+                                            <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform mt-0.5">
+                                                <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                </svg>
                                             </div>
-                                            <div className="flex-1">
-                                                <h3 className="text-primary font-semibold text-base mb-2">{change.title}</h3>
-                                                <p className="text-secondary text-sm leading-relaxed mb-4">{change.description}</p>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Reasoning:</span>
-                                                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">{change.reason}</p>
-                                                </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-primary font-semibold text-base mb-1">{change.title}</h3>
+                                                <p className="text-secondary text-sm leading-relaxed">{change.description}</p>
+                                                {change.reason && (
+                                                    <p className="text-gray-400 text-xs mt-2 italic">{change.reason}</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

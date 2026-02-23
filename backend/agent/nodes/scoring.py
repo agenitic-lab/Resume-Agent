@@ -81,6 +81,10 @@ def score_resume(state: Dict) -> Dict:
         "node": "score_initial",
         "action": "scored_original_resume",
         "score": score_value,
+        "detail": f"Original resume scored {score_value}/100. "
+                  f"Breakdown — Keywords: {breakdown['keywords']}/40, Skills: {breakdown['skills']}/30, "
+                  f"Format: {breakdown['format']}/15, Sections: {breakdown['sections']}/15",
+        "breakdown": breakdown,
     }
 
     return {

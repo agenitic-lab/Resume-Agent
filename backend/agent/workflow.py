@@ -108,6 +108,8 @@ def run_optimization_with_events(
     user_llm_api_key: Optional[str] = None,
     run_id: Optional[str] = None,
     event_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
+    template_id: Optional[str] = None,
+    custom_template_latex: Optional[str] = None,
 ) -> ResumeAgentState:
     # Run optimization workflow with event callbacks
     if run_id is None:
@@ -119,6 +121,8 @@ def run_optimization_with_events(
         job_description=job_description,
         original_resume=resume,
         user_llm_api_key=user_llm_api_key,
+        template_id=template_id,
+        custom_template_latex=custom_template_latex,
     )
 
     if event_callback:
@@ -187,6 +191,8 @@ def run_optimization(
     user_id: str = "anonymous",
     user_llm_api_key: Optional[str] = None,
     run_id: Optional[str] = None,
+    template_id: Optional[str] = None,
+    custom_template_latex: Optional[str] = None,
 ) -> ResumeAgentState:
     # Wrapper to run workflow without event callbacks
     return run_optimization_with_events(
@@ -196,4 +202,6 @@ def run_optimization(
         user_llm_api_key=user_llm_api_key,
         run_id=run_id,
         event_callback=None,
+        template_id=template_id,
+        custom_template_latex=custom_template_latex,
     )

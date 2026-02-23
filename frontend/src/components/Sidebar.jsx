@@ -181,18 +181,18 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                         <span className="text-sm font-medium">Sign Out</span>
                     </button>
                 </div>
-
-                <ConfirmDialog
-                    isOpen={showLogoutDialog}
-                    title="Sign Out"
-                    message="Are you sure you want to sign out?"
-                    confirmText="Sign Out"
-                    cancelText="Cancel"
-                    variant="danger"
-                    onConfirm={handleLogout}
-                    onCancel={() => setShowLogoutDialog(false)}
-                />
             </div>
+
+            <ConfirmDialog
+                isOpen={showLogoutDialog}
+                title="Sign Out"
+                message="Are you sure you want to sign out?"
+                confirmText="Sign Out"
+                cancelText="Cancel"
+                variant="danger"
+                onConfirm={handleLogout}
+                onCancel={() => setShowLogoutDialog(false)}
+            />
         </>
     );
 }

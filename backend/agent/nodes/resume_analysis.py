@@ -41,4 +41,18 @@ Return ONLY valid JSON, no other text."""
     
     analysis = json.loads(content)
     
-    return {"resume_analysis": analysis}
+    decision = {
+        "node": "analyze_resume",
+        "action": "analyzed_resume",
+        "detail": f"Found {len(analysis.get('strengths', []))} strengths and "
+                  f"{len(analysis.get('weaknesses', []))} weaknesses. "
+                  f"{len(analysis.get('missing_keywords', []))} keywords missing from resume",
+        "strengths_count": len(analysis.get("strengths", [])),
+        "weaknesses_count": len(analysis.get("weaknesses", [])),
+        "missing_keywords": analysis.get("missing_keywords", [])[:5],
+    }
+    
+    return {
+        "resume_analysis": analysis,
+        "decision_log": state.get("decision_log", []) + [decision],
+    }

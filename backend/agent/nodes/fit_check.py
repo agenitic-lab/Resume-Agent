@@ -77,6 +77,9 @@ def assess_job_fit(state: Dict) -> Dict:
         "fit_score": fit_score,
         "matched_required_count": len(matched_required),
         "required_count": len(required),
+        "detail": f"Job fit assessment: {fit_decision} (score: {fit_score:.2f}). "
+                  f"Matched {len(matched_required)}/{len(required)} required skills, "
+                  f"{len(matched_keywords)}/{len(keywords)} keywords. {reason}",
     }
 
     status = "rejected_poor_fit" if fit_decision == "poor_fit" else "processing"

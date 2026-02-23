@@ -89,11 +89,17 @@ Rules:
     plan = _safe_json_load(response.choices[0].message.content)
 
     # Track what the agent decided to do
+    priority_changes = plan.get("priority_changes", [])
     decision = {
         "node": "planning",
         "action": "created_improvement_plan",
-        "priority_changes": len(plan.get("priority_changes", [])),
+        "priority_changes": len(priority_changes),
         "expected_gain": plan.get("expected_score_gain", 0),
+        "detail": f"Created improvement plan with {len(priority_changes)} priority changes. "
+                  f"Expected score gain: +{plan.get('expected_score_gain', 0)}. "
+                  f"Focus areas: {', '.join(plan.get('section_improvements', [])[:3]) or 'general optimization'}",
+        "changes_summary": [str(c)[:80] for c in priority_changes[:3]],
+        "reasoning": plan.get("reasoning", ""),
     }
 
     return {
