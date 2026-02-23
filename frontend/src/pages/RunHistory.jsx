@@ -122,7 +122,7 @@ export default function RunHistory() {
     );
 
     return (
-        <div className="min-h-screen bg-primary p-8">
+        <div className="min-h-screen bg-primary p-4 md:p-8">
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
@@ -135,8 +135,8 @@ export default function RunHistory() {
                     <button
                         onClick={() => setActiveTab('runs')}
                         className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'runs'
-                                ? 'bg-brand text-black shadow-lg shadow-brand-primary/20'
-                                : 'text-gray-500 hover:text-primary'
+                            ? 'bg-brand text-black shadow-lg shadow-brand-primary/20'
+                            : 'text-gray-500 hover:text-primary'
                             }`}
                     >
                         Run History
@@ -144,8 +144,8 @@ export default function RunHistory() {
                     <button
                         onClick={() => setActiveTab('skills')}
                         className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'skills'
-                                ? 'bg-brand text-black shadow-lg shadow-brand-primary/20'
-                                : 'text-gray-500 hover:text-primary'
+                            ? 'bg-brand text-black shadow-lg shadow-brand-primary/20'
+                            : 'text-gray-500 hover:text-primary'
                             }`}
                     >
                         Skills History
@@ -156,14 +156,14 @@ export default function RunHistory() {
                 {activeTab === 'runs' && (
                     <div className="space-y-4">
                         {loadingRuns ? renderSkeletons() : historyItems.length === 0 ? (
-                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-16 text-center shadow-xl shadow-black/5">
+                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-8 md:p-16 text-center shadow-xl shadow-black/5">
                                 <div className="w-24 h-24 bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-8 border border-gray-100">
                                     <svg className="w-12 h-12 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                 </div>
                                 <h3 className="text-xl font-semibold text-primary mb-2">No Runs Yet</h3>
-                                <p className="text-gray-500 text-sm mb-10 font-medium">Your historical data manifest is currently empty.</p>
+                                <p className="text-gray-500 text-sm mb-10 font-medium">You haven't run any optimizations yet.</p>
                                 <button
                                     onClick={() => navigate('/new-optimization')}
                                     className="px-8 py-3 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-red-600 transition-all active:scale-95"
@@ -175,9 +175,9 @@ export default function RunHistory() {
                             historyItems.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="bg-surface border border-gray-200 rounded-3xl p-8 hover:border-brand-primary/30 hover:shadow-xl hover:shadow-black/10 transition-all group"
+                                    className="bg-surface border border-gray-200 rounded-3xl p-6 md:p-8 hover:border-brand-primary/30 hover:shadow-xl hover:shadow-black/10 transition-all group"
                                 >
-                                    <div className="flex items-center justify-between gap-8">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
                                         {/* Left Side */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-4 mb-3">
@@ -195,8 +195,8 @@ export default function RunHistory() {
                                         </div>
 
                                         {/* Right Side */}
-                                        <div className="flex items-center gap-8 shrink-0">
-                                            <div className="text-right border-r border-gray-200 pr-8">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 shrink-0 w-full md:w-auto">
+                                            <div className="text-left sm:text-right border-b sm:border-b-0 sm:border-r border-gray-200 pb-4 sm:pb-0 pr-0 sm:pr-8 w-full sm:w-auto">
                                                 <div className="flex items-center gap-3 mb-1">
                                                     <span className="text-xl font-semibold text-gray-500">{Math.round(item.ats_score_before || 0)}</span>
                                                     <svg className="w-4 h-4 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +208,7 @@ export default function RunHistory() {
                                                     +{Math.round(item.improvement_delta || 0)} improvement
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 w-full sm:w-auto justify-end sm:justify-start">
                                                 <button
                                                     onClick={() => handleView(item.id)}
                                                     className="p-4 bg-secondary hover:bg-brand text-gray-500 hover:text-black rounded-2xl transition-all shadow-inner border border-gray-100 hover:border-brand-primary active:scale-95"
@@ -241,7 +241,7 @@ export default function RunHistory() {
                 {activeTab === 'skills' && (
                     <div className="space-y-4">
                         {loadingSkills ? renderSkeletons() : skillsItems.length === 0 ? (
-                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-16 text-center shadow-xl shadow-black/5">
+                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-8 md:p-16 text-center shadow-xl shadow-black/5">
                                 <div className="w-24 h-24 bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-8 border border-gray-100">
                                     <svg className="w-12 h-12 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -267,8 +267,8 @@ export default function RunHistory() {
                                         className="bg-surface border border-gray-200 rounded-3xl overflow-hidden hover:border-brand-primary/30 hover:shadow-xl hover:shadow-black/10 transition-all group"
                                     >
                                         {/* Card Header */}
-                                        <div className="p-8">
-                                            <div className="flex items-center justify-between gap-8">
+                                        <div className="p-6 md:p-8">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-4 mb-3">
                                                         <span className="px-3 py-1 bg-brand/10 text-brand rounded-full text-xs font-medium border border-brand-primary/10">
@@ -286,19 +286,19 @@ export default function RunHistory() {
                                                     </p>
                                                 </div>
 
-                                                <div className="flex items-center gap-8 shrink-0">
-                                                    <div className="text-right border-r border-gray-200 pr-8">
+                                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 shrink-0 w-full md:w-auto">
+                                                    <div className="text-left sm:text-right border-b sm:border-b-0 sm:border-r border-gray-200 pb-4 sm:pb-0 pr-0 sm:pr-8 w-full sm:w-auto">
                                                         <span className="text-2xl font-bold text-primary underline decoration-brand-primary decoration-2 underline-offset-4">
                                                             {item.total_missing}
                                                         </span>
                                                         <div className="text-brand text-xs font-medium mt-1">missing skills</div>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end sm:justify-start">
                                                         <button
                                                             onClick={() => setExpandedId(prev => prev === item.id ? null : item.id)}
                                                             className={`p-4 rounded-2xl transition-all shadow-inner border active:scale-95 ${isExpanded
-                                                                    ? 'bg-brand text-black border-brand-primary'
-                                                                    : 'bg-secondary hover:bg-brand text-gray-500 hover:text-black border-gray-100 hover:border-brand-primary'
+                                                                ? 'bg-brand text-black border-brand-primary'
+                                                                : 'bg-secondary hover:bg-brand text-gray-500 hover:text-black border-gray-100 hover:border-brand-primary'
                                                                 }`}
                                                             title={isExpanded ? "Collapse" : "Expand Details"}
                                                         >
@@ -322,7 +322,7 @@ export default function RunHistory() {
 
                                         {/* Expanded Skills Breakdown */}
                                         {isExpanded && missingSkills.length > 0 && (
-                                            <div className="border-t border-gray-200 p-8 bg-secondary/30">
+                                            <div className="border-t border-gray-200 p-6 md:p-8 bg-secondary/30">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                                     {missingSkills.map(cat => {
                                                         const colors = getCategoryColors(cat.category);
@@ -348,7 +348,7 @@ export default function RunHistory() {
                                         )}
 
                                         {isExpanded && missingSkills.length === 0 && (
-                                            <div className="border-t border-gray-200 p-8 bg-secondary/30 text-center">
+                                            <div className="border-t border-gray-200 p-6 md:p-8 bg-secondary/30 text-center">
                                                 <p className="text-green-500 text-sm font-semibold">✓ No missing skills — your resume covered all requirements!</p>
                                             </div>
                                         )}
