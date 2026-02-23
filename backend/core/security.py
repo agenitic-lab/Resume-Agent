@@ -20,7 +20,10 @@ def _get_fernet() -> Fernet:
     key = settings.ENCRYPTION_KEY
     if not key:
         raise RuntimeError("ENCRYPTION_KEY is not configured")
-    return Fernet(key.encode("utf-8"))
+    stripped_key = key.strip()
+    if len(stripped_key) != 44:
+        raise RuntimeError(f"ENCRYPTION_KEY must be exactly 44 characters, got {len(stripped_key)}")
+    return Fernet(stripped_key.encode("utf-8"))
 
 
 def encrypt_api_key(api_key: str) -> str:
