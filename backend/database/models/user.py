@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 
 from database.connection import Base
@@ -21,5 +21,10 @@ class User(Base):
     auth_provider = Column(String, default='email', nullable=False)  # 'email' or 'google'
     profile_picture = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
+    
+    # Template preferences
+    default_template = Column(String, nullable=True, default=None)  # builtin ID or 'custom_0','custom_1','custom_2'
+    custom_template_latex = Column(Text, nullable=True)  # legacy single custom template
+    custom_templates = Column(JSONB, nullable=True, default=None)  # list of up to 3 custom templates [{name, latex}]
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

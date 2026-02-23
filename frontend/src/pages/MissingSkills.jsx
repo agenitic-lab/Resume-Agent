@@ -167,7 +167,7 @@ export default function MissingSkills() {
   }
 
   function copyAllSkills() {
-    if (!result) return;
+    if (!result || !result.missing_skills) return;
     const lines = result.missing_skills.map(cat =>
       `${cat.category}:\n${cat.skills.map(s => `  • ${s}`).join('\n')}`
     ).join('\n\n');
@@ -481,7 +481,7 @@ export default function MissingSkills() {
                   )}
                   <div className="w-px h-10 bg-border-muted" />
                   <div>
-                    <p className="text-2xl font-black text-text-primary">{result.missing_skills.length}</p>
+                    <p className="text-2xl font-black text-text-primary">{(result.missing_skills || []).length}</p>
                     <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">Categories</p>
                   </div>
                 </div>
@@ -510,7 +510,7 @@ export default function MissingSkills() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {result.missing_skills.map(cat => {
+                {(result.missing_skills || []).map(cat => {
                   const colors = getCategoryColors(cat.category);
                   return (
                     <div key={cat.category} className={`${colors.bg} border ${colors.border} rounded-[1.5rem] p-5 relative overflow-hidden`}>

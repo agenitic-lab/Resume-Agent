@@ -34,12 +34,18 @@ class ResumeAgentState(TypedDict):
     status: str
     created_at: str
 
+    # Template preference
+    template_id: Optional[str]
+    custom_template_latex: Optional[str]
+
 
 def create_initial_state(
     user_id: str,
     job_description: str,
     original_resume: str,
     user_llm_api_key: Optional[str] = None,
+    template_id: Optional[str] = None,
+    custom_template_latex: Optional[str] = None,
 ) -> ResumeAgentState:
     return {
         "user_id": user_id,
@@ -67,5 +73,7 @@ def create_initial_state(
         "target_score": settings.TARGET_SCORE,
         "min_iteration_gain": settings.MIN_ITERATION_GAIN,
         "status": "pending",
-        "created_at": datetime.utcnow().isoformat()
+        "created_at": datetime.utcnow().isoformat(),
+        "template_id": template_id,
+        "custom_template_latex": custom_template_latex,
     }

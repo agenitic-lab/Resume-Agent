@@ -27,12 +27,19 @@ def rescore_modified_resume(state: Dict) -> Dict:
     improvement_delta = round(ats_score_after - ats_score_before, 2)
     last_iteration_delta = round(ats_score_after - float(previous_score), 2)
 
+    iteration_num = int(state.get("iteration_count", 0)) + 1
     decision = {
         "node": "score_modified",
         "action": "scored_modified_resume",
         "score": ats_score_after,
         "delta_vs_previous": last_iteration_delta,
         "delta_vs_baseline": improvement_delta,
+        "iteration": iteration_num,
+        "detail": f"Iteration {iteration_num}: Score changed from {previous_score} to {ats_score_after} "
+                  f"(+{last_iteration_delta} this iteration, +{improvement_delta} total). "
+                  f"Breakdown — Keywords: {ats_breakdown_after['keywords']}/40, "
+                  f"Skills: {ats_breakdown_after['skills']}/30",
+        "breakdown": ats_breakdown_after,
     }
 
     return {
@@ -40,7 +47,7 @@ def rescore_modified_resume(state: Dict) -> Dict:
         "ats_breakdown_after": ats_breakdown_after,
         "improvement_delta": improvement_delta,
         "last_iteration_delta": last_iteration_delta,
-        "iteration_count": int(state.get("iteration_count", 0)) + 1,
+        "iteration_count": iteration_num,
         "score_history": updated_history,
         "decision_log": state.get("decision_log", []) + [decision],
     }

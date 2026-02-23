@@ -3,6 +3,10 @@ import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import Optional
+
+from sqlalchemy.orm.attributes import flag_modified
 
 from database.connection import get_db
 from database.models.user import User
@@ -216,3 +220,153 @@ def delete_api_key(
     db.add(current_user)
     db.commit()
     return {"message": "API key removed"}
+
+
+# --- Template Preference Endpoints ---
+
+class TemplatePreferenceRequest(BaseModel):
+    template_id: str  # e.g. "clean_modern", "jake", "custom_0", "custom_1", "custom_2"
+    custom_latex: Optional[str] = None  # only when template_id starts with "custom_"
+
+
+class CustomTemplateRequest(BaseModel):
+    name: str
+    latex: str
+
+
+class TemplatePreferenceResponse(BaseModel):
+    template_id: Optional[str] = None
+    custom_templates: Optional[list] = None  # [{name, latex}]
+
+
+MAX_CUSTOM_TEMPLATES = 3
+
+
+@router.get(
+    "/template-preference",
+    response_model=TemplatePreferenceResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get user's template preference and custom templates",
+)
+def get_template_preference(
+    current_user: User = Depends(get_current_user),
+):
+    custom_templates = getattr(current_user, 'custom_templates', None) or []
+    # Migrate legacy single custom_template_latex to array if needed
+    if not custom_templates and current_user.custom_template_latex:
+        custom_templates = [{"name": "My Custom Template", "latex": current_user.custom_template_latex}]
+    return TemplatePreferenceResponse(
+        template_id=current_user.default_template,
+        custom_templates=custom_templates,
+    )
+
+
+@router.post(
+    "/template-preference",
+    status_code=status.HTTP_200_OK,
+    summary="Set user's default template preference",
+)
+def set_template_preference(
+    data: TemplatePreferenceRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.default_template = data.template_id
+    db.add(current_user)
+    db.commit()
+    return {"message": "Template preference saved", "template_id": data.template_id}
+
+
+@router.post(
+    "/custom-template",
+    status_code=status.HTTP_200_OK,
+    summary="Add a custom template (max 3)",
+)
+def add_custom_template(
+    data: CustomTemplateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    custom_templates = list(getattr(current_user, 'custom_templates', None) or [])
+    if len(custom_templates) >= MAX_CUSTOM_TEMPLATES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Maximum {MAX_CUSTOM_TEMPLATES} custom templates allowed",
+        )
+    custom_templates.append({"name": data.name, "latex": data.latex})
+    current_user.custom_templates = custom_templates
+    flag_modified(current_user, 'custom_templates')
+    db.add(current_user)
+    db.commit()
+    return {"message": "Custom template added", "index": len(custom_templates) - 1, "custom_templates": custom_templates}
+
+
+@router.put(
+    "/custom-template/{index}",
+    status_code=status.HTTP_200_OK,
+    summary="Update an existing custom template",
+)
+def update_custom_template(
+    index: int,
+    data: CustomTemplateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    custom_templates = list(getattr(current_user, 'custom_templates', None) or [])
+    if index < 0 or index >= len(custom_templates):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom template not found")
+    custom_templates[index] = {"name": data.name, "latex": data.latex}
+    current_user.custom_templates = custom_templates
+    flag_modified(current_user, 'custom_templates')
+    db.add(current_user)
+    db.commit()
+    return {"message": "Custom template updated", "custom_templates": custom_templates}
+
+
+@router.delete(
+    "/custom-template/{index}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete a custom template",
+)
+def delete_custom_template(
+    index: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    custom_templates = list(getattr(current_user, 'custom_templates', None) or [])
+    if index < 0 or index >= len(custom_templates):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom template not found")
+    
+    # If the deleted template was the default, clear the default
+    if current_user.default_template == f"custom_{index}":
+        current_user.default_template = None
+    # Adjust default_template index if a template before the default was deleted
+    elif current_user.default_template and current_user.default_template.startswith("custom_"):
+        try:
+            default_idx = int(current_user.default_template.replace("custom_", ""))
+            if default_idx > index:
+                current_user.default_template = f"custom_{default_idx - 1}"
+        except ValueError:
+            pass
+
+    custom_templates.pop(index)
+    current_user.custom_templates = custom_templates
+    flag_modified(current_user, 'custom_templates')
+    db.add(current_user)
+    db.commit()
+    return {"message": "Custom template deleted", "custom_templates": custom_templates}
+
+
+@router.delete(
+    "/template-preference",
+    status_code=status.HTTP_200_OK,
+    summary="Reset template preference to default",
+)
+def reset_template_preference(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.default_template = None
+    db.add(current_user)
+    db.commit()
+    return {"message": "Template preference reset"}

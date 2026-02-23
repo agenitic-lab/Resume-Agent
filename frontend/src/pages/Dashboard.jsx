@@ -48,7 +48,7 @@ export default function Dashboard() {
             totalRuns: runs.length, // Only shows loaded count, ideally fetch total count
             avgImprovement: avgImp,
             bestScore: Math.round(maxScore),
-            lastRunDate: new Date(runs[0].created_at).toLocaleDateString()
+            lastRunDate: runs[0].created_at ? new Date(runs[0].created_at).toLocaleDateString() : 'Unknown'
           });
 
           setLatestRun(runs[0]);
@@ -82,7 +82,7 @@ export default function Dashboard() {
           Welcome back,{' '}
           {loading
             ? <Skeleton className="inline-block h-9 w-36 rounded-xl" />
-            : <span className="text-brand">{user ? (user.full_name || user.email.split('@')[0]) : 'User'}</span>
+            : <span className="text-brand">{user ? (user.full_name || user.email?.split('@')[0] || 'User') : 'User'}</span>
           }
         </h1>
         <p className="text-secondary text-lg font-medium">
@@ -290,7 +290,7 @@ export default function Dashboard() {
                 <HistoryItem
                   key={run.id}
                   title={run.job_description ? (run.job_description.substring(0, 30) + "...") : "Optimization Run"}
-                  date={new Date(run.created_at).toLocaleDateString()}
+                  date={run.created_at ? new Date(run.created_at).toLocaleDateString() : 'Unknown'}
                   improvement={run.improvement_delta ? `+${Math.round(run.improvement_delta)}` : '0'}
                 />
               ))}
