@@ -313,11 +313,18 @@ def update_custom_template(
     db: Session = Depends(get_db),
 ):
     custom_templates = list(getattr(current_user, 'custom_templates', None) or [])
+    is_legacy = False
+    if not custom_templates and current_user.custom_template_latex:
+        custom_templates = [{"name": "My Custom Template", "latex": current_user.custom_template_latex}]
+        is_legacy = True
     if index < 0 or index >= len(custom_templates):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom template not found")
     custom_templates[index] = {"name": data.name, "latex": data.latex}
     current_user.custom_templates = custom_templates
     flag_modified(current_user, 'custom_templates')
+    if is_legacy:
+        # Migrate: clear the legacy single-template field now that data lives in JSONB
+        current_user.custom_template_latex = None
     db.add(current_user)
     db.commit()
     return {"message": "Custom template updated", "custom_templates": custom_templates}
@@ -334,6 +341,10 @@ def delete_custom_template(
     db: Session = Depends(get_db),
 ):
     custom_templates = list(getattr(current_user, 'custom_templates', None) or [])
+    is_legacy = False
+    if not custom_templates and current_user.custom_template_latex:
+        custom_templates = [{"name": "My Custom Template", "latex": current_user.custom_template_latex}]
+        is_legacy = True
     if index < 0 or index >= len(custom_templates):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Custom template not found")
     
@@ -350,7 +361,10 @@ def delete_custom_template(
             pass
 
     custom_templates.pop(index)
-    current_user.custom_templates = custom_templates
+    if is_legacy:
+        # Clear the legacy single-template field; remaining templates (if any) go into JSONB
+        current_user.custom_template_latex = None
+    current_user.custom_templates = custom_templates if custom_templates else None
     flag_modified(current_user, 'custom_templates')
     db.add(current_user)
     db.commit()

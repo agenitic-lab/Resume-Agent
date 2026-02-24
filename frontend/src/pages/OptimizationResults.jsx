@@ -367,7 +367,7 @@ export default function OptimizationResults() {
 
     return (
         <div className="min-h-screen bg-primary text-primary p-4 md:p-8 cyber-grid">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 {/* Warning Banner */}
                 {!warningDismissed && (
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-8 flex items-start gap-4">
@@ -414,9 +414,9 @@ export default function OptimizationResults() {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column - Main Content */}
-                    <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-6">
+                    {/* Main Content */}
+                    <div className="space-y-6">
                         {/* Score Section */}
                         <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
@@ -615,7 +615,7 @@ export default function OptimizationResults() {
                                         <textarea
                                             value={latexCode}
                                             onChange={(e) => setLatexCode(e.target.value)}
-                                            className="w-full h-[400px] md:h-[600px] p-6 md:p-8 bg-secondary border border-gray-100 rounded-3xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-sm resize-none shadow-inner"
+                                            className="w-full h-[500px] md:h-[800px] p-4 md:p-6 bg-secondary border border-gray-100 rounded-xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs leading-relaxed resize-none shadow-inner"
                                         />
                                     </div>
 
@@ -647,11 +647,11 @@ export default function OptimizationResults() {
                                             </button>
                                         </div>
 
-                                        <div className="relative h-[400px] md:h-[600px] bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-inner">
+                                        <div className="relative h-[500px] md:h-[800px] bg-white border border-gray-200 rounded-xl shadow-sm">
                                             {compiledPdfUrl ? (
                                                 <iframe
-                                                    src={compiledPdfUrl}
-                                                    className="w-full h-full"
+                                                    src={`${compiledPdfUrl}#toolbar=1&view=FitH`}
+                                                    className="w-full h-full block border-0 rounded-xl"
                                                     title="PDF Preview"
                                                 />
                                             ) : (
@@ -706,24 +706,22 @@ export default function OptimizationResults() {
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Right Column - Cover Letter */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 sticky top-8 shadow-xl shadow-black/5">
+                        {/* Cover Letter - full-width, below editor/PDF */}
+                        <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
                             <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Cover Letter</h2>
                             <p className="text-gray-500 text-sm mb-8">Generated cover letter</p>
 
-                            <div className="bg-secondary rounded-3xl p-8 mb-8 max-h-[500px] overflow-y-auto border border-gray-100 shadow-inner">
+                            <div className="bg-secondary rounded-2xl p-8 mb-8 border border-gray-100 shadow-inner">
                                 <pre className="text-secondary text-sm whitespace-pre-wrap font-medium leading-relaxed">
                                     {resultsData.coverLetter}
                                 </pre>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
                                 <button
                                     onClick={handleCopyCoverLetter}
-                                    className="w-full py-4 bg-text-primary text-bg-primary font-semibold text-sm tracking-wide rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-white active:scale-95"
+                                    className="flex-1 py-4 bg-text-primary text-bg-primary font-semibold text-sm tracking-wide rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-white active:scale-95"
                                 >
                                     {coverLetterCopied ? (
                                         <>
@@ -742,7 +740,7 @@ export default function OptimizationResults() {
                                     )}
                                 </button>
 
-                                <button className="w-full py-4 bg-secondary text-gray-500 font-medium text-sm rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-primary hover:text-primary border border-gray-100 active:scale-95">
+                                <button className="flex-1 py-4 bg-secondary text-gray-500 font-medium text-sm rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-primary hover:text-primary border border-gray-100 active:scale-95">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>

@@ -37,9 +37,9 @@ def plan_improvements(state: Dict) -> Dict:
     client = build_groq_client(state)
 
     prompt = f"""
-You are an expert ATS optimization strategist.
+You are an expert ATS optimization strategist and resume consultant.
 
-Your task is to decide WHAT changes should be made to improve a resume.
+Your task is to decide WHAT changes should be made to improve a resume's ATS score AND page fill.
 Do NOT rewrite the resume. Only plan the improvements.
 
 Job Requirements:
@@ -54,29 +54,33 @@ Create a resume improvement plan with the following JSON structure:
 
 {{
   "priority_changes": [
-    "Specific, high-impact change (max 5)"
+    "Specific, high-impact change (max 6)"
   ],
   "skill_additions": [
-    "Skills to add or emphasize"
+    "Skills from the resume to emphasize or add to skills section"
   ],
   "keyword_insertions": [
-    "Exact ATS keywords to include"
+    "Exact ATS keywords from the JD to include naturally"
   ],
   "section_improvements": [
     "Sections that need improvement (e.g., Experience, Skills, Summary)"
   ],
+  "content_expansion": [
+    "Specific ways to expand thin sections to fill the page — e.g., add Summary, expand bullet points, add skill categories"
+  ],
   "expected_score_gain": <number>,
-  "reasoning": "Why these changes will improve ATS score"
+  "reasoning": "Why these changes will improve ATS score and page fill"
 }}
 
 Rules:
 - Be specific
 - Be realistic
-- Do NOT invent skills or experiences that the candidate doesn't already have
-- Only suggest rephrasing or emphasizing EXISTING skills and experiences
-- "skill_additions" should ONLY list skills already present in the resume that need more emphasis
-- Do NOT suggest adding new job entries, projects, or certifications
-- Focus on keyword optimization, better phrasing, and structural improvements
+- You SHOULD suggest adding a Professional Summary section if one is missing — it is derived from existing skills
+- You SHOULD suggest expanding sparse bullet points with more detail from existing experience
+- You SHOULD suggest splitting skills into labelled categories (Languages, Frameworks, Databases, etc.)
+- You SHOULD suggest adding Areas of Interest or Coursework rows if mentioned in the resume
+- Do NOT suggest inventing new jobs, new companies, or new certifications not mentioned in the original resume
+- Focus on keyword optimization, better phrasing, content expansion, and structural improvements
 - Return ONLY valid JSON
 """
 
