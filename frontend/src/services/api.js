@@ -85,8 +85,8 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         if (!response.ok) {
-            // Handle unauthorized globally (e.g., expired token)
-            if (response.status === 401) {
+            // Handle unauthorized globally (e.g., expired token), but skip for auth endpoints
+            if (response.status === 401 && !endpoint.startsWith('/api/auth/')) {
                 removeToken();
                 window.location.href = '/login?expired=true';
             }
