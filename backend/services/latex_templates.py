@@ -433,6 +433,16 @@ STRICT RULES:
 4. Do NOT use \\section{{}} if the example uses \\cvsection{{}}.
 5. Do NOT use \\resumeProjectHeading if the example uses \\resumeProject.
 6. Only replace the CONTENT (names, dates, descriptions) — keep the STRUCTURE identical.
+
+MACRO ARGUMENT COUNTS (CRITICAL — violating this crashes the compiler):
+- \\resumeSubheading ALWAYS takes EXACTLY 4 brace-group arguments: {{#1}}{{#2}}{{#3}}{{#4}}
+  Example: \\resumeSubheading{{Job Title}}{{City, State}}{{Company Name}}{{Start -- End}}
+  NEVER pass only 3 arguments. If a field is unknown, use an empty {{}}.
+- \\resumeProject ALWAYS takes EXACTLY 4 brace-group arguments: {{#1}}{{#2}}{{#3}}{{#4}}
+  Example: \\resumeProject{{Project Name}}{{Tech Stack}}{{Year}}{{}}
+  NEVER pass only 3 arguments. If a field is unknown, use an empty {{}}.
+- \\resumeItem takes 1 argument: \\resumeItem{{text}}
+  Inside sb2nov, you may also use plain \\item {{text}} in project/experience lists.
 """
 
 

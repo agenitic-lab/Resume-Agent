@@ -31,6 +31,93 @@ _LATEX_TYPO_FIXES = {
     "\\begin{enumerateenumerate}": "\\begin{enumerate}",
 }
 
+# Macros that require a specific number of brace-group arguments.
+# If the LLM emits fewer, we pad with empty {}.
+_MACRO_EXPECTED_ARGS = {
+    "\\resumeSubheading": 4,
+    "\\resumeProject": 4,
+    "\\resumePOR": 3,
+}
+
+
+def _fix_macro_arguments(latex: str) -> str:
+    """Fix LLM errors where macros receive the wrong number of brace-group arguments.
+
+    For every known macro, scan each occurrence, count the consecutive brace-groups
+    that follow it, and insert empty {} placeholders when there are too few.
+    """
+    for macro, expected in _MACRO_EXPECTED_ARGS.items():
+        latex = _pad_macro_args(latex, macro, expected)
+    return latex
+
+
+def _pad_macro_args(latex: str, macro_name: str, expected: int) -> str:
+    """Ensure every occurrence of *macro_name* is followed by exactly *expected*
+    consecutive brace-group arguments.  Missing ones are inserted as ``{}``."""
+    parts: list[str] = []
+    search_start = 0
+
+    while True:
+        pos = latex.find(macro_name, search_start)
+        if pos == -1:
+            parts.append(latex[search_start:])
+            break
+
+        # Make sure we matched the full command name, not a prefix
+        # e.g. \resumeSubheading vs \resumeSubHeadingListStart
+        end_of_name = pos + len(macro_name)
+        if end_of_name < len(latex) and (latex[end_of_name].isalpha() or latex[end_of_name] == '*'):
+            parts.append(latex[search_start:end_of_name])
+            search_start = end_of_name
+            continue
+
+        # Emit everything up to and including the macro name
+        parts.append(latex[search_start:end_of_name])
+
+        # Now walk forward collecting brace-groups
+        j = end_of_name
+        args_collected = 0
+        last_arg_end = j
+
+        while args_collected < expected:
+            # Skip whitespace / newlines between arguments
+            while j < len(latex) and latex[j] in ' \t\n\r':
+                j += 1
+
+            if j >= len(latex) or latex[j] != '{':
+                # Not a brace-group — stop collecting
+                break
+
+            # Read one balanced brace-group
+            depth = 0
+            while j < len(latex):
+                if latex[j] == '{':
+                    depth += 1
+                elif latex[j] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        j += 1
+                        break
+                j += 1
+
+            args_collected += 1
+            last_arg_end = j
+
+        # If we read some args but fewer than expected, pad with {}
+        if 0 < args_collected < expected:
+            # Insert the collected args text
+            parts.append(latex[end_of_name:last_arg_end])
+            # Pad missing args
+            for _ in range(expected - args_collected):
+                parts.append('{}')
+            search_start = last_arg_end
+        else:
+            # Correct count (or zero — leave untouched)
+            parts.append(latex[end_of_name:last_arg_end])
+            search_start = last_arg_end
+
+    return ''.join(parts)
+
 
 def _sanitize_latex(latex: str, template_preamble: str = None) -> str:
     """Sanitize LLM output and assemble the final LaTeX document.
@@ -40,6 +127,9 @@ def _sanitize_latex(latex: str, template_preamble: str = None) -> str:
     """
     for typo, fix in _LATEX_TYPO_FIXES.items():
         latex = latex.replace(typo, fix)
+
+    # Fix macros that received the wrong number of arguments
+    latex = _fix_macro_arguments(latex)
 
     if template_preamble:
         # Template mode: LLM should have output body-only, but might have
@@ -178,9 +268,10 @@ def modify_resume(state: Dict) -> Dict:
     # Default design instructions when no template is selected
     default_design = """4. CLEAN PROFESSIONAL DESIGN: Use a clean, minimal, black-and-white professional template. NO colored backgrounds, NO colored text, NO shading, NO dark themes. Use standard black text on white background.
 5. Output a COMPLETE, compilable LaTeX document starting with \\documentclass
-6. Use only standard LaTeX packages (geometry, enumitem, hyperref, titlesec, fontenc, inputenc)
-10. Use \\documentclass[10pt]{{article}} with \\usepackage[margin=0.5in]{{geometry}} for compact single-page layout
-11. Use \\pagestyle{{empty}} to remove page numbers and headers/footers"""
+6. Use only standard LaTeX packages (geometry, enumitem, hyperref, titlesec, fontenc, inputenc, tabularx)
+10. Use \\documentclass[10pt]{{article}} with \\usepackage[top=0.4in,bottom=0.4in,left=0.5in,right=0.5in]{{geometry}} to maximise usable page area
+11. Use \\pagestyle{{empty}} to remove page numbers and headers/footers
+    Add \\addtolength{{\\textheight}}{{0.5in}} after geometry to use as much vertical space as possible"""
 
     # Determine the actual preamble to prepend (for template mode)
     actual_preamble = None
@@ -213,35 +304,76 @@ def modify_resume(state: Dict) -> Dict:
 
     # Page fitting instructions (Issue #5)
     page_fit_instructions = """
-PAGE LAYOUT VALIDATION (CRITICAL — HIGHEST PRIORITY):
-- The resume MUST fit on EXACTLY 1 page. This is a HARD REQUIREMENT for candidates with less than 10 years experience.
-- If you estimate the content would spill onto a second page, you MUST cut content aggressively:
-  * Reduce bullet points per experience entry to 2-3 maximum
-  * Remove the least impactful/relevant entries (projects, certifications, etc.)
-  * Use \\small or \\footnotesize for body text
-  * Tighten spacing with \\vspace{-Xpt} between sections
-  * Shorten bullet points to single lines where possible
-- If content is too short and only fills 60-70% of the page, expand bullet points with more specific detail from the original resume to fill the page properly.
-- NEVER produce a 2-page resume where the second page is less than 50% filled. Either fill both pages fully or cut to 1 page.
-- Use \\pagestyle{empty} to remove page numbers and headers/footers
-- Ensure consistent spacing between all sections — no uneven gaps
-- The bottom margin should have minimal white space (no more than 1 inch of empty space at the bottom)"""
+PAGE FILL VALIDATION (CRITICAL — HIGHEST PRIORITY):
+You MUST produce a resume that fills the page completely — no large blank spaces at the bottom.
+
+STEP 1 — ESTIMATE PAGE FILL:
+Before finalising, mentally estimate how much of a standard A4/letter page your output fills.
+A full page of 10pt or 11pt text with 0.5in margins holds roughly 55-65 lines of content.
+Count your content lines. If you are below 50 lines, you are NOT filling the page.
+
+STEP 2 — EXPAND IF SPARSE (most important step for junior/early-career candidates):
+If your estimated content fills less than 85% of the page, you MUST expand using ONLY the
+information that already exists in the original resume AND the job description details:
+  a) ADD A PROFESSIONAL SUMMARY (3-5 sentences) if one is missing. Write it by combining
+     the candidate's actual skills/experience from the resume with keywords from the JD.
+     This alone adds ~5-8 lines.
+  b) EXPAND BULLET POINTS: Each experience and project entry should have 3-5 bullet points.
+     Expand vague bullets into specific, quantified achievements using details already present.
+     For example: "Developed REST APIs" → "Developed and maintained 5+ REST API endpoints using
+     Django REST Framework, integrated with PostgreSQL for persistent data storage."
+  c) ADD A TECHNICAL SKILLS TABLE: If the original resume has a skills section, split it into
+     categories (Languages, Frameworks, Databases, Tools, Cloud, etc.) and list every skill
+     mentioned in the resume. Present as a compact 2-column table or labeled rows.
+  d) ADD RELEVANT SECTIONS from the original resume that may have been omitted:
+     Certifications, Achievements, Languages, Interests, Coursework, etc.
+  e) ADD AN AREAS OF INTEREST row listing interests/domains from the original resume + JD.
+
+STEP 3 — SPACING CALIBRATION:
+  - Use \\vspace{{2pt}} between section entries (not 0pt, not 8pt).
+  - Do NOT add large \\vspace gaps between sections — keep them tight (\\vspace{{4pt}} max).
+  - Use \\setlength{{\\itemsep}}{{2pt}} \\setlength{{\\parskip}}{{0pt}} inside itemize environments.
+  - Use \\small for body text (not \\footnotesize unless absolutely needed for overflow).
+  - Ensure \\addtolength{{\\textheight}} is set to maximize usable page height.
+
+STEP 4 — OVERFLOW GUARD:
+  - If content DOES overflow to page 2, cut aggressively (remove least relevant bullets/sections).
+  - Never produce a 2-page resume where page 2 is less than 50% filled.
+
+FINAL CHECK: The bottom of the page should have NO more than 0.5 inches of blank space."""
 
     prompt = f"""You are an expert resume writer and LaTeX typesetter.
 
 Your task: Optimize the resume below into a professional LaTeX document tailored to the job requirements.
 {"This is iteration " + str(iteration + 1) + " of optimization. Focus on improving areas that still need work." if iteration > 0 else ""}
 
-CRITICAL RULES (MUST FOLLOW):
-1. PAGE LENGTH: The resume MUST fit on EXACTLY 1 page. This is NON-NEGOTIABLE unless the candidate has 10+ years of experience. If content would overflow to a second page, you MUST remove the least relevant content, shorten bullet points, and tighten spacing until it fits on one page. A 2-page resume where the second page is mostly empty is UNACCEPTABLE — either fill both pages or cut to 1 page. Use compact formatting (\\small, tight \\vspace, 2-3 bullets per entry).
-2. NO INVENTED CONTENT: ONLY use information that exists in the original resume. Do NOT add, fabricate, or invent ANY experiences, jobs, projects, skills, certifications, or achievements that are not already present. You may REPHRASE existing content to better match keywords, but NEVER create new entries.
-3. PRESERVE ORIGINAL STRUCTURE: Keep the same sections that exist in the original resume (e.g., if it has Education, Experience, Projects, Skills - keep those same sections). Do not add new sections that weren't in the original.
+CRITICAL RULES (MUST FOLLOW IN ORDER OF PRIORITY):
+
+1. PAGE FILL (HIGHEST PRIORITY): The resume MUST fill the page completely.
+   - Count your content lines before finalising. A full page holds ~55-65 lines at 10-11pt.
+   - If content is sparse (junior candidate, few entries), you MUST expand it — see PAGE FILL
+     VALIDATION section below for exactly how to do this.
+   - A resume with large blank space at the bottom is a FAILURE. Fill the page.
+   - Only cut content if it would overflow to a second page.
+
+2. CONTENT SOURCING — EXPAND, DON'T FABRICATE:
+   - You MAY expand, elaborate, and quantify existing bullets using details from the original
+     resume text and the job description. This is encouraged and expected.
+   - You MAY add a Professional Summary if missing — write it from existing skills + JD keywords.
+   - You MAY split the skills section into labelled categories using skills already in the resume.
+   - You MAY add an Areas of Interest, Coursework, or Certifications section if data exists in
+     the original resume.
+   - You MUST NOT invent new jobs, new companies, new projects, or new certifications that are
+     not mentioned anywhere in the original resume.
+
+3. PRESERVE ORIGINAL STRUCTURE: Keep the same sections that exist in the original resume (e.g.,
+   Education, Experience, Projects, Skills). You may ADD a Summary/Objective section if missing.
 {default_design}
-7. Apply the improvement plan to strengthen existing content through better phrasing and keyword integration
-8. Incorporate relevant keywords from the job requirements NATURALLY into existing content
-9. Do NOT remove existing valid content - optimize it instead
-12. Keep bullet points concise (1-2 lines each, max 3-4 bullets per experience entry)
-13. Use \\small or \\footnotesize for body text if needed to fit on one page{headline_instruction}
+7. Apply the improvement plan to strengthen existing content through better phrasing and keyword integration.
+8. Incorporate relevant keywords from the job requirements NATURALLY into existing content.
+9. Do NOT remove existing valid content — optimize and expand it instead.
+12. Keep bullet points specific and 1-2 lines each. Aim for 3-5 bullets per experience/project entry.
+13. Use \\small for body text to fit content on one page.{headline_instruction}
 
 {page_fit_instructions}
 
