@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Button } from "./ui/button";
 
 export default function Navbar() {
@@ -64,9 +64,9 @@ export default function Navbar() {
               onClick={() => setMobileOpen(!mobileOpen)}
               className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5"
             >
-              <span className={`block w-5 h-0.5 bg-gray-800 transition-all duration-300 ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <span className={`block w-5 h-0.5 bg-gray-800 transition-all duration-300 ${mobileOpen ? 'opacity-0' : ''}`} />
-              <span className={`block w-5 h-0.5 bg-gray-800 transition-all duration-300 ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              <span className={`block w-5 h-0.5 bg-text-primary transition-all duration-300 ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`block w-5 h-0.5 bg-text-primary transition-all duration-300 ${mobileOpen ? 'opacity-0' : ''}`} />
+              <span className={`block w-5 h-0.5 bg-text-primary transition-all duration-300 ${mobileOpen ? '-rotate-45 -translate-y-2' : ''}`} />
             </button>
           </div>
         </div>
@@ -74,11 +74,11 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
+            <Motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden overflow-hidden bg-white border-t" style={{ borderColor: 'var(--color-border-subtle)' }}
+              className="md:hidden overflow-hidden bg-primary border-t border-border-subtle"
             >
               <div className="p-6 flex flex-col gap-4">
                 {navLinks.map((link) => (
@@ -95,7 +95,7 @@ export default function Navbar() {
                 <Link
                   to="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="w-full text-center py-3 text-sm font-semibold text-secondary border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="w-full text-center py-3 text-sm font-semibold text-secondary border border-gray-200 rounded-lg hover:bg-secondary"
                 >
                   Log in
                 </Link>
@@ -103,7 +103,7 @@ export default function Navbar() {
                   <Link to="/register" onClick={() => setMobileOpen(false)}>Get Started</Link>
                 </Button>
               </div>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
       </header>

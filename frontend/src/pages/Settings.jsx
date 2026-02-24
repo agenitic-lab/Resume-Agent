@@ -86,7 +86,7 @@ export default function Settings() {
               href="https://console.groq.com/keys"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand hover:hover:text-red-700 underline font-black"
+              className="text-brand hover:text-brand-hover underline font-black"
             >
               console.groq.com/keys
             </a>
@@ -138,7 +138,7 @@ export default function Settings() {
                     <button
                       onClick={handleSaveKey}
                       disabled={!apiKey.trim()}
-                      className="px-8 py-3 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-lg shadow-sm hover:hover:bg-red-600 transition-all disabled:opacity-50 active:scale-95"
+                      className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-lg shadow-brand/20 hover:bg-brand-hover transition-all disabled:opacity-50 active:scale-95"
                     >
                       Save API Key
                     </button>
@@ -154,7 +154,7 @@ export default function Settings() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => setShowKeyInput(true)}
-                    className="px-8 py-3 bg-text-primary text-bg-primary rounded-2xl font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95"
+                    className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide hover:bg-brand-hover transition-all active:scale-95"
                   >
                     Update Key
                   </button>
@@ -174,12 +174,12 @@ export default function Settings() {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Paste your Groq API key"
-                className="w-full px-6 py-4 bg-neutral-50 border border-neutral-100 rounded-2xl text-neutral-900 placeholder-neutral-300 focus:outline-none focus:border-[#606c38]/30 transition-all font-medium text-sm"
+                className="w-full px-6 py-4 bg-secondary border border-gray-100 rounded-2xl text-primary placeholder-text-muted/50 focus:outline-none focus:border-brand-primary/30 transition-all font-medium text-sm"
               />
               <button
                 onClick={handleSaveKey}
                 disabled={!apiKey.trim()}
-                className="px-10 py-4 bg-[#606c38] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-olive-500/20 hover:bg-[#4a532b] transition-all active:scale-95 disabled:opacity-50"
+                className="px-10 py-4 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-xl shadow-brand/20 hover:bg-brand-hover transition-all active:scale-95 disabled:opacity-50"
               >
                 Save Key
               </button>

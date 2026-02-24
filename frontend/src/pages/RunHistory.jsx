@@ -135,7 +135,7 @@ export default function RunHistory() {
                     <button
                         onClick={() => setActiveTab('runs')}
                         className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'runs'
-                            ? 'bg-brand text-black shadow-lg shadow-brand-primary/20'
+                            ? 'bg-brand text-white shadow-lg shadow-brand-primary/20'
                             : 'text-gray-500 hover:text-primary'
                             }`}
                     >
@@ -144,7 +144,7 @@ export default function RunHistory() {
                     <button
                         onClick={() => setActiveTab('skills')}
                         className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'skills'
-                            ? 'bg-brand text-black shadow-lg shadow-brand-primary/20'
+                            ? 'bg-brand text-white shadow-lg shadow-brand-primary/20'
                             : 'text-gray-500 hover:text-primary'
                             }`}
                     >
@@ -166,7 +166,7 @@ export default function RunHistory() {
                                 <p className="text-gray-500 text-sm mb-10 font-medium">You haven't run any optimizations yet.</p>
                                 <button
                                     onClick={() => navigate('/new-optimization')}
-                                    className="px-8 py-3 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-red-600 transition-all active:scale-95"
+                                    className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-brand-hover transition-all active:scale-95"
                                 >
                                     Start First Optimization
                                 </button>
@@ -251,7 +251,7 @@ export default function RunHistory() {
                                 <p className="text-gray-500 text-sm mb-10 font-medium">You haven&apos;t run any missing skills analyses yet.</p>
                                 <button
                                     onClick={() => navigate('/missing-skills')}
-                                    className="px-8 py-3 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-red-600 transition-all active:scale-95"
+                                    className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-brand-hover transition-all active:scale-95"
                                 >
                                     Analyze Missing Skills
                                 </button>
@@ -297,7 +297,7 @@ export default function RunHistory() {
                                                         <button
                                                             onClick={() => setExpandedId(prev => prev === item.id ? null : item.id)}
                                                             className={`p-4 rounded-2xl transition-all shadow-inner border active:scale-95 ${isExpanded
-                                                                ? 'bg-brand text-black border-brand-primary'
+                                                                ? 'bg-brand text-white border-brand-primary'
                                                                 : 'bg-secondary hover:bg-brand text-gray-500 hover:text-black border-gray-100 hover:border-brand-primary'
                                                                 }`}
                                                             title={isExpanded ? "Collapse" : "Expand Details"}

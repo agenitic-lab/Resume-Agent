@@ -186,7 +186,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
                             {years.map(y => (
                                 <button key={y} type="button"
                                     onClick={() => setSelectedYear(String(y))}
-                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedYear === String(y) ? 'bg-brand text-black' : 'hover:bg-secondary text-secondary'}`}>
+                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedYear === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'}`}>
                                     {y}
                                 </button>
                             ))}
@@ -202,7 +202,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
                                         setSelectedMonth(m);
                                         if (selectedYear) handleSelect(m, selectedYear);
                                     }}
-                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedMonth === m ? 'bg-brand text-black' : 'hover:bg-secondary text-secondary'}`}>
+                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedMonth === m ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'}`}>
                                     {m}
                                 </button>
                             ))}
@@ -249,7 +249,7 @@ function YearPicker({ value, onChange, placeholder, allowPresent = false }) {
                         {years.map(y => (
                             <button key={y} type="button"
                                 onClick={() => { onChange(String(y)); setOpen(false); }}
-                                className={`text-xs py-1.5 rounded-lg font-medium transition-all ${value === String(y) ? 'bg-brand text-black' : 'hover:bg-secondary text-secondary'
+                                className={`text-xs py-1.5 rounded-lg font-medium transition-all ${value === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'
                                     }`}>
                                 {y}
                             </button>
@@ -795,7 +795,7 @@ export default function ResumeBuilder() {
                 <div className="text-center space-y-8 py-6">
                     <div className="text-7xl animate-bounce duration-[3s]">📄</div>
                     <p className="text-slate-600 text-lg leading-relaxed font-medium">Create a professional, ATS-optimized resume for any field. Fill in each section and use the AI buttons to generate content automatically.</p>
-                    <div className="grid grid-cols-3 gap-4 text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">
                         <div className="p-4 bg-secondary rounded-2xl border border-gray-100 shadow-sm">✨ AI-Powered</div>
                         <div className="p-4 bg-secondary rounded-2xl border border-gray-100 shadow-sm">🎯 ATS-Friendly</div>
                         <div className="p-4 bg-secondary rounded-2xl border border-gray-100 shadow-sm">📥 PDF Export</div>
@@ -884,7 +884,7 @@ export default function ResumeBuilder() {
                                 <input placeholder="Profile URL" value={formData.contact.linkedin} onChange={e => updateField('contact.linkedin', e.target.value)}
                                     className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.linkedin ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
                                 <input placeholder="Label" value={formData.contact.linkedin_label} onChange={e => updateField('contact.linkedin_label', e.target.value)}
-                                    className="w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
+                                    className="w-full sm:w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                             </div>
                             {err('linkedin')}
                         </div>
@@ -894,7 +894,7 @@ export default function ResumeBuilder() {
                                 <input placeholder="Website URL" value={formData.contact.portfolio} onChange={e => updateField('contact.portfolio', e.target.value)}
                                     className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.portfolio ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
                                 <input placeholder="Label" value={formData.contact.portfolio_label} onChange={e => updateField('contact.portfolio_label', e.target.value)}
-                                    className="w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
+                                    className="w-full sm:w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                             </div>
                             {err('portfolio')}
                         </div>
@@ -905,7 +905,7 @@ export default function ResumeBuilder() {
                                     <input placeholder="GitHub URL" value={formData.contact.github} onChange={e => updateField('contact.github', e.target.value)}
                                         className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.github ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
                                     <input placeholder="Label" value={formData.contact.github_label} onChange={e => updateField('contact.github_label', e.target.value)}
-                                        className="w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
+                                        className="w-full sm:w-1/3 p-4 bg-secondary border border-gray-100 rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium" />
                                 </div>
                                 {err('github')}
                             </div>
@@ -963,7 +963,7 @@ export default function ResumeBuilder() {
                             </div>
 
                             {/* Form Grid */}
-                            <div className="grid grid-cols-2 gap-5 mb-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Job Title</label>
                                     <AutocompleteInput
@@ -1083,7 +1083,7 @@ export default function ResumeBuilder() {
                             </div>
 
                             {/* Form Grid */}
-                            <div className="grid grid-cols-2 gap-5 mb-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Project Name</label>
                                     <input
@@ -1338,7 +1338,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-6">
                     {/* Template grid */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
                             { id: 'classic', icon: '📋', name: 'Classic Serif', desc: 'Traditional single-column serif. Best for corporate & legal.' },
                             { id: 'executive', icon: '🏛️', name: 'Executive', desc: 'Clean serif with profile section. Best for senior roles.' },

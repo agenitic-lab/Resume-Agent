@@ -304,6 +304,16 @@ def modify_resume(state: Dict) -> Dict:
 
     # Page fitting instructions (Issue #5)
     page_fit_instructions = """
+SECTION ORDERING (CRITICAL — follow standard resume conventions):
+- For JUNIOR/FRESHER candidates (0-2 years experience, interns, recent graduates):
+  Order: Summary → Technical Skills → Projects → Experience → Education → Certifications (if any)
+  Rationale: Skills and projects showcase ability when formal experience is limited.
+- For EXPERIENCED candidates (3+ years of formal work experience):
+  Order: Summary → Experience → Technical Skills → Projects → Education → Certifications (if any)
+  Rationale: Work experience is the strongest selling point.
+- NEVER include "Areas of Interest" or "Hobbies" sections — they waste space and add no ATS value.
+- ALWAYS include a Professional Summary (3-5 sentences) at the top, derived from existing skills + JD keywords.
+
 PAGE FILL VALIDATION (CRITICAL — HIGHEST PRIORITY):
 You MUST produce a resume that fills the page completely — no large blank spaces at the bottom.
 
@@ -326,19 +336,27 @@ information that already exists in the original resume AND the job description d
      categories (Languages, Frameworks, Databases, Tools, Cloud, etc.) and list every skill
      mentioned in the resume. Present as a compact 2-column table or labeled rows.
   d) ADD RELEVANT SECTIONS from the original resume that may have been omitted:
-     Certifications, Achievements, Languages, Interests, Coursework, etc.
-  e) ADD AN AREAS OF INTEREST row listing interests/domains from the original resume + JD.
+     Certifications, Achievements, Coursework, etc. (but NOT Areas of Interest or Hobbies).
 
-STEP 3 — SPACING CALIBRATION:
+STEP 3 — FONT SIZE CALIBRATION:
+  - If the page is 85-95% filled with only 3-4 blank lines at bottom:
+    Increase the body font to \\normalsize (10pt) or adjust \\vspace between sections (+1-2pt each)
+    to naturally fill the remaining space. Do NOT leave small gaps.
+  - If page is 70-85% filled: use \\normalsize and expand bullet points further.
+  - If page is less than 70% filled: something is wrong — add Summary, expand all bullets to 4-5 each.
+
+STEP 4 — SPACING CALIBRATION:
   - Use \\vspace{{2pt}} between section entries (not 0pt, not 8pt).
   - Do NOT add large \\vspace gaps between sections — keep them tight (\\vspace{{4pt}} max).
   - Use \\setlength{{\\itemsep}}{{2pt}} \\setlength{{\\parskip}}{{0pt}} inside itemize environments.
   - Use \\small for body text (not \\footnotesize unless absolutely needed for overflow).
   - Ensure \\addtolength{{\\textheight}} is set to maximize usable page height.
 
-STEP 4 — OVERFLOW GUARD:
-  - If content DOES overflow to page 2, cut aggressively (remove least relevant bullets/sections).
-  - Never produce a 2-page resume where page 2 is less than 50% filled.
+STEP 5 — OVERFLOW GUARD:
+  - If content overflows to page 2 AND page 2 has MORE than 50% content: keep both pages, fill page 2 fully.
+  - If content overflows to page 2 AND page 2 has LESS than 50% content: STRICTLY cut to 1 page.
+    Cut strategy: reduce bullets to 2-3 per entry, use \\small, remove least relevant entries first.
+  - Never produce a 2-page resume where page 2 is less than half filled.
 
 FINAL CHECK: The bottom of the page should have NO more than 0.5 inches of blank space."""
 
@@ -361,13 +379,15 @@ CRITICAL RULES (MUST FOLLOW IN ORDER OF PRIORITY):
      resume text and the job description. This is encouraged and expected.
    - You MAY add a Professional Summary if missing — write it from existing skills + JD keywords.
    - You MAY split the skills section into labelled categories using skills already in the resume.
-   - You MAY add an Areas of Interest, Coursework, or Certifications section if data exists in
-     the original resume.
+   - You MAY add Coursework or Certifications sections if data exists in the original resume.
+   - You MUST NOT add "Areas of Interest", "Hobbies", or filler sections. They waste space.
    - You MUST NOT invent new jobs, new companies, new projects, or new certifications that are
      not mentioned anywhere in the original resume.
 
-3. PRESERVE ORIGINAL STRUCTURE: Keep the same sections that exist in the original resume (e.g.,
-   Education, Experience, Projects, Skills). You may ADD a Summary/Objective section if missing.
+3. SECTION ORDERING: Follow standard resume conventions based on experience level.
+   Junior (0-2 years): Summary → Skills → Projects → Experience → Education
+   Experienced (3+ years): Summary → Experience → Skills → Projects → Education
+   Always keep Summary at the top.
 {default_design}
 7. Apply the improvement plan to strengthen existing content through better phrasing and keyword integration.
 8. Incorporate relevant keywords from the job requirements NATURALLY into existing content.

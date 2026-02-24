@@ -69,7 +69,7 @@ export default function MissingSkillsHistory() {
     };
 
     return (
-        <div className="min-h-screen bg-primary p-8">
+        <div className="min-h-screen bg-primary p-4 md:p-8">
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-12">
@@ -82,8 +82,8 @@ export default function MissingSkillsHistory() {
                     {loading ? (
                         <div className="space-y-4">
                             {Array.from({ length: 4 }).map((_, i) => (
-                                <div key={i} className="bg-surface border border-gray-100 rounded-3xl p-8">
-                                    <div className="flex items-center justify-between gap-8">
+                                <div key={i} className="bg-surface border border-gray-100 rounded-3xl p-4 md:p-8">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8">
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-4 mb-3">
                                                 <Skeleton className="h-6 w-20 rounded-full" />
@@ -92,7 +92,7 @@ export default function MissingSkillsHistory() {
                                             <Skeleton className="h-5 w-2/3 mb-2" />
                                             <Skeleton className="h-4 w-1/2" />
                                         </div>
-                                        <div className="flex items-center gap-8 shrink-0">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 w-full md:w-auto">
                                             <div className="text-right border-r border-gray-100 pr-8 space-y-2">
                                                 <Skeleton className="h-8 w-12" />
                                                 <Skeleton className="h-3 w-24 ml-auto" />
@@ -117,7 +117,7 @@ export default function MissingSkillsHistory() {
                             <p className="text-gray-500 text-sm mb-10 font-medium">You haven&apos;t run any missing skills analyses yet.</p>
                             <button
                                 onClick={() => navigate('/missing-skills')}
-                                className="px-8 py-3 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-red-600 transition-all active:scale-95"
+                                className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-xl hover:bg-brand-hover transition-all active:scale-95"
                             >
                                 Analyze Missing Skills
                             </button>
@@ -133,8 +133,8 @@ export default function MissingSkillsHistory() {
                                     className="bg-surface border border-gray-200 rounded-3xl overflow-hidden hover:border-brand-primary/30 hover:shadow-xl hover:shadow-black/10 transition-all group"
                                 >
                                     {/* Card Header */}
-                                    <div className="p-8">
-                                        <div className="flex items-center justify-between gap-8">
+                                    <div className="p-4 md:p-8">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8">
                                             {/* Left Side */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-4 mb-3">
@@ -154,7 +154,7 @@ export default function MissingSkillsHistory() {
                                             </div>
 
                                             {/* Right Side */}
-                                            <div className="flex items-center gap-8 shrink-0">
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8 w-full md:w-auto">
                                                 {/* Score Display */}
                                                 <div className="text-right border-r border-gray-200 pr-8">
                                                     <div className="flex items-center gap-2 mb-1">
@@ -172,7 +172,7 @@ export default function MissingSkillsHistory() {
                                                     <button
                                                         onClick={() => handleToggleExpand(item.id)}
                                                         className={`p-4 rounded-2xl transition-all shadow-inner border active:scale-95 ${isExpanded
-                                                                ? 'bg-brand text-black border-brand-primary'
+                                                                ? 'bg-brand text-white border-brand-primary'
                                                                 : 'bg-secondary hover:bg-brand text-gray-500 hover:text-black border-gray-100 hover:border-brand-primary'
                                                             }`}
                                                         title={isExpanded ? "Collapse" : "Expand Details"}
@@ -197,7 +197,7 @@ export default function MissingSkillsHistory() {
 
                                     {/* Expanded: Missing Skills Breakdown */}
                                     {isExpanded && missingSkills.length > 0 && (
-                                        <div className="border-t border-gray-200 p-8 bg-secondary/30">
+                                        <div className="border-t border-gray-200 p-4 md:p-8 bg-secondary/30">
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                                 {missingSkills.map(cat => {
                                                     const colors = getCategoryColors(cat.category);
@@ -236,7 +236,7 @@ export default function MissingSkillsHistory() {
                                     )}
 
                                     {isExpanded && missingSkills.length === 0 && (
-                                        <div className="border-t border-gray-200 p-8 bg-secondary/30 text-center">
+                                        <div className="border-t border-gray-200 p-4 md:p-8 bg-secondary/30 text-center">
                                             <p className="text-green-500 text-sm font-semibold">
                                                 ✓ No missing skills — your resume covered all requirements!
                                             </p>
