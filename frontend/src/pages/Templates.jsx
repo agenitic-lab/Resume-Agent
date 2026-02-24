@@ -67,6 +67,7 @@ function PreviewModal({ templateId, templateName, onClose }) {
             cancelled = true;
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [templateId]);
 
     // Close on Escape key

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Button } from "./ui/button";
 
 export default function Navbar() {
@@ -74,7 +74,7 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
+            <Motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -103,7 +103,7 @@ export default function Navbar() {
                   <Link to="/register" onClick={() => setMobileOpen(false)}>Get Started</Link>
                 </Button>
               </div>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
       </header>
