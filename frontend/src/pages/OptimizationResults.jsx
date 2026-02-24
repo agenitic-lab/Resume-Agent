@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getRunDetails } from '../services/api';
 import Toast from '../components/Toast';
 import { Skeleton } from '../components/ui/skeleton';
+import PdfViewer from '../components/PdfViewer';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -649,9 +650,10 @@ export default function OptimizationResults() {
 
                                         <div className="relative h-[500px] md:h-[800px] bg-white border border-gray-200 rounded-xl shadow-sm">
                                             {compiledPdfUrl ? (
-                                                <iframe
-                                                    src={`${compiledPdfUrl}#toolbar=1&view=FitH`}
-                                                    className="w-full h-full block border-0 rounded-xl"
+                                                <PdfViewer
+                                                    url={compiledPdfUrl}
+                                                    filename="optimized_resume.pdf"
+                                                    className="rounded-xl"
                                                     title="PDF Preview"
                                                 />
                                             ) : (

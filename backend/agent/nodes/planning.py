@@ -81,6 +81,8 @@ Rules:
 - You SHOULD suggest reordering sections: for juniors (0-2 yrs): Skills/Projects before Experience; for experienced: Experience first
 - Do NOT suggest adding "Areas of Interest" or "Hobbies" sections — they waste space and add no ATS value
 - Do NOT suggest inventing new jobs, new companies, or new certifications not mentioned in the original resume
+- Do NOT suggest adding a Certifications section unless the original resume already contains actual certifications — suggesting placeholder certifications is strictly forbidden
+- Do NOT suggest adding Awards, Publications, Volunteer Work, or any new section unless that section's content already exists in the original resume
 - Focus on keyword optimization, better phrasing, content expansion, and structural improvements
 - Return ONLY valid JSON
 """

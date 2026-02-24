@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Toast from '../components/Toast';
-import { optimizeResumeStream, getApiKeyStatus } from '../services/api';
+import PdfViewer from '../components/PdfViewer';
+import { optimizeResumeStream, getApiKeyStatus, getTemplatePreference } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -23,15 +24,16 @@ export default function NewOptimization() {
     const [toast, setToast] = useState(null);
     const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = status
+    const [hasTemplate, setHasTemplate] = useState(null); // null = loading, true/false = status
     const [optimizationData, setOptimizationData] = useState(null); // full optimization response
     const [activeResultTab, setActiveResultTab] = useState('resume'); // 'resume' | 'details' | 'coverLetter'
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [liveStatusLogs, setLiveStatusLogs] = useState([]);
 
-    // check API key status on mount
+    // check API key + template on mount
     useEffect(() => {
-        async function checkApiKey() {
+        async function checkPrerequisites() {
             try {
                 const status = await getApiKeyStatus();
                 setHasApiKey(status.has_api_key);
@@ -39,8 +41,15 @@ export default function NewOptimization() {
                 console.error('Failed to check API key status:', error);
                 setHasApiKey(false);
             }
+            try {
+                const pref = await getTemplatePreference();
+                setHasTemplate(!!(pref && pref.template_id));
+            } catch (error) {
+                console.error('Failed to check template preference:', error);
+                setHasTemplate(false);
+            }
         }
-        checkApiKey();
+        checkPrerequisites();
     }, []);
 
     // reset to step 1 if user refreshes mid-optimization (skip while API call is in-flight)
@@ -174,14 +183,24 @@ export default function NewOptimization() {
     const canProceedStep1 = inputType !== null;
     const canProceedStep2 = (inputType === 'pdf' && extractedText.trim().length > 0) ||
         (inputType === 'latex' && resumeText.trim().length > 0);
-    const canProceedStep3 = jobDescription.trim().length >= 50;
+    const canProceedStep3 = jobDescription.trim().length >= 50 &&
+        hasApiKey === true &&
+        hasTemplate === true;
 
     const handleContinue = () => {
         if (currentStep === 1 && canProceedStep1) {
             setCurrentStep(2);
         } else if (currentStep === 2 && canProceedStep2) {
             setCurrentStep(3);
-        } else if (currentStep === 3 && canProceedStep3) {
+        } else if (currentStep === 3 && jobDescription.trim().length >= 50) {
+            if (hasApiKey !== true) {
+                setToast({ message: 'Please add your Groq API key in Settings before running optimization.', type: 'error' });
+                return;
+            }
+            if (hasTemplate !== true) {
+                setToast({ message: 'Please select a resume template in Templates before running optimization.', type: 'error' });
+                return;
+            }
             setCurrentStep(4);
             simulateAgentOptimization();
         }
@@ -384,36 +403,50 @@ export default function NewOptimization() {
 
     return (
         <div className="min-h-screen bg-primary text-primary p-8">
-            {/* API Key Warning Banner */}
-            {hasApiKey === false && (
-                <div className="max-w-4xl mx-auto mb-8">
-                    <div className="bg-surface border-l-4 border-brand-primary rounded-2xl p-8 shadow-xl shadow-black/5 flex items-start gap-6">
-                        <div className="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <svg className="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-primary mb-1">Groq API Key Required</h3>
-                            <p className="text-secondary font-medium mb-4 leading-relaxed">
-                                You need to add your Groq API key to use the resume optimization feature.
-                                Get your free API key from{' '}
-                                <a
-                                    href="https://console.groq.com/keys"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-brand hover:underline font-black"
-                                >
-                                    console.groq.com/keys
-                                </a>
-                            </p>
+            {/* Compact prerequisites bar — shown only when something is missing */}
+            {(hasApiKey === false || hasTemplate === false) && (
+                <div className="max-w-5xl mx-auto mb-6">
+                    <div className="bg-surface border border-gray-200 rounded-2xl px-4 py-3 shadow-sm flex flex-wrap items-center gap-2">
+                        {/* Label */}
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-1 shrink-0">
+                            Setup required
+                        </span>
+
+                        {/* API Key chip */}
+                        {hasApiKey === false && (
                             <button
                                 onClick={() => navigate('/settings')}
-                                className="px-6 py-2.5 bg-brand text-white rounded-xl font-semibold text-sm tracking-wide transition-all hover:bg-white hover:text-black active:scale-95"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-100 active:scale-95 transition-all"
                             >
-                                Go to Settings
+                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                                Groq API Key
+                                <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                </svg>
                             </button>
-                        </div>
+                        )}
+
+                        {/* Template chip */}
+                        {hasTemplate === false && (
+                            <button
+                                onClick={() => navigate('/templates')}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 active:scale-95 transition-all"
+                            >
+                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Resume Template
+                                <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        )}
+
+                        <span className="text-[10px] text-gray-400 ml-auto hidden sm:block">
+                            Both required to run optimization
+                        </span>
                     </div>
                 </div>
             )}
@@ -773,30 +806,49 @@ export default function NewOptimization() {
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between pt-10 border-t border-white/5">
-                                        <button
-                                            onClick={handleBack}
-                                            className="px-8 py-4 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-primary rounded-2xl font-medium text-sm transition-all flex items-center gap-4 border border-gray-100"
-                                        >
-                                            <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
-                                            </svg>
-                                            <span>Back</span>
-                                        </button>
+                                    <div className="flex flex-col gap-4 pt-10 border-t border-white/5">
+                                        {/* Blocking prerequisites hint */}
+                                        {(hasApiKey === false || hasTemplate === false) && (
+                                            <div className="flex flex-wrap items-center gap-2 justify-end">
+                                                <span className="text-[10px] text-gray-400 font-semibold">Still needed:</span>
+                                                {hasApiKey === false && (
+                                                    <button onClick={() => navigate('/settings')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold hover:bg-red-100 transition-all">
+                                                        API Key <span className="opacity-60">→</span>
+                                                    </button>
+                                                )}
+                                                {hasTemplate === false && (
+                                                    <button onClick={() => navigate('/templates')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-all">
+                                                        Template <span className="opacity-60">→</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
 
-                                        <button
-                                            onClick={handleContinue}
-                                            disabled={!canProceedStep3}
-                                            className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep3
-                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
-                                                : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
-                                                }`}
-                                        >
-                                            <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                            <span>Start Optimization</span>
-                                        </button>
+                                        <div className="flex justify-between">
+                                            <button
+                                                onClick={handleBack}
+                                                className="px-8 py-4 bg-white/5 hover:bg-white/10 text-gray-500 hover:text-primary rounded-2xl font-medium text-sm transition-all flex items-center gap-4 border border-gray-100"
+                                            >
+                                                <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+                                                </svg>
+                                                <span>Back</span>
+                                            </button>
+
+                                            <button
+                                                onClick={handleContinue}
+                                                disabled={!canProceedStep3}
+                                                className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep3
+                                                    ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
+                                                    : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
+                                                    }`}
+                                            >
+                                                <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                <span>Start Optimization</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </Motion.div>
                             )}
@@ -1007,10 +1059,10 @@ export default function NewOptimization() {
                                                             {/* PDF Viewer Container */}
                                                             <div className="flex-1 relative bg-white border border-gray-200 rounded-[2rem] overflow-hidden group">
                                                                 {compiledPdfUrl ? (
-                                                                    <iframe
-                                                                        src={`${compiledPdfUrl}#toolbar=0&navpanes=0`}
-                                                                        className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
-                                                                        style={{ backgroundColor: 'white' }}
+                                                                    <PdfViewer
+                                                                        url={compiledPdfUrl}
+                                                                        filename="optimized_resume.pdf"
+                                                                        className="opacity-90 group-hover:opacity-100 transition-opacity"
                                                                         title="PDF Preview"
                                                                     />
                                                                 ) : (
