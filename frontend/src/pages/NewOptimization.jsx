@@ -409,7 +409,7 @@ export default function NewOptimization() {
                             </p>
                             <button
                                 onClick={() => navigate('/settings')}
-                                className="px-6 py-2.5 bg-text-primary text-bg-primary rounded-xl font-semibold text-sm tracking-wide transition-all hover:bg-white hover:text-black active:scale-95"
+                                className="px-6 py-2.5 bg-brand text-white rounded-xl font-semibold text-sm tracking-wide transition-all hover:bg-white hover:text-black active:scale-95"
                             >
                                 Go to Settings
                             </button>
@@ -423,12 +423,12 @@ export default function NewOptimization() {
                 <div className="flex items-center justify-between px-4">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.number}>
-                            <div className="flex flex-col items-center relative z-10 w-32">
+                            <div className="flex flex-col items-center relative z-10 w-16 sm:w-24 md:w-32">
                                 <div
                                     className={`w-12 h-12 rounded-xl flex items-center justify-center font-black transition-all duration-500 border-2 ${currentStep === step.number
-                                        ? 'bg-brand border-brand-primary text-black shadow-[0_0_20px_rgba(141,163,74,0.3)] scale-110'
+                                        ? 'bg-brand border-brand-primary text-black shadow-[0_0_20px_rgba(255,75,114,0.3)] scale-110'
                                         : currentStep > step.number
-                                            ? 'bg-text-primary border-text-primary text-bg-primary'
+                                            ? 'bg-brand border-brand-primary text-white'
                                             : 'bg-primary border-gray-200 text-gray-500 hover:border-brand-primary/30'
                                         }`}
                                 >
@@ -450,7 +450,7 @@ export default function NewOptimization() {
                                         <Motion.div
                                             initial={{ width: "0%" }}
                                             animate={{ width: currentStep > step.number ? "100%" : "0%" }}
-                                            className="absolute inset-0 bg-brand shadow-[0_0_10px_rgba(141,163,74,0.5)]"
+                                            className="absolute inset-0 bg-brand shadow-[0_0_10px_rgba(255,75,114,0.5)]"
                                         />
                                     </div>
                                 </div>
@@ -461,7 +461,7 @@ export default function NewOptimization() {
             </div>
 
             {/* Main Content Container with Background Grid */}
-            <div className="max-w-5xl mx-auto relative min-h-[600px]">
+            <div className="max-w-5xl mx-auto relative min-h-[400px] md:min-h-[600px]">
                 {/* Background Decoration */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute inset-0 cyber-grid opacity-20" />
@@ -469,7 +469,7 @@ export default function NewOptimization() {
                 </div>
 
                 {/* Main Container */}
-                <div className="relative z-10 bg-surface/30 backdrop-blur-xl border border-gray-200 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/40">
+                <div className="relative z-10 bg-surface/30 backdrop-blur-xl border border-gray-200 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/10">
                     <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
 
                     {/* Corner Markers */}
@@ -508,7 +508,7 @@ export default function NewOptimization() {
                                                 key={opt.id}
                                                 onClick={() => setInputType(opt.id)}
                                                 className={`group relative p-8 md:p-12 rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
-                                                    ? 'border-brand-primary bg-brand/5 shadow-[0_0_40px_rgba(141,163,74,0.1)]'
+                                                    ? 'border-brand-primary bg-brand/5 shadow-[0_0_40px_rgba(255,75,114,0.1)]'
                                                     : 'border-gray-200 hover:border-text-secondary hover:bg-white/[0.02]'
                                                     }`}
                                             >
@@ -519,7 +519,7 @@ export default function NewOptimization() {
 
                                                 <div className="relative z-10">
                                                     <div className="flex justify-between items-start mb-8">
-                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${inputType === opt.id ? 'bg-brand text-black' : 'bg-secondary text-gray-500'}`}>
+                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-transform duration-500 group-hover:scale-110 ${inputType === opt.id ? 'bg-brand text-white' : 'bg-secondary text-gray-500'}`}>
                                                             {opt.icon}
                                                         </div>
                                                         <div className="text-mono text-[9px] font-bold text-gray-500 uppercase tracking-widest">{opt.code}</div>
@@ -543,7 +543,7 @@ export default function NewOptimization() {
                                             onClick={handleContinue}
                                             disabled={!canProceedStep1}
                                             className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep1
-                                                ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
                                                 : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
                                                 }`}
                                         >
@@ -582,7 +582,7 @@ export default function NewOptimization() {
                                                 onDragOver={handleDragOver}
                                                 onDragLeave={handleDragLeave}
                                                 className={`relative border border-dashed rounded-[2rem] p-8 md:p-16 text-center transition-all duration-500 overflow-hidden ${isDragging
-                                                    ? 'border-brand-primary bg-brand/10 shadow-[inner_0_0_40px_rgba(141,163,74,0.1)]'
+                                                    ? 'border-brand-primary bg-brand/10 shadow-[inner_0_0_40px_rgba(255,75,114,0.1)]'
                                                     : 'border-gray-200 hover:border-brand-primary/30 bg-white/[0.02]'
                                                     }`}
                                             >
@@ -645,7 +645,7 @@ export default function NewOptimization() {
                                                                 <p className="text-gray-500 text-sm mb-8">or click to browse your files</p>
                                                                 <label
                                                                     htmlFor="pdf-upload"
-                                                                    className="inline-block px-10 py-4 bg-text-primary text-bg-primary rounded-2xl cursor-pointer font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 shadow-xl"
+                                                                    className="inline-block px-10 py-4 bg-brand text-white rounded-2xl cursor-pointer font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 shadow-xl"
                                                                 >
                                                                     Browse Files
                                                                 </label>
@@ -712,7 +712,7 @@ export default function NewOptimization() {
                                             onClick={handleContinue}
                                             disabled={!canProceedStep2 || isExtracting}
                                             className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep2 && !isExtracting
-                                                ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
                                                 : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
                                                 }`}
                                         >
@@ -756,14 +756,14 @@ export default function NewOptimization() {
                                                 value={jobDescription}
                                                 onChange={(e) => setJobDescription(e.target.value)}
                                                 placeholder="Paste the complete target job description here..."
-                                                className="w-full h-[600px] md:h-80 p-6 md:p-10 bg-secondary border border-gray-200 rounded-[2.5rem] text-primary placeholder-gray-400 focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all resize-none custom-scrollbar text-sm font-medium leading-relaxed"
+                                                className="w-full h-52 md:h-80 p-4 md:p-10 bg-secondary border border-gray-200 rounded-2xl md:rounded-[2.5rem] text-primary placeholder-gray-400 focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all resize-none custom-scrollbar text-sm font-medium leading-relaxed"
                                             />
                                             <div className="absolute bottom-6 right-8 flex items-center gap-4">
                                                 <div className="h-1.5 w-32 rounded-full overflow-hidden bg-white/5 border border-white/5">
                                                     <Motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${Math.min(100, (jobDescription.length / 50) * 100)}%` }}
-                                                        className={`h-full shadow-[0_0_10px_rgba(141,163,74,0.5)] ${jobDescription.length >= 50 ? 'bg-brand' : 'bg-brand/20'}`}
+                                                        className={`h-full shadow-[0_0_10px_rgba(255,75,114,0.5)] ${jobDescription.length >= 50 ? 'bg-brand' : 'bg-brand/20'}`}
                                                     />
                                                 </div>
                                                 <p className={`text-mono text-[9px] font-black uppercase tracking-widest ${jobDescription.length >= 50 ? 'text-brand' : 'text-gray-500'}`}>
@@ -788,7 +788,7 @@ export default function NewOptimization() {
                                             onClick={handleContinue}
                                             disabled={!canProceedStep3}
                                             className={`group relative px-10 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-4 ${canProceedStep3
-                                                ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
                                                 : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
                                                 }`}
                                         >
@@ -955,7 +955,7 @@ export default function NewOptimization() {
                                                                         setCopyButtonText('Copied');
                                                                         setTimeout(() => setCopyButtonText('Copy'), 2000);
                                                                     }}
-                                                                    className="text-brand hover:hover:text-red-700 text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
+                                                                    className="text-brand hover:text-brand-hover text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
                                                                 >
                                                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -985,7 +985,7 @@ export default function NewOptimization() {
                                                                     disabled={isCompiling}
                                                                     className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isCompiling
                                                                         ? 'bg-white/5 border-white/5 text-gray-500 cursor-not-allowed'
-                                                                        : 'bg-text-primary border-text-primary hover:bg-white text-bg-primary shadow-lg'
+                                                                        : 'bg-brand border-brand-primary hover:bg-brand-hover text-white shadow-lg'
                                                                     }`}
                                                                 >
                                                                     {isCompiling ? (
@@ -1058,7 +1058,7 @@ export default function NewOptimization() {
                                                                 {optimizationData.scoreProgression.map((score, index) => (
                                                                     <React.Fragment key={index}>
                                                                         <div className={`flex-1 py-3 px-4 rounded-xl text-center font-black italic tracking-tighter text-xl text-mono ${index === optimizationData.scoreProgression.length - 1
-                                                                            ? 'bg-brand text-black shadow-lg scale-105'
+                                                                            ? 'bg-brand text-white shadow-lg scale-105'
                                                                             : 'bg-secondary text-gray-500 border border-gray-200'
                                                                         }`}>
                                                                             {score}
@@ -1083,7 +1083,7 @@ export default function NewOptimization() {
                                                                 <h4 className="text-primary font-semibold text-sm mb-3">Key Requirements (Must Have)</h4>
                                                                 <div className="flex flex-wrap gap-2">
                                                                     {optimizationData.jobRequirements.mustHave?.map((skill) => (
-                                                                        <span key={skill} className="px-4 py-1.5 bg-text-primary text-bg-primary rounded-full text-[10px] font-black uppercase tracking-widest text-mono">{skill}</span>
+                                                                        <span key={skill} className="px-4 py-1.5 bg-brand text-white rounded-full text-[10px] font-black uppercase tracking-widest text-mono">{skill}</span>
                                                                     ))}
                                                                 </div>
                                                             </div>
@@ -1213,7 +1213,7 @@ export default function NewOptimization() {
                                                                     setCoverLetterCopied(true);
                                                                     setTimeout(() => setCoverLetterCopied(false), 2000);
                                                                 }}
-                                                                className="px-5 py-2 bg-text-primary text-bg-primary rounded-xl font-semibold text-sm tracking-wide transition-all flex items-center gap-2 hover:bg-white active:scale-95"
+                                                                className="px-5 py-2 bg-brand text-white rounded-xl font-semibold text-sm tracking-wide transition-all flex items-center gap-2 hover:bg-white active:scale-95"
                                                             >
                                                                 {coverLetterCopied ? (
                                                                     <>
@@ -1265,7 +1265,7 @@ export default function NewOptimization() {
                                                         onClick={handleDownloadPdf}
                                                         disabled={!compiledPdfUrl}
                                                         className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 ${compiledPdfUrl
-                                                            ? 'bg-brand text-black hover:hover:bg-red-600 shadow-[0_20px_40px_-10px_rgba(141,163,74,0.3)] hover:scale-105 active:scale-95'
+                                                            ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
                                                             : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
                                                         }`}
                                                     >

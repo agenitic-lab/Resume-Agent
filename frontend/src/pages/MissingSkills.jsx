@@ -190,7 +190,7 @@ export default function MissingSkills() {
         <div className="mb-8">
           <h1 className="text-4xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">
             Find Missing{' '}
-            <span className="text-brand-primary drop-shadow-[0_0_15px_rgba(141,163,74,0.1)]">Skills</span>
+            <span className="text-brand-primary drop-shadow-[0_0_15px_rgba(255,75,114,0.1)]">Skills</span>
           </h1>
           <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">
             Paste your resume + up to 20 job descriptions · AI identifies the skills you need to learn
@@ -203,7 +203,7 @@ export default function MissingSkills() {
             <svg className="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
-            <p className="text-yellow-300 text-xs font-bold">
+            <p className="text-yellow-700 text-xs font-bold">
               No API key set.{' '}
               <a href="/settings" className="underline hover:text-yellow-200">Go to Settings</a>{' '}
               to add your Groq API key before running analysis.
@@ -420,8 +420,8 @@ export default function MissingSkills() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
                 </svg>
                 <div>
-                  <p className="text-red-300 text-xs font-black uppercase tracking-widest mb-1">Daily API Limit Reached</p>
-                  <p className="text-red-300/80 text-xs">
+                  <p className="text-red-600 text-xs font-black uppercase tracking-widest mb-1">Daily API Limit Reached</p>
+                  <p className="text-red-600/80 text-xs">
                     Your Groq API key has exhausted its daily request quota (free tier: ~25–1000 RPD).
                     Results below are from the <strong>{result.jds_analyzed}</strong> JD{result.jds_analyzed !== 1 ? 's' : ''} analyzed before the limit was hit.
                     Try again tomorrow or{' '}
@@ -437,8 +437,8 @@ export default function MissingSkills() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 </svg>
                 <div>
-                  <p className="text-yellow-300 text-xs font-black uppercase tracking-widest mb-1">Token Rate Limit Hit (12K TPM)</p>
-                  <p className="text-yellow-300/80 text-xs">
+                  <p className="text-yellow-700 text-xs font-black uppercase tracking-widest mb-1">Token Rate Limit Hit (12K TPM)</p>
+                  <p className="text-yellow-700/80 text-xs">
                     llama-3.3-70b-versatile allows 12,000 tokens per minute. Your JDs + resume exceeded this.
                     Partial results shown for <strong>{result.jds_analyzed}</strong> of <strong>{result.jds_submitted}</strong> JDs.
                     Try shorter JDs or submit fewer at once.

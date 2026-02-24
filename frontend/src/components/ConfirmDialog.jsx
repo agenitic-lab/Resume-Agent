@@ -31,8 +31,8 @@ export default function ConfirmDialog({
     if (!isOpen) return null;
 
     const confirmButtonClass = variant === "danger"
-        ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/10"
-        : "bg-brand hover:hover:bg-red-600 text-black shadow-brand-primary/10";
+        ? "bg-red-500 hover:bg-brand-hover text-white shadow-red-500/10"
+        : "bg-brand hover:bg-brand-hover text-black shadow-brand-primary/10";
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

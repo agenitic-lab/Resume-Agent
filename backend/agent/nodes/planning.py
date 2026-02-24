@@ -78,7 +78,8 @@ Rules:
 - You SHOULD suggest adding a Professional Summary section if one is missing — it is derived from existing skills
 - You SHOULD suggest expanding sparse bullet points with more detail from existing experience
 - You SHOULD suggest splitting skills into labelled categories (Languages, Frameworks, Databases, etc.)
-- You SHOULD suggest adding Areas of Interest or Coursework rows if mentioned in the resume
+- You SHOULD suggest reordering sections: for juniors (0-2 yrs): Skills/Projects before Experience; for experienced: Experience first
+- Do NOT suggest adding "Areas of Interest" or "Hobbies" sections — they waste space and add no ATS value
 - Do NOT suggest inventing new jobs, new companies, or new certifications not mentioned in the original resume
 - Focus on keyword optimization, better phrasing, content expansion, and structural improvements
 - Return ONLY valid JSON

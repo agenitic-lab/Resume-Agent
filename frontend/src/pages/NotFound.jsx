@@ -146,7 +146,7 @@ export default function NotFound() {
             <Motion.h1
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-8xl md:text-9xl font-black italic tracking-tighter text-primary/90 drop-shadow-[0_0_20px_rgba(141,163,74,0.15)] animate-glitch"
+              className="text-8xl md:text-9xl font-black italic tracking-tighter text-primary/90 drop-shadow-[0_0_20px_rgba(255,75,114,0.15)] animate-glitch"
             >
               404
             </Motion.h1>
@@ -211,7 +211,7 @@ export default function NotFound() {
           >
             <Link
               to="/"
-              className="inline-flex items-center px-12 py-4 bg-[#606c38] text-white font-black text-[11px] uppercase tracking-[0.25em] rounded-2xl hover:bg-[#4a532b] transition-all active:scale-95 shadow-xl shadow-olive-500/10"
+              className="inline-flex items-center px-12 py-4 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:bg-brand-hover transition-all active:scale-95 shadow-xl shadow-brand/10"
             >
               Return Home
             </Link>

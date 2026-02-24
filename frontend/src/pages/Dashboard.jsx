@@ -95,7 +95,7 @@ export default function Dashboard() {
         <div className="absolute top-0 left-0 w-full h-1 bg-brand/10" />
         <div className="flex items-center justify-between">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 mb-6 md:mb-0">
-            <div className="w-16 h-16 bg-brand rounded-2xl flex flex-shrink-0 items-center justify-center shadow-lg shadow-sm">
+            <div className="w-16 h-16 bg-brand rounded-2xl flex flex-shrink-0 items-center justify-center shadow-lg shadow-brand/10">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -109,7 +109,7 @@ export default function Dashboard() {
           </div>
           <Link
             to="/new-optimization"
-            className="w-full md:w-auto px-6 py-3 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:hover:bg-red-600 transition-all active:scale-95 shadow-xl shadow-brand-primary/10 flex items-center justify-center gap-3 whitespace-nowrap"
+            className="w-full md:w-auto px-6 py-3 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:bg-brand-hover transition-all active:scale-95 shadow-xl shadow-brand-primary/10 flex items-center justify-center gap-3 whitespace-nowrap"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -237,7 +237,7 @@ export default function Dashboard() {
 
               <Link
                 to={`/optimization/${latestRun.id}`}
-                className="mt-8 w-full py-4 bg-text-primary text-bg-primary font-semibold text-sm tracking-wide rounded-2xl hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-black/10"
+                className="mt-8 w-full py-4 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:bg-brand-hover transition-all flex items-center justify-center gap-3 shadow-xl shadow-brand/10"
               >
                 <span>View Full Report</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,8 +247,8 @@ export default function Dashboard() {
             </>
           ) : (
             <div className="text-center py-8">
-              <p className="text-slate-400 mb-4">No optimizations yet</p>
-              <Link to="/new-optimization" className="text-cyan-400 hover:text-cyan-300 font-medium">Start your first run</Link>
+              <p className="text-gray-500 mb-4">No optimizations yet</p>
+              <Link to="/new-optimization" className="text-brand hover:text-brand-hover font-medium">Start your first run</Link>
             </div>
           )}
         </div>
@@ -264,7 +264,7 @@ export default function Dashboard() {
               </div>
               <h3 className="text-lg font-semibold text-primary">Recent History</h3>
             </div>
-            <Link to="/history" className="text-brand hover:hover:text-red-700 text-xs font-medium px-4 py-2 bg-secondary rounded-full transition-colors border border-gray-100">
+            <Link to="/history" className="text-brand hover:text-brand-hover text-xs font-medium px-4 py-2 bg-secondary rounded-full transition-colors border border-gray-100">
               View All
             </Link>
           </div>
@@ -297,7 +297,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-slate-500 text-sm">Your past optimization runs will appear here</p>
+              <p className="text-gray-500 text-sm">Your past optimization runs will appear here</p>
             </div>
           )}
         </div>
@@ -326,7 +326,7 @@ function HistoryItem({ title, date, improvement }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 bg-secondary rounded-2xl hover:bg-primary transition-all border border-gray-100 group gap-2 sm:gap-4 relative overflow-hidden">
       <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
-        <div className="w-2 h-2 bg-brand rounded-full animate-pulse shadow-[0_0_8px_rgba(141,163,74,0.4)] shrink-0 mt-2 sm:mt-0" />
+        <div className="w-2 h-2 bg-brand rounded-full animate-pulse shadow-[0_0_8px_rgba(255,75,114,0.4)] shrink-0 mt-2 sm:mt-0" />
         <div className="min-w-0">
           <p className="text-primary font-semibold text-sm truncate" title={title}>{title}</p>
           <p className="text-gray-500 text-xs mt-0.5">{date}</p>

@@ -416,7 +416,7 @@ export default function Templates() {
                                             disabled={saving || isActive}
                                             className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50 ${isActive
                                                 ? 'bg-brand/10 text-brand border border-brand-primary/20 cursor-default'
-                                                : 'bg-brand text-black hover:opacity-90 shadow-lg shadow-brand-primary/10'
+                                                : 'bg-brand text-white hover:opacity-90 shadow-lg shadow-brand-primary/10'
                                             }`}
                                         >
                                             {isActive ? 'Active' : 'Set as Default'}
@@ -449,7 +449,7 @@ export default function Templates() {
                                             >
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${isActive ? 'bg-brand text-black' : 'bg-gray-200 text-gray-500'}`}>
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${isActive ? 'bg-brand text-white' : 'bg-gray-200 text-gray-500'}`}>
                                                             {idx + 1}
                                                         </div>
                                                         <h4 className="text-sm font-semibold text-primary">{ct.name}</h4>
@@ -461,7 +461,7 @@ export default function Templates() {
                                                         <button
                                                             onClick={() => handleSelectCustom(idx)}
                                                             disabled={saving || isActive}
-                                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isActive ? 'text-brand cursor-default' : 'bg-brand text-black hover:opacity-90'}`}
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isActive ? 'text-brand cursor-default' : 'bg-brand text-white hover:opacity-90'}`}
                                                         >
                                                             {isActive ? 'Default' : 'Set Default'}
                                                         </button>
@@ -517,7 +517,7 @@ export default function Templates() {
                                         <button
                                             onClick={handleSaveCustom}
                                             disabled={saving || !formName.trim() || !formLatex.trim()}
-                                            className="px-8 py-3 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-lg hover:opacity-90 transition-all disabled:opacity-50 active:scale-95"
+                                            className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-lg hover:opacity-90 transition-all disabled:opacity-50 active:scale-95"
                                         >
                                             {saving ? 'Saving...' : editingIndex !== null ? 'Update Template' : 'Save Template'}
                                         </button>
@@ -533,7 +533,7 @@ export default function Templates() {
                                 customTemplates.length < MAX_CUSTOM && (
                                     <button
                                         onClick={openAddForm}
-                                        className="px-8 py-3 bg-text-primary text-bg-primary rounded-2xl font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 flex items-center gap-2"
+                                        className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 flex items-center gap-2"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />

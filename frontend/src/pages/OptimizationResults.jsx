@@ -332,7 +332,7 @@ export default function OptimizationResults() {
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => navigate('/new-optimization')}
-                                    className="flex-1 py-4 bg-brand text-black rounded-2xl font-semibold text-sm tracking-wide shadow-xl shadow-sm hover:hover:bg-red-600 transition-all active:scale-95"
+                                    className="flex-1 py-4 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide shadow-xl shadow-brand/10 hover:bg-brand-hover transition-all active:scale-95"
                                 >
                                     New Optimization
                                 </button>
@@ -403,7 +403,7 @@ export default function OptimizationResults() {
                         onClick={handleDownloadPdf}
                         disabled={!latexCode || isCompiling}
                         className={`px-8 py-4 rounded-2xl font-semibold text-sm tracking-wide shadow-xl transition-all flex items-center gap-3 ${latexCode && !isCompiling
-                            ? 'bg-brand text-black hover:hover:bg-red-600 shadow-sm active:scale-95'
+                            ? 'bg-brand text-white hover:bg-brand-hover shadow-sm active:scale-95'
                             : 'bg-secondary text-gray-500 cursor-not-allowed shadow-none border border-gray-100'
                             }`}
                     >
@@ -445,7 +445,7 @@ export default function OptimizationResults() {
                                     {resultsData.scoreProgression.map((score, index) => (
                                         <React.Fragment key={index}>
                                             <div className={`flex-1 py-4 px-6 rounded-2xl text-center font-black italic tracking-tighter text-2xl transition-all text-mono ${index === resultsData.scoreProgression.length - 1
-                                                ? 'bg-brand text-black shadow-lg shadow-sm scale-105'
+                                                ? 'bg-brand text-white shadow-lg shadow-brand/10 scale-105'
                                                 : 'bg-secondary text-gray-500 border border-gray-200'
                                                 }`}>
                                                 {score}
@@ -471,7 +471,7 @@ export default function OptimizationResults() {
                                     <h3 className="text-primary font-semibold text-sm mb-4">Key Requirements (Must Have)</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {resultsData.jobRequirements.mustHave?.map((skill) => (
-                                            <span key={skill} className="px-5 py-2 bg-text-primary text-bg-primary rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
+                                            <span key={skill} className="px-5 py-2 bg-brand text-white rounded-full text-[10px] font-black uppercase tracking-widest text-mono">
                                                 {skill}
                                             </span>
                                         ))}
@@ -604,7 +604,7 @@ export default function OptimizationResults() {
                                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Resume Editor</label>
                                             <button
                                                 onClick={handleCopyLatex}
-                                                className="text-brand hover:hover:text-red-700 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
+                                                className="text-brand hover:text-brand-hover text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -628,7 +628,7 @@ export default function OptimizationResults() {
                                                 disabled={isCompiling}
                                                 className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompiling
                                                     ? 'bg-secondary text-gray-500 cursor-not-allowed'
-                                                    : 'bg-text-primary hover:bg-white text-bg-primary shadow-lg shadow-black/10'
+                                                    : 'bg-brand hover:bg-brand-hover text-white shadow-lg shadow-black/10'
                                                     }`}
                                             >
                                                 {isCompiling ? (
@@ -694,7 +694,7 @@ export default function OptimizationResults() {
                                         onClick={handleDownloadPdf}
                                         disabled={!compiledPdfUrl || isCompiling}
                                         className={`px-8 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-3 ${compiledPdfUrl && !isCompiling
-                                            ? 'bg-brand text-black hover:hover:bg-red-600 shadow-xl shadow-sm active:scale-95'
+                                            ? 'bg-brand text-white hover:bg-brand-hover shadow-xl shadow-brand/10 active:scale-95'
                                             : 'bg-secondary text-gray-500 cursor-not-allowed shadow-none border border-gray-100'
                                             }`}
                                     >
@@ -721,7 +721,7 @@ export default function OptimizationResults() {
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <button
                                     onClick={handleCopyCoverLetter}
-                                    className="flex-1 py-4 bg-text-primary text-bg-primary font-semibold text-sm tracking-wide rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-white active:scale-95"
+                                    className="flex-1 py-4 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl transition-all flex items-center justify-center gap-3 hover:bg-white active:scale-95"
                                 >
                                     {coverLetterCopied ? (
                                         <>
@@ -755,7 +755,7 @@ export default function OptimizationResults() {
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-16">
                     <button
                         onClick={() => navigate('/new-optimization')}
-                        className="px-8 py-4 bg-brand text-black rounded-[2rem] font-semibold text-sm tracking-wide shadow-2xl shadow-sm hover:hover:bg-red-600 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                        className="px-8 py-4 bg-brand text-white rounded-[2rem] font-semibold text-sm tracking-wide shadow-2xl shadow-brand/10 hover:bg-brand-hover transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
                     >
                         <span>New Optimization</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
