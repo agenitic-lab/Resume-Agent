@@ -14,7 +14,7 @@
  *   className  {string}  – extra classes forwarded to the <iframe> on desktop
  *   title      {string}  – iframe title for accessibility
  */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 /** Heuristic mobile detection – covers iOS, Android, and iPad in mobile mode. */
 function detectMobile() {
@@ -31,11 +31,7 @@ export default function PdfViewer({
     className = '',
     title = 'PDF Preview',
 }) {
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        setIsMobile(detectMobile());
-    }, []);
+    const [isMobile] = useState(() => detectMobile());
 
     if (!url) return null;
 
