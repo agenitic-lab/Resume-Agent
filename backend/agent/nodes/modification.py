@@ -335,8 +335,14 @@ information that already exists in the original resume AND the job description d
   c) ADD A TECHNICAL SKILLS TABLE: If the original resume has a skills section, split it into
      categories (Languages, Frameworks, Databases, Tools, Cloud, etc.) and list every skill
      mentioned in the resume. Present as a compact 2-column table or labeled rows.
-  d) ADD RELEVANT SECTIONS from the original resume that may have been omitted:
-     Certifications, Achievements, Coursework, etc. (but NOT Areas of Interest or Hobbies).
+  d) ADD SECTIONS THAT EXIST IN THE ORIGINAL RESUME but were omitted:
+     - ONLY include a section if its content is explicitly present in the original resume.
+     - Certifications: ONLY if the original resume names real certifications. If none exist,
+       do NOT add any Certifications section at all — no heading, no placeholder, nothing.
+     - Achievements/Awards: ONLY if explicitly mentioned in the original resume.
+     - Coursework: ONLY if specific courses are listed in the original resume.
+     - Do NOT add any section that requires inventing content. When in doubt, omit it.
+     - NEVER add Areas of Interest, Hobbies, or Objective sections.
 
 STEP 3 — FONT SIZE CALIBRATION:
   - If the page is 85-95% filled with only 3-4 blank lines at bottom:
@@ -379,8 +385,19 @@ CRITICAL RULES (MUST FOLLOW IN ORDER OF PRIORITY):
      resume text and the job description. This is encouraged and expected.
    - You MAY add a Professional Summary if missing — write it from existing skills + JD keywords.
    - You MAY split the skills section into labelled categories using skills already in the resume.
-   - You MAY add Coursework or Certifications sections if data exists in the original resume.
-   - You MUST NOT add "Areas of Interest", "Hobbies", or filler sections. They waste space.
+   - SECTION EXISTENCE RULE (STRICT — NO EXCEPTIONS): A section may only appear in the output
+     if entries for it are EXPLICITLY AND CLEARLY PRESENT in the original resume text below.
+     This applies especially to these fabrication-prone sections:
+       * Certifications / Licenses — ONLY if the original resume names actual certifications.
+         If no certifications are mentioned, do NOT add any Certifications section, not even
+         a heading, not even a single placeholder entry. Omit entirely.
+       * Awards / Honors / Achievements — ONLY if the original resume mentions them.
+       * Publications / Research — ONLY if the original resume mentions them.
+       * Volunteer / Extra-Curricular — ONLY if the original resume mentions them.
+       * Coursework — ONLY if the original resume lists specific relevant courses.
+       * Languages (spoken) — ONLY if the original resume mentions language fluency.
+     When in doubt, OMIT the section. Adding a fabricated section is a critical error that
+     makes the resume untruthful and damages the candidate's credibility.
    - You MUST NOT invent new jobs, new companies, new projects, or new certifications that are
      not mentioned anywhere in the original resume.
 

@@ -12,6 +12,7 @@ import {
     getToken,
 } from '../services/api';
 import { Skeleton } from '../components/ui/skeleton';
+import PdfViewer from '../components/PdfViewer';
 
 const TAG_COLORS = {
     'modern': 'bg-blue-50 text-blue-600',
@@ -122,11 +123,14 @@ function PreviewModal({ templateId, templateName, onClose }) {
                         </div>
                     )}
                     {pdfUrl && !loading && (
-                        <iframe
-                            src={pdfUrl}
-                            title={`${templateName} preview`}
-                            className="w-full h-[75vh] rounded-xl border border-gray-100"
-                        />
+                        <div className="w-full h-[70vh]">
+                            <PdfViewer
+                                url={pdfUrl}
+                                filename={`${templateName.replace(/\s+/g, '_')}_preview.pdf`}
+                                className="rounded-xl border border-gray-100"
+                                title={`${templateName} preview`}
+                            />
+                        </div>
                     )}
                 </div>
             </div>
