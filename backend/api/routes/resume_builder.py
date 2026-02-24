@@ -153,6 +153,10 @@ class SummaryGenerationRequest(BaseModel):
     current_role: str
     experience_level: str
     keywords: List[str]
+    experience: List[dict] | None = []
+    projects: List[dict] | None = []
+    education: List[dict] | None = []
+    skills: List[str] | None = []
 
 @router.post("/generate-summary")
 def generate_summary(
@@ -171,6 +175,10 @@ def generate_summary(
         current_role=payload.current_role,
         experience_level=payload.experience_level,
         keywords=payload.keywords,
+        experience=payload.experience,
+        projects=payload.projects,
+        education=payload.education,
+        skills=payload.skills,
         api_key=api_key
     )
     return {"summary": summary}

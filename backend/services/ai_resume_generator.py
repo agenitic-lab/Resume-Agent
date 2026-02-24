@@ -145,9 +145,18 @@ Rules:
         return [f"Error generating content: {str(e)}"]
 
 
-def generate_ats_summary(current_role: str, experience_level: str, keywords: List[str], api_key: str) -> str:
+def generate_ats_summary(
+    current_role: str, 
+    experience_level: str, 
+    keywords: List[str], 
+    api_key: str,
+    experience: Optional[List[dict]] = None,
+    projects: Optional[List[dict]] = None,
+    education: Optional[List[dict]] = None,
+    skills: Optional[List[str]] = None
+) -> str:
     """
-    Generates a professional summary tailored to the field.
+    Generates a professional summary tailored to the field, using all provided context.
     """
     client = get_groq_client(api_key)
     if not client:
@@ -155,34 +164,55 @@ def generate_ats_summary(current_role: str, experience_level: str, keywords: Lis
 
     ctx = _get_field_context(current_role)
     keywords_str = ", ".join(keywords) if keywords else "core professional skills"
+    
+    # Format extra context for the prompt
+    context_str = ""
+    if experience:
+        exp_pts = []
+        for e in experience[:2]:
+            company = e.get('company', 'Unknown Company')
+            title = e.get('title', 'Unknown Role')
+            details = "; ".join(e.get('details', [])[:2])
+            exp_pts.append(f"- {title} at {company}: {details}")
+        context_str += "\nExperience:\n" + "\n".join(exp_pts)
+    
+    if projects:
+        proj_pts = []
+        for p in projects[:2]:
+            title = p.get('title', 'Unknown Project')
+            details = "; ".join(p.get('details', [])[:1])
+            proj_pts.append(f"- Project {title}: {details}")
+        context_str += "\nProjects:\n" + "\n".join(proj_pts)
+        
+    if skills:
+        context_str += f"\nSpecific Skills: {', '.join(skills)}"
 
-    prompt = f"""You are an expert RESUME WRITER for the {ctx['field']} field.
-Write a powerful 3-4 sentence Professional Summary for a resume.
+    prompt = f"""You are an expert RESUME WRITER for the {ctx['field']} industry.
+Write a powerful 3-4 sentence Professional Summary for a resume that highlights the candidate's unique value proposition.
 
-Candidate:
-- Role: {current_role}
-- Field: {ctx['field']}
+Candidate Info:
+- Target Role: {current_role}
 - Experience Level: {experience_level}
-- Key Skills: {keywords_str}
+- Primary Skills: {keywords_str}{context_str}
 
 Rules:
-1. Return ONLY the summary paragraph. No labels, no markdown.
-2. Use strong, active language appropriate for {ctx['field']}.
+1. Return ONLY the summary paragraph. No labels, no headers, no markdown.
+2. Use strong, active language appropriate for the {ctx['field']} industry.
 3. Focus on: {ctx['focus']}
-4. Keep it between 50-80 words.
-5. Avoid first-person pronouns ("I", "me"). Use "Results-driven [Role] with..." style.
-6. Make it specific to the {ctx['field']} field — not generic.
+4. Incorporate details from the experience and projects to make it specific, not generic.
+5. Keep it between 50-80 words.
+6. Avoid first-person pronouns ("I", "me"). Use "Results-driven [Role] with..." style.
 """
 
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": f"You are a professional resume writer for the {ctx['field']} industry. Output only a single paragraph summary."},
+                {"role": "system", "content": f"You are a professional resume writer specializing in {ctx['field']}. Output only a single paragraph summary based on the provided history."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.5,
-            max_tokens=200
+            temperature=0.4,
+            max_tokens=250
         )
         content = response.choices[0].message.content.strip()
         if content.startswith('"') and content.endswith('"'):
