@@ -24,7 +24,7 @@ export default function Navbar() {
               </svg>
             </div>
             <span className="text-xl font-bold tracking-tight text-primary">
-              ResumeAgent
+              AiRes
             </span>
           </Link>
 
