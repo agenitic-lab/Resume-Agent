@@ -117,7 +117,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                         </svg>
                     </div>
                     <span className="text-lg font-semibold text-primary tracking-tight">
-                        ResumeAgent
+                        AiRes
                     </span>
                     <button
                         onClick={() => setMobileOpen(false)}
