@@ -1,0 +1,76 @@
+\begin{document}
+\fontfamily{cmr}\selectfont
+
+\begin{tabularx}{\linewidth}{L r} \\
+  \textbf{\Large << contact.name >>} & <%% if contact.phone %%>{\raisebox{0.0\height}{\footnotesize \faPhone}\ << contact.phone >>}<%% endif %%>\\
+  {<< contact.summary or 'Professional' | truncate(50) >>} & <%% if contact.email %%>\href{mailto:<< contact.email >>}{\raisebox{0.0\height}{\footnotesize \faEnvelope}\ {<< contact.email >>}}<%% endif %%> \\
+  <%% if contact.location %%>{<< contact.location >>}<%% endif %%> & <%% if contact.github %%>\href{<< contact.github >>}{\raisebox{0.0\height}{\footnotesize \faGithub}\ {<< contact.github_label or 'GitHub' >>}}<%% endif %%> \\  
+  {} & <%% if contact.linkedin %%>\href{<< contact.linkedin >>}{\raisebox{0.0\height}{\footnotesize \faLinkedin}\ {<< contact.linkedin_label or 'LinkedIn' >>}}<%% endif %%>
+\end{tabularx}
+
+<%% if education|length > 0 %%>
+\cvsection{Education}
+\resumeSubHeadingListStart
+<%% for edu in education %%>
+    \resumeSubheading
+      {<< edu.school >>}{}
+      {<< edu.degree >>}{<< edu.start_year >> -- << edu.end_year or 'Present' >>}
+<%% endfor %%>
+\resumeSubHeadingListEnd
+\vspace{-5.5mm}
+<%% endif %%>
+
+<%% if experience|length > 0 %%>
+\cvsection{Experience}
+\resumeSubHeadingListStart
+<%% for exp in experience %%>
+    \resumeSubheading
+      {<< exp.title >>}{}
+      {<< exp.company >>}{<< exp.start_date >> -- << exp.end_date or 'Present' >>}
+      \vspace{-2.0mm}
+      <%% if exp.details|length > 0 %%>
+      \resumeItemListStart
+        <%% for detail in exp.details %%>
+        \item {<< detail >>}
+        <%% endfor %%>
+      \resumeItemListEnd
+      <%% endif %%>
+      \vspace{-3.0mm}
+<%% endfor %%>
+\resumeSubHeadingListEnd
+\vspace{-5.5mm}
+<%% endif %%>
+
+<%% if projects|length > 0 %%>
+\cvsection{Projects}
+\resumeSubHeadingListStart
+<%% for proj in projects %%>
+    \resumeProject
+      {<< proj.title >>}
+      {<< proj.tools >>}
+      {}
+      {}
+      <%% if proj.details|length > 0 %%>
+      \resumeItemListStart
+        <%% for detail in proj.details %%>
+        \item {<< detail >>}
+        <%% endfor %%>
+      \resumeItemListEnd
+      <%% endif %%>
+      \vspace{-2mm}
+<%% endfor %%>
+\resumeSubHeadingListEnd
+\vspace{-8.5mm}
+<%% endif %%>
+
+<%% if skills|length > 0 %%>
+\cvsection{Technical Skills and Interests}
+ \begin{itemize}[leftmargin=0.05in, label={}]
+    \small{\item{
+     \textbf{Skills}{: << skills | join(', ') >>}
+    }}
+ \end{itemize}
+ \vspace{-16pt}
+<%% endif %%>
+
+\end{document}
