@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createResume, getResumePreview, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference } from '../services/api';
+import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference } from '../services/api';
 import toast from 'react-hot-toast';
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -282,7 +282,6 @@ export default function ResumeBuilder() {
     const [skillInput, setSkillInput] = useState('');
     const [errors, setErrors] = useState({});
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = resolved
-    const [isGeneratingBullets, setIsGeneratingBullets] = useState(false);
     const [latexCode, setLatexCode] = useState('');
     const [isCompiling, setIsCompiling] = useState(false);
 
@@ -621,17 +620,7 @@ export default function ResumeBuilder() {
         }
     };
 
-    const handlePrint = () => {
-        if (!previewHtml) return;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(previewHtml);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 500);
-    };
+
 
     const handleGenerateSummary = async () => {
         if (!formData.field) { toast.error("Please enter a Target Job Title first (Step 3)."); return; }
