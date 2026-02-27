@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system deps needed by psycopg2-binary & cryptography
+# Build deps: gcc + libpq-dev for psycopg2-binary
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
@@ -24,11 +24,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Copy only installed packages from builder (keeps image smaller)
+# Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Install libpq runtime library (needed by psycopg2-binary at runtime)
+# Runtime: libpq5 for psycopg2-binary
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
@@ -36,8 +36,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy application source
 COPY . .
 
-# Render injects $PORT; default to 8000 for local docker run
+# Azure App Service injects PORT env var; default 8000 for local runs
 EXPOSE 8000
 
-# Run any schema migrations then start the server
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# gunicorn + uvicorn workers:
+#   -w 2        : 2 workers (optimal for Azure B1: 1 vCPU / 1.75GB RAM)
+#   --timeout   : 180s — covers worst-case LLM optimization runs (~2 min)
+#   --keep-alive: 5s  — reuse connections for streaming responses
+CMD ["sh", "-c", "gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 180 --keep-alive 5"]
