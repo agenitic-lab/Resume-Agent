@@ -476,6 +476,10 @@ export async function downloadResume(resumeId, templateName) {
     return response.blob();
 }
 
+export async function getResumeLatexSource(resumeId, templateName) {
+    return apiRequest(`/api/resume/source/${resumeId}/${templateName}`);
+}
+
 export async function generateResumeBullets(data) {
     return apiRequest('/api/resume/generate-bullets', {
         method: 'POST',
