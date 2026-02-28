@@ -18,10 +18,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <img src="/resiko-logo.png" alt="Resiko" className="w-9 h-9 object-contain scale-100 group-hover:scale-105 transition-transform duration-200" />
-            <span className="text-xl font-bold tracking-tight text-primary">
-              Resiko
-            </span>
+            <img src="/resiko-logo.png" alt="Resiko" className="h-9 object-contain scale-100 group-hover:scale-105 transition-transform duration-200" />
           </Link>
 
           {/* Desktop Nav */}

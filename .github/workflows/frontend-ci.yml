@@ -40,10 +40,9 @@ jobs:
 
       - name: Run build
         env:
-          # Add any VITE_ build-time env vars your app needs here.
-          # Values can be empty strings in CI — the build will still verify
-          # the output bundle compiles correctly.
           VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_URL || '' }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || '' }}
         run: |
           cd frontend
           npm run build
