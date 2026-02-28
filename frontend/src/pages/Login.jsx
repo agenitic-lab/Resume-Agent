@@ -19,6 +19,7 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated()) {
+      // Don't redirect here – ProtectedRoute will handle role-based routing
       navigate('/dashboard', { replace: true });
     }
 
@@ -31,10 +32,11 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      await googleAuth(credentialResponse.credential);
+      const response = await googleAuth(credentialResponse.credential);
       toast.success('Login successful!');
-      const from = location.state?.from || '/dashboard';
-      setTimeout(() => navigate(from, { replace: true }), 500);
+      // Always redirect based on role — never use `from` to prevent cross-role navigation
+      const destination = response?.user?.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+      setTimeout(() => navigate(destination, { replace: true }), 500);
     } catch (err) {
       toast.error(err.message || 'Google login failed');
     }
@@ -47,12 +49,18 @@ export default function Login() {
       setError('Please fill in all fields');
       return;
     }
+
+    if (!email.toLowerCase().endsWith('@gmail.com')) {
+      setError('Only @gmail.com addresses are allowed');
+      return;
+    }
     setLoading(true);
     try {
-      await login(email, password);
+      const response = await login(email, password);
       toast.success('Login successful!');
-      const from = location.state?.from || '/dashboard';
-      setTimeout(() => navigate(from, { replace: true }), 500);
+      // Always redirect based on role — never use `from` to prevent cross-role navigation
+      const destination = response?.user?.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+      setTimeout(() => navigate(destination, { replace: true }), 500);
     } catch (err) {
       setError(err.message || 'Login failed');
       toast.error(err.message || 'Login failed');

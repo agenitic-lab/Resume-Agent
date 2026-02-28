@@ -52,7 +52,10 @@ def get_current_user_info(
     return UserResponse(
         id=str(current_user.id),
         email=current_user.email,
-        created_at=current_user.created_at
+        created_at=current_user.created_at,
+        role=current_user.role,
+        full_name=current_user.full_name,
+        profile_picture=current_user.profile_picture
     )
 
 

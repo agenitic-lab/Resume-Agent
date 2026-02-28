@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, DateTime, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 
@@ -11,6 +11,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=True)  # Nullable for OAuth users
+    role = Column(String, default="user", nullable=False)
+    is_blocked = Column(Boolean, default=False, nullable=False)
     
     # API key storage (encrypted)
     encrypted_api_key = Column(Text, nullable=True)

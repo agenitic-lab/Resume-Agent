@@ -562,3 +562,81 @@ export async function deleteCustomTemplate(index) {
         method: 'DELETE',
     });
 }
+
+// Admin Endpoints
+export async function getAdminUsers(page = 1, size = 15, search = '', sort = 'latest') {
+    return apiRequest(`/api/admin/users?page=${page}&size=${size}&search=${encodeURIComponent(search)}&sort=${sort}`);
+}
+
+export async function updateAdminUserRole(userId, role) {
+    return apiRequest(`/api/admin/users/${userId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role }),
+    });
+}
+
+export async function deleteAdminUser(userId) {
+    return apiRequest(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function getAdminMetrics() {
+    return apiRequest('/api/admin/metrics');
+}
+
+export async function getAdminActivityUsers(page = 1, size = 15, search = '', sort = 'latest') {
+    return apiRequest(`/api/admin/activity/users?page=${page}&size=${size}&search=${encodeURIComponent(search)}&sort=${sort}`);
+}
+
+export async function getAdminActivityUserDetails(userId, page = 1, size = 15) {
+    return apiRequest(`/api/admin/activity/users/${userId}?page=${page}&size=${size}`);
+}
+
+export async function getAdminTemplates() {
+    return apiRequest('/api/admin/templates');
+}
+
+export async function getAdminTemplateContent(templateId) {
+    return apiRequest(`/api/admin/templates/${templateId}`);
+}
+
+export async function updateAdminTemplate(templateId, name, preamble) {
+    return apiRequest(`/api/admin/templates/${templateId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, preamble }),
+    });
+}
+
+export async function deleteAdminTemplate(templateId) {
+    return apiRequest(`/api/admin/templates/${templateId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function updateAdminUserBlock(userId, isBlocked) {
+    return apiRequest(`/api/admin/users/${userId}/block`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_blocked: isBlocked }),
+    });
+}
+
+export async function getAdminGlobalActivity(page = 1, size = 5) {
+    return apiRequest(`/api/admin/activity/global?page=${page}&size=${size}`);
+}
+
+export async function getAdminActivityLogDetails(activityType, entityId) {
+    return apiRequest(`/api/admin/activity/details/${activityType}/${entityId}`);
+}
+
+// Maintenance Mode
+export async function getMaintenanceStatus() {
+    return apiRequest('/api/admin/maintenance-status');
+}
+
+export async function setMaintenanceMode(active) {
+    return apiRequest('/api/admin/maintenance', {
+        method: 'PUT',
+        body: JSON.stringify({ active }),
+    });
+}

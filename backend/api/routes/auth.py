@@ -179,7 +179,8 @@ def login(
         user=UserResponse(
             id=str(user.id),
             email=user.email,
-            created_at=user.created_at
+            created_at=user.created_at,
+            role=user.role
         )
     )
 
@@ -296,7 +297,8 @@ def google_auth(
         user=UserResponse(
             id=str(user.id),
             email=user.email,
-            created_at=user.created_at
+            created_at=user.created_at,
+            role=user.role
         )
     )
 
@@ -331,5 +333,6 @@ def get_current_user_profile(
         email=current_user.email,
         created_at=current_user.created_at,
         full_name=current_user.full_name,
-        profile_picture=current_user.profile_picture
+        profile_picture=current_user.profile_picture,
+        role=current_user.role
     )
