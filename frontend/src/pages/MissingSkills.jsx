@@ -8,14 +8,14 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim() || 'http://loca
 
 // ─── Category accent colours ───────────────────────────────────────────────
 const CATEGORY_COLORS = {
-  'Programming Languages': { bg: 'bg-blue-500/10', border: 'border-blue-500/20', badge: 'bg-blue-500/20 text-blue-300', dot: 'bg-blue-400' },
-  'Frameworks & Libraries': { bg: 'bg-purple-500/10', border: 'border-purple-500/20', badge: 'bg-purple-500/20 text-purple-300', dot: 'bg-purple-400' },
-  'Cloud & DevOps': { bg: 'bg-orange-500/10', border: 'border-orange-500/20', badge: 'bg-orange-500/20 text-orange-300', dot: 'bg-orange-400' },
-  'Databases': { bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', badge: 'bg-cyan-500/20 text-cyan-300', dot: 'bg-cyan-400' },
-  'Tools & Platforms': { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', badge: 'bg-yellow-500/20 text-yellow-300', dot: 'bg-yellow-400' },
-  'Soft Skills & Concepts': { bg: 'bg-green-500/10', border: 'border-green-500/20', badge: 'bg-green-500/20 text-green-300', dot: 'bg-green-400' },
+  'Programming Languages': { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+  'Frameworks & Libraries': { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500' },
+  'Cloud & DevOps': { bg: 'bg-orange-50', border: 'border-orange-200', badge: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+  'Databases': { bg: 'bg-cyan-50', border: 'border-cyan-200', badge: 'bg-cyan-100 text-cyan-700', dot: 'bg-cyan-500' },
+  'Tools & Platforms': { bg: 'bg-yellow-50', border: 'border-yellow-200', badge: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-500' },
+  'Soft Skills & Concepts': { bg: 'bg-green-50', border: 'border-green-200', badge: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
 };
-const DEFAULT_COLORS = { bg: 'bg-gray-500/10', border: 'border-gray-500/20', badge: 'bg-gray-500/20 text-gray-300', dot: 'bg-gray-400' };
+const DEFAULT_COLORS = { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400' };
 
 function getCategoryColors(cat) {
   return CATEGORY_COLORS[cat] || DEFAULT_COLORS;
@@ -24,7 +24,7 @@ function getCategoryColors(cat) {
 // ─── Small reusable components ─────────────────────────────────────────────
 function SectionLabel({ children }) {
   return (
-    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-3">
+    <p className="text-muted text-xs font-semibold uppercase tracking-wide mb-2">
       {children}
     </p>
   );
@@ -33,7 +33,7 @@ function SectionLabel({ children }) {
 function IconBtn({ onClick, title, disabled, children, variant = 'ghost' }) {
   const base = 'transition-all rounded-lg p-1.5 disabled:opacity-40 disabled:cursor-not-allowed';
   const variants = {
-    ghost: 'text-text-muted hover:text-text-primary hover:bg-bg-secondary',
+    ghost: 'text-muted hover:text-primary hover:bg-secondary',
     danger: 'text-red-400/60 hover:text-red-400 hover:bg-red-400/10',
   };
   return (
@@ -183,16 +183,16 @@ export default function MissingSkills() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-4 md:p-8">
+    <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
 
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-black text-text-primary mb-2 italic tracking-tighter uppercase">
+          <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">
             Find Missing{' '}
-            <span className="text-brand-primary drop-shadow-[0_0_15px_rgba(255,75,114,0.1)]">Skills</span>
+            <span className="text-brand">Skills</span>
           </h1>
-          <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">
+          <p className="text-secondary text-sm font-medium">
             Paste your resume + up to 20 job descriptions · AI identifies the skills you need to learn
           </p>
         </div>
@@ -214,23 +214,23 @@ export default function MissingSkills() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
 
           {/* ── Left panel: Resume ─────────────────────────────────────────── */}
-          <div className="bg-bg-surface border border-border-muted rounded-[2rem] p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-brand-primary/30" />
+          <div className="bg-surface border border-gray-100 rounded-[2rem] p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-brand/30" />
 
             <div className="flex items-center justify-between mb-4">
               <div>
                 <SectionLabel>Step 1 — Your Resume</SectionLabel>
-                <h2 className="text-sm font-black uppercase tracking-wider text-text-primary">Resume</h2>
+                <h2 className="text-sm font-semibold text-primary">Resume</h2>
               </div>
               {/* Toggle: text or PDF */}
-              <div className="flex gap-1 bg-bg-secondary rounded-lg p-1">
+              <div className="flex gap-1 bg-secondary rounded-lg p-1">
                 {['text', 'pdf'].map(t => (
                   <button
                     key={t}
                     onClick={() => setResumeInputType(t)}
-                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${resumeInputType === t
-                        ? 'bg-brand-primary text-black'
-                        : 'text-text-muted hover:text-text-primary'
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${resumeInputType === t
+                        ? 'bg-brand text-white'
+                        : 'text-muted hover:text-primary'
                       }`}
                   >
                     {t === 'text' ? 'Paste Text' : 'Upload PDF'}
@@ -245,16 +245,16 @@ export default function MissingSkills() {
                 onChange={e => setResumeText(e.target.value)}
                 placeholder="Paste your resume content here…"
                 rows={16}
-                className="w-full bg-bg-secondary border border-border-muted rounded-xl px-4 py-3 text-text-primary text-sm placeholder:text-text-muted resize-none focus:outline-none focus:border-brand-primary/50 transition-colors"
+                className="w-full bg-secondary border border-gray-100 rounded-xl px-4 py-3 text-primary text-sm placeholder:text-muted resize-none focus:outline-none focus:border-brand/50 transition-colors"
               />
             ) : (
               <div className="space-y-3">
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center border-2 border-dashed border-border-muted rounded-xl py-10 cursor-pointer hover:border-brand-primary/50 transition-colors"
+                  className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-10 cursor-pointer hover:border-brand/50 transition-colors"
                 >
                   {isExtractingPdf ? (
-                    <div className="flex items-center gap-2 text-text-muted text-xs font-bold">
+                    <div className="flex items-center gap-2 text-muted text-xs font-medium">
                       <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -263,41 +263,41 @@ export default function MissingSkills() {
                     </div>
                   ) : (
                     <>
-                      <svg className="w-8 h-8 text-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-8 h-8 text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                       </svg>
-                      <p className="text-text-muted text-xs font-bold">Click to upload PDF resume</p>
+                      <p className="text-muted text-xs font-medium">Click to upload PDF resume</p>
                     </>
                   )}
                 </div>
                 <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={handlePdfUpload} />
 
                 {resumeText && (
-                  <div className="bg-bg-secondary border border-border-muted rounded-xl px-4 py-3">
-                    <p className="text-brand-primary text-[10px] font-black uppercase tracking-widest mb-1">Text extracted ✓</p>
-                    <p className="text-text-muted text-xs line-clamp-3">{resumeText.slice(0, 200)}…</p>
+                  <div className="bg-secondary border border-gray-100 rounded-xl px-4 py-3">
+                    <p className="text-brand text-xs font-semibold mb-1">Text extracted ✓</p>
+                    <p className="text-muted text-xs line-clamp-3">{resumeText.slice(0, 200)}…</p>
                   </div>
                 )}
               </div>
             )}
 
             {resumeText && (
-              <p className="mt-2 text-text-muted text-[10px] font-black uppercase tracking-widest">
+              <p className="mt-2 text-muted text-xs font-medium">
                 {resumeText.length.toLocaleString()} characters · ready
               </p>
             )}
           </div>
 
           {/* ── Right panel: Job Descriptions ──────────────────────────────── */}
-          <div className="bg-bg-surface border border-border-muted rounded-[2rem] p-6 relative overflow-hidden flex flex-col">
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-brand-primary/30" />
+          <div className="bg-surface border border-gray-100 rounded-[2rem] p-6 relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-brand/30" />
 
             <div className="flex items-center justify-between mb-4">
               <div>
                 <SectionLabel>Step 2 — Job Descriptions</SectionLabel>
-                <h2 className="text-sm font-black uppercase tracking-wider text-text-primary">
+                <h2 className="text-sm font-semibold text-primary">
                   JDs{' '}
-                  <span className="text-text-muted font-normal">
+                  <span className="text-muted font-normal">
                     ({jobDescriptions.length}/{MAX_JDS})
                   </span>
                 </h2>
@@ -305,7 +305,7 @@ export default function MissingSkills() {
               <button
                 onClick={addJD}
                 disabled={jobDescriptions.length >= MAX_JDS}
-                className="flex items-center gap-1.5 px-3 py-2 bg-brand-primary/10 border border-brand-primary/20 rounded-lg text-brand-primary text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-3 py-2 bg-brand/10 border border-brand/20 rounded-lg text-brand text-xs font-semibold hover:bg-brand/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -316,10 +316,10 @@ export default function MissingSkills() {
 
             <div className="flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1 scrollbar-thin">
               {jobDescriptions.map((jd, idx) => (
-                <div key={idx} className="group relative bg-bg-secondary border border-border-muted rounded-xl overflow-hidden focus-within:border-brand-primary/40 transition-colors">
+                <div key={idx} className="group relative bg-secondary border border-gray-100 rounded-xl overflow-hidden focus-within:border-brand/40 transition-colors">
                   {/* JD header bar */}
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border-muted bg-bg-primary/30">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
+                    <span className="text-xs font-medium text-muted">
                       JD #{idx + 1}
                     </span>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -345,10 +345,10 @@ export default function MissingSkills() {
                     onChange={e => updateJD(idx, e.target.value)}
                     placeholder={`Paste job description #${idx + 1} here…`}
                     rows={5}
-                    className="w-full bg-transparent px-3 py-2.5 text-text-primary text-xs placeholder:text-text-muted resize-none focus:outline-none"
+                    className="w-full bg-transparent px-3 py-2.5 text-primary text-xs placeholder:text-muted resize-none focus:outline-none"
                   />
                   {jd.trim() && (
-                    <div className="absolute bottom-1.5 right-2 text-[9px] font-bold text-text-muted opacity-60">
+                    <div className="absolute bottom-1.5 right-2 text-[9px] font-medium text-muted opacity-60">
                       {jd.length} chars
                     </div>
                   )}
@@ -360,7 +360,7 @@ export default function MissingSkills() {
             {jobDescriptions.length < MAX_JDS && (
               <button
                 onClick={addJD}
-                className="mt-3 w-full py-2.5 border border-dashed border-border-muted rounded-xl text-text-muted text-[10px] font-black uppercase tracking-widest hover:border-brand-primary/40 hover:text-brand-primary/70 transition-all"
+                className="mt-3 w-full py-2.5 border border-dashed border-gray-200 rounded-xl text-muted text-xs font-medium hover:border-brand/40 hover:text-brand/70 transition-all"
               >
                 + Add another job description
               </button>
@@ -373,7 +373,7 @@ export default function MissingSkills() {
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing || !resumeText.trim() || jobDescriptions.every(j => !j.trim())}
-            className="flex items-center gap-2 px-8 py-3.5 bg-brand-primary text-black font-black uppercase text-xs tracking-widest rounded-xl shadow-lg shadow-brand-primary/20 hover:bg-brand-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-8 py-3.5 bg-brand text-white font-semibold text-sm rounded-xl shadow-lg shadow-brand/20 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isAnalyzing ? (
               <>
@@ -396,14 +396,14 @@ export default function MissingSkills() {
           {result && (
             <button
               onClick={resetAll}
-              className="px-5 py-3.5 border border-border-muted rounded-xl text-text-muted text-[10px] font-black uppercase tracking-widest hover:border-red-400/40 hover:text-red-400 transition-all"
+              className="px-5 py-3.5 border border-gray-200 rounded-xl text-muted text-xs font-medium hover:border-red-400/40 hover:text-red-400 transition-all"
             >
               Reset
             </button>
           )}
 
           {isAnalyzing && (
-            <p className="text-text-muted text-xs font-bold animate-pulse">
+              <p className="text-muted text-xs font-medium animate-pulse">
               Running {Math.min(jobDescriptions.filter(j => j.trim()).length, 10)} API calls…
             </p>
           )}
@@ -420,7 +420,7 @@ export default function MissingSkills() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
                 </svg>
                 <div>
-                  <p className="text-red-600 text-xs font-black uppercase tracking-widest mb-1">Daily API Limit Reached</p>
+                  <p className="text-red-600 text-xs font-semibold uppercase tracking-wide mb-1">Daily API Limit Reached</p>
                   <p className="text-red-600/80 text-xs">
                     Your Groq API key has exhausted its daily request quota (free tier: ~25–1000 RPD).
                     Results below are from the <strong>{result.jds_analyzed}</strong> JD{result.jds_analyzed !== 1 ? 's' : ''} analyzed before the limit was hit.
@@ -437,7 +437,7 @@ export default function MissingSkills() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 </svg>
                 <div>
-                  <p className="text-yellow-700 text-xs font-black uppercase tracking-widest mb-1">Token Rate Limit Hit (12K TPM)</p>
+                  <p className="text-yellow-700 text-xs font-semibold uppercase tracking-wide mb-1">Token Rate Limit Hit (12K TPM)</p>
                   <p className="text-yellow-700/80 text-xs">
                     llama-3.3-70b-versatile allows 12,000 tokens per minute. Your JDs + resume exceeded this.
                     Partial results shown for <strong>{result.jds_analyzed}</strong> of <strong>{result.jds_submitted}</strong> JDs.
@@ -457,38 +457,38 @@ export default function MissingSkills() {
             )}
 
             {/* Summary bar */}
-            <div className="bg-bg-surface border border-border-muted rounded-[2rem] p-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-brand-primary/30" />
+            <div className="bg-surface border border-gray-100 rounded-[2rem] p-6 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-0.5 bg-brand/30" />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                   <div>
-                    <p className="text-4xl font-black text-brand-primary italic">{result.total_missing}</p>
-                    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">Missing Skills</p>
+                    <p className="text-4xl font-bold text-brand">{result.total_missing}</p>
+                    <p className="text-muted text-xs font-medium uppercase tracking-wide">Missing Skills</p>
                   </div>
-                  <div className="w-px h-10 bg-border-muted" />
+                  <div className="w-px h-10 bg-gray-200" />
                   <div>
-                    <p className="text-2xl font-black text-text-primary">{result.jds_analyzed}</p>
-                    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">JDs Analysed</p>
+                    <p className="text-2xl font-bold text-primary">{result.jds_analyzed}</p>
+                    <p className="text-muted text-xs font-medium uppercase tracking-wide">JDs Analysed</p>
                   </div>
                   {result.jds_failed > 0 && (
                     <>
-                      <div className="w-px h-10 bg-border-muted" />
+                      <div className="w-px h-10 bg-gray-200" />
                       <div>
-                        <p className="text-2xl font-black text-red-400">{result.jds_failed}</p>
-                        <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">JDs Failed</p>
+                        <p className="text-2xl font-bold text-red-500">{result.jds_failed}</p>
+                        <p className="text-muted text-xs font-medium uppercase tracking-wide">JDs Failed</p>
                       </div>
                     </>
                   )}
-                  <div className="w-px h-10 bg-border-muted" />
+                  <div className="w-px h-10 bg-gray-200" />
                   <div>
-                    <p className="text-2xl font-black text-text-primary">{(result.missing_skills || []).length}</p>
-                    <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">Categories</p>
+                    <p className="text-2xl font-bold text-primary">{(result.missing_skills || []).length}</p>
+                    <p className="text-muted text-xs font-medium uppercase tracking-wide">Categories</p>
                   </div>
                 </div>
 
                 <button
                   onClick={copyAllSkills}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-bg-secondary border border-border-muted rounded-xl text-text-secondary text-[10px] font-black uppercase tracking-widest hover:border-brand-primary/40 hover:text-brand-primary transition-all self-start sm:self-auto"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-secondary border border-gray-100 rounded-xl text-secondary text-xs font-medium hover:border-brand/40 hover:text-brand transition-all self-start sm:self-auto"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3" />
@@ -499,14 +499,14 @@ export default function MissingSkills() {
             </div>
 
             {result.total_missing === 0 ? (
-              <div className="bg-bg-surface border border-green-500/20 rounded-[2rem] p-10 text-center">
+              <div className="bg-surface border border-green-500/20 rounded-[2rem] p-10 text-center">
                 <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-black uppercase text-green-400 mb-2">Excellent Coverage!</h3>
-                <p className="text-text-muted text-sm">Your resume already covers all the skills mentioned across the provided job descriptions.</p>
+                <h3 className="text-xl font-bold text-green-600 mb-2">Excellent Coverage!</h3>
+                <p className="text-secondary text-sm">Your resume already covers all the skills mentioned across the provided job descriptions.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -517,7 +517,7 @@ export default function MissingSkills() {
                       {/* Category header */}
                       <div className="flex items-center gap-2 mb-4">
                         <div className={`w-2 h-2 rounded-full ${colors.dot} flex-shrink-0`} />
-                        <h3 className="text-[11px] font-black uppercase tracking-widest text-text-primary">
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
                           {cat.category}
                         </h3>
                         <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-full ${colors.badge}`}>
@@ -530,7 +530,7 @@ export default function MissingSkills() {
                         {cat.skills.map(skill => (
                           <span
                             key={skill}
-                            className="inline-block px-2.5 py-1 bg-bg-surface/60 border border-border-muted rounded-lg text-text-primary text-[11px] font-semibold"
+                            className="inline-block px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-primary text-[11px] font-semibold"
                           >
                             {skill}
                           </span>

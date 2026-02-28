@@ -252,7 +252,7 @@ export default function AdminTemplates() {
                         <p className="text-xs text-gray-500 mb-2">Define your document class, packages, and custom commands. Do NOT include \begin{`{document}`} or \end{`{document}`}.</p>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden h-[600px] flex p-2">
+                    <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden h-[350px] sm:h-[600px] flex p-2">
                         <textarea
                             className="w-full p-4 font-mono text-sm bg-gray-50 text-gray-800 resize-none outline-none rounded-2xl border border-gray-100 focus:ring-1 focus:ring-brand focus:border-brand transition-colors"
                             value={formLatex}
@@ -289,7 +289,7 @@ export default function AdminTemplates() {
     return (
         <div className="min-h-screen p-4 md:p-8">
             <div className="max-w-5xl mx-auto">
-                <div className="flex justify-between items-center mb-10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
                     <div>
                         <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">System Templates</h1>
                         <p className="text-gray-500 text-sm">View and manage the built-in ATS-friendly LaTeX templates available to all users.</p>

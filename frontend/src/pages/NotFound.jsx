@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function NotFound() {
   const canvasRef = useRef(null);
@@ -40,7 +41,12 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden flex flex-col items-center justify-center bg-white font-sans select-none">
+    <>
+    <Helmet>
+      <title>Page Not Found — Resiko</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
+    <div className="relative h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-white font-sans select-none">
 
       <style>{`
         @keyframes float-y { 0%,100% { transform: translateY(0px) rotate(-2deg); } 50% { transform: translateY(-14px) rotate(2deg); } }
@@ -62,8 +68,8 @@ export default function NotFound() {
         style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255,75,114,0.07) 0%, transparent 70%)' }} />
 
       {/* Top-left branding */}
-      <div className="absolute top-6 left-8 text-sm font-black tracking-widest uppercase" style={{ color: '#ff4b72', opacity: 0.5 }}>
-        Resume Agent
+      <div className="absolute top-6 left-4 sm:left-8 text-sm font-black tracking-wider sm:tracking-widest uppercase text-brand opacity-50">
+        Resiko
       </div>
 
       {/* Main content */}
@@ -90,19 +96,19 @@ export default function NotFound() {
         </div>
 
         {/* 404 number */}
-        <div className="slide-up text-9xl font-black leading-none tracking-tighter mb-1"
-          style={{ color: '#ff4b72', textShadow: '0 8px 32px rgba(255,75,114,0.2)' }}>
+        <div className="slide-up text-6xl sm:text-9xl font-black leading-none tracking-tighter mb-1 text-brand"
+          style={{ textShadow: '0 8px 32px rgba(255,75,114,0.2)' }}>
           404
         </div>
 
         {/* Title */}
-        <h1 className="slide-up-2 text-xl font-bold text-gray-800 mb-2 tracking-tight">
-          Oops! Page not found
+        <h1 className="slide-up-2 text-xl font-bold text-primary mb-2 tracking-tight">
+          Page not found
         </h1>
 
         {/* Description */}
-        <p className="slide-up-3 text-gray-400 text-sm leading-relaxed max-w-xs mb-8">
-          The page you're looking for doesn't exist or has been moved. Let's get you back on track.
+        <p className="slide-up-3 text-muted text-sm leading-relaxed max-w-xs mb-8">
+          This page doesn't exist or has been moved. Let's get you back on track.
         </p>
 
         {/* Buttons */}
@@ -117,16 +123,17 @@ export default function NotFound() {
             Go Home
           </Link>
           <Link to="/dashboard"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-95">
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-secondary bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-95">
             Dashboard &rarr;
           </Link>
         </div>
       </div>
 
       {/* Bottom watermark */}
-      <div className="absolute bottom-6 text-xs text-gray-300 font-mono tracking-widest">
+      <div className="absolute bottom-6 text-xs text-muted font-mono tracking-wider sm:tracking-widest opacity-50">
         ERROR · 404 · NOT FOUND
       </div>
     </div>
+    </>
   );
 }

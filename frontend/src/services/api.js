@@ -53,6 +53,9 @@ export function isAuthenticated() {
     return !!getToken();
 }
 
+// Guard against multiple concurrent auth redirects (e.g. pending API calls after logout)
+let _isRedirecting = false;
+
 // Generic API request helper
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_URL}${endpoint}`;
@@ -85,10 +88,24 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         if (!response.ok) {
-            // Handle unauthorized globally (e.g., expired token)
-            if (response.status === 401) {
-                removeToken();
-                window.location.href = '/login?expired=true';
+            // Handle unauthorized/forbidden globally (e.g., expired token)
+            // Skip global redirect for auth endpoints — let caller handle those errors
+            const isAuthEndpoint = endpoint.startsWith('/api/auth/');
+            if ((response.status === 401 || response.status === 403) && !isAuthEndpoint) {
+                const hadToken = !!getToken();
+                if (!_isRedirecting && hadToken) {
+                    // Only treat as "session expired" when there was an active token.
+                    // If there was no token, the caller just made an unauthenticated request —
+                    // redirecting would cause an infinite loop on public routes.
+                    _isRedirecting = true;
+                    removeToken();
+                    clearSessionCaches();
+                    window.location.href = '/login?expired=true';
+                    // Return a never-resolving promise so .then() chains don't fire
+                    return new Promise(() => {});
+                }
+                // No active token — throw so callers can handle it gracefully
+                throw new Error('Unauthorized');
             }
 
             // Extract error message from backend response

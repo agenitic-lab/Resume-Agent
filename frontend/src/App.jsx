@@ -21,7 +21,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminActivity from "./pages/AdminActivity";
 import AdminTemplates from "./pages/AdminTemplates";
 import Maintenance from "./pages/Maintenance";
-import { getMaintenanceStatus, getCurrentUser } from "./services/api";
+import { getMaintenanceStatus, getCurrentUser, isAuthenticated } from "./services/api";
 
 function AppContent() {
   const location = useLocation();
@@ -33,7 +33,10 @@ function AppContent() {
     try {
       const [status, user] = await Promise.allSettled([
         getMaintenanceStatus(),
-        getCurrentUser(),
+        // Only fetch the current user when authenticated — calling this without
+        // a token causes a 401 which would otherwise trigger the session-expired
+        // redirect even on public routes like /login.
+        isAuthenticated() ? getCurrentUser() : Promise.resolve(null),
       ]);
       const active = status.status === 'fulfilled' ? status.value?.active : false;
       const role = user.status === 'fulfilled' ? user.value?.role : null;

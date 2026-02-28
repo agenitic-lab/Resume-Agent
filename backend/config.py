@@ -25,10 +25,9 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     
     ENCRYPTION_KEY: Optional[str] = os.getenv("ENCRYPTION_KEY")
-    if ENCRYPTION_KEY:
-        print(f"DEBUG: ENCRYPTION_KEY loaded, length: {len(ENCRYPTION_KEY)}")
-    else:
-        print("DEBUG: ENCRYPTION_KEY NOT found in environment")
+    if not ENCRYPTION_KEY:
+        import logging
+        logging.getLogger(__name__).warning("ENCRYPTION_KEY not found in environment")
     
     # Google OAuth (optional)
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
@@ -77,7 +76,7 @@ class Settings:
     LATEX_TIMEOUT: int = int(os.getenv("LATEX_TIMEOUT", "15"))
     
     # App info
-    APP_NAME: str = "Resume Agent API"
+    APP_NAME: str = "Resiko"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

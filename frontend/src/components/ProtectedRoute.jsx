@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { isAuthenticated, getCurrentUser, getCachedCurrentUser } from '../services/api';
+import { isAuthenticated, getCurrentUser, getCachedCurrentUser, removeToken } from '../services/api';
 
 export default function ProtectedRoute({ children }) {
     const location = useLocation();
@@ -16,6 +16,8 @@ export default function ProtectedRoute({ children }) {
                 })
                 .catch(_e => {
                     console.error('Failed to fetch user in ProtectedRoute', _e);
+                    // Clear stale token if validation fails
+                    removeToken();
                 })
                 .finally(() => {
                     setLoading(false);

@@ -28,7 +28,7 @@ export default function AdminDashboard({ children }) {
 
     return (
         <div className="flex flex-col h-full bg-gray-50/50">
-            <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+            <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex items-center justify-between flex-wrap gap-3">
                 <h1 className="text-2xl font-bold text-primary">Admin Console</h1>
 
                 {/* Maintenance Toggle */}

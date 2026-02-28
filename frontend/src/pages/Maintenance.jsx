@@ -87,7 +87,7 @@ export default function Maintenance({ onRefresh }) {
             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none opacity-70" />
 
             {/* Soft brand glow */}
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-96 h-64 sm:h-96 rounded-full pointer-events-none"
                 style={{ background: 'radial-gradient(circle, rgba(255,75,114,0.08) 0%, transparent 70%)' }} />
 
             {/* Grid overlay */}
@@ -128,33 +128,23 @@ export default function Maintenance({ onRefresh }) {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-4xl font-black tracking-tight text-gray-900 mb-2">
+                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-primary mb-2">
                     Under Maintenance
                 </h1>
 
                 {/* Animated subtitle */}
-                <p className="font-semibold mb-3" style={{ color: '#ff4b72' }}>
+                <p className="font-semibold mb-3 text-brand">
                     We're improving your experience{dots}
                 </p>
 
                 {/* Description */}
-                <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-xs mx-auto">
-                    Our team is performing scheduled maintenance to bring you a better experience. We'll be back shortly!
+                <p className="text-secondary text-sm leading-relaxed mb-8 max-w-xs mx-auto">
+                    We're performing scheduled updates. Everything will be back to normal shortly!
                 </p>
 
                 {/* Progress bar */}
                 <div className="w-full bg-gray-100 rounded-full h-1.5 mb-8 overflow-hidden">
                     <div className="h-full rounded-full animate-pulse" style={{ width: '65%', background: 'linear-gradient(90deg, #ff4b72, #ff7695)' }} />
-                </div>
-
-                {/* Status chips */}
-                <div className="flex justify-center gap-2 flex-wrap mb-8">
-                    {[{ label: 'Database', ok: true }, { label: 'AI Engine', ok: false }, { label: 'Auth', ok: true }].map(({ label, ok }) => (
-                        <span key={label} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${ok ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} />
-                            {label}
-                        </span>
-                    ))}
                 </div>
 
                 {/* Refresh button */}
@@ -170,9 +160,9 @@ export default function Maintenance({ onRefresh }) {
                 </button>
 
                 {/* Footer */}
-                <p className="text-gray-400 text-xs">
+                <p className="text-muted text-xs">
                     Need urgent help?{' '}
-                    <a href="mailto:support@resumeagent.ai" className="font-medium hover:underline" style={{ color: '#ff4b72' }}>
+                    <a href="mailto:support@resiko.app" className="font-medium hover:underline text-brand">
                         Contact support
                     </a>
                 </p>

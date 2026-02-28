@@ -93,8 +93,8 @@ export default function Dashboard() {
       {/* Start New Optimization Card */}
       <div className="mb-8 bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 relative overflow-hidden group">
         <div className="absolute top-0 left-0 w-full h-1 bg-brand/10" />
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 mb-6 md:mb-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8">
             <div className="w-16 h-16 bg-brand rounded-2xl flex flex-shrink-0 items-center justify-center shadow-lg shadow-brand/10">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -109,7 +109,7 @@ export default function Dashboard() {
           </div>
           <Link
             to="/new-optimization"
-            className="w-full md:w-auto px-6 py-3 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:bg-brand-hover transition-all active:scale-95 shadow-xl shadow-brand-primary/10 flex items-center justify-center gap-3 whitespace-nowrap"
+            className="w-full sm:w-auto px-6 py-3 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:bg-brand-hover transition-all active:scale-95 shadow-xl shadow-brand/10 flex items-center justify-center gap-3 whitespace-nowrap"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -221,7 +221,7 @@ export default function Dashboard() {
                     </svg>
                     <span className="text-brand font-bold text-lg sm:text-xl">+{Math.round(latestRun.improvement_delta || 0)}</span>
                   </div>
-                  <div className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest sm:tracking-[0.3em] text-gray-500 mt-1 text-center leading-tight">Optimization Yield</div>
+                  <div className="text-[6px] sm:text-[7px] font-black uppercase tracking-wider sm:tracking-[0.3em] text-gray-500 mt-1 text-center leading-tight">Score Improvement</div>
                 </div>
 
                 {/* After Score */}

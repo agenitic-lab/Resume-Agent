@@ -83,8 +83,8 @@ def startup():
 @app.get("/")
 def root():
     return {
-        "service": "Resume Agent API",
-        "version": "1.0.0",
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "status": "running",
         "docs": "/docs"
     }

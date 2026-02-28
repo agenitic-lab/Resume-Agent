@@ -81,6 +81,9 @@ def update_user_role(
     if role_data.role not in ['user', 'admin']:
         raise HTTPException(status_code=400, detail="Invalid role")
     
+    if str(current_admin.id) == str(user_id):
+        raise HTTPException(status_code=400, detail="Cannot change your own role")
+    
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -99,6 +102,9 @@ def update_user_block(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if str(current_admin.id) == str(user_id):
+        raise HTTPException(status_code=400, detail="Cannot block your own account")
         
     user.is_blocked = block_data.is_blocked
     db.commit()
@@ -115,6 +121,9 @@ def delete_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if str(current_admin.id) == str(user_id):
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
         
     # Optional: Delete associated runs/data directly
     db.query(Run).filter(Run.user_id == user.id).delete()
@@ -134,7 +143,7 @@ def get_admin_metrics(
     total_blocked_users = db.query(User).filter(User.is_blocked == True).count()
     total_runs = db.query(Run).count()
     
-    # Active users in the last 7 days
+    # New users in the last 30 days
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     new_users = db.query(User).filter(User.created_at >= thirty_days_ago).count()
     

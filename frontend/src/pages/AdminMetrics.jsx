@@ -131,7 +131,7 @@ export default function AdminMetrics() {
                                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} allowDecimals={false} />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '8px', border: 'none', fontStyle: 'sans-serif', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    contentStyle={{ borderRadius: '8px', border: 'none', fontFamily: 'inherit', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Area type="monotone" dataKey="runs" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorRuns)" activeDot={{ r: 6 }} />
                             </AreaChart>

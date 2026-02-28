@@ -223,7 +223,7 @@ TEMPLATES = {
         "id": "sb2nov",
         "name": "Modern Boxed",
         "description": "Distinctive layout with gray-boxed section headers, tabular contact header, compact geometry margins, and different font. Uses footnotesize dates for a dense modern look.",
-        "author": "Resume Agent",
+        "author": "Resiko",
         "source": "Built-in",
         "preview_color": "#4A5568",
         "tags": ["modern", "compact", "boxed", "ats-optimized"],

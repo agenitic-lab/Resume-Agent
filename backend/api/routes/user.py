@@ -118,7 +118,7 @@ def get_user_profile(
                         "authenticated": {
                             "summary": "Authenticated user",
                             "value": {
-                                "service": "Resume Agent API",
+                                "service": "Resiko",
                                 "status": "operational",
                                 "authenticated": True,
                                 "user_email": "user@example.com"
@@ -127,7 +127,7 @@ def get_user_profile(
                         "anonymous": {
                             "summary": "Anonymous user",
                             "value": {
-                                "service": "Resume Agent API",
+                                "service": "Resiko",
                                 "status": "operational",
                                 "authenticated": False
                             }
@@ -143,7 +143,7 @@ def get_service_status(
 ):
     # Get service status (optional auth - enhanced response when authenticated)
     response = {
-        "service": "Resume Agent API",
+        "service": "Resiko",
         "status": "operational",
         "authenticated": current_user is not None
     }
