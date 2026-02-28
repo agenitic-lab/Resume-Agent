@@ -208,7 +208,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
                                         setSelectedMonth(m);
                                         if (selectedYear) handleSelect(m, selectedYear);
                                     }}
-                                    className={`text - xs py - 1 rounded - lg font - medium transition - all ${selectedMonth === m ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'} `}>
+                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedMonth === m ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'} `}>
                                     {m}
                                 </button>
                             ))}
@@ -255,7 +255,7 @@ function YearPicker({ value, onChange, placeholder, allowPresent = false }) {
                         {years.map(y => (
                             <button key={y} type="button"
                                 onClick={() => { onChange(String(y)); setOpen(false); }}
-                                className={`text - xs py - 1.5 rounded - lg font - medium transition - all ${value === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'
+                                className={`text-xs py-1.5 rounded-lg font-medium transition-all ${value === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'
                                     } `}>
                                 {y}
                             </button>
@@ -444,7 +444,7 @@ const ScoreBanner = ({ score, label }) => {
     else if (score >= 50) bgClass = "bg-gradient-to-r from-amber-500 to-orange-500";
 
     return (
-        <div className={`w - full ${bgClass} rounded - t - 2xl p - 6 text - center text - white shadow - md relative overflow - hidden`}>
+        <div className={`w-full ${bgClass} rounded-t-2xl p-6 text-center text-white shadow-md relative overflow-hidden`}>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
             <div className="relative z-10">
                 <h2 className="text-5xl font-black mb-1 drop-shadow-sm">{score}</h2>
@@ -1961,7 +1961,7 @@ export default function ResumeBuilder() {
                                                     onClick={handleRecompile}
                                                     disabled={isCompiling}
                                                     size="sm"
-                                                    className={`px - 5 py - 2 rounded - full text - [9px] font - black uppercase tracking - widest transition - all flex items - center gap - 2 ${isCompiling
+                                                    className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompiling
                                                         ? 'bg-secondary text-gray-500 cursor-not-allowed'
                                                         : 'bg-brand hover:bg-brand-hover text-white shadow-lg shadow-black/10'
                                                         } `}
@@ -2114,14 +2114,14 @@ export default function ResumeBuilder() {
                             variant="ghost"
                             onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
                             disabled={currentStep === 0}
-                            className={`w-full sm:w-auto font - bold text - gray - 500 uppercase tracking - widest text - xs hover: text - gray - 900 transition - colors ${currentStep === 0 ? 'opacity-0 cursor-default' : ''} `}>
+                            className={`w-full sm:w-auto font-bold text-gray-500 uppercase tracking-widest text-xs hover:text-gray-900 transition-colors ${currentStep === 0 ? 'opacity-0 cursor-default' : ''} `}>
                             ← Back
                         </Button>
 
                         <div className="flex gap-2">
                             {steps.map((_, idx) => (
                                 <button key={idx} onClick={() => setCurrentStep(idx)}
-                                    className={`rounded - full transition - all ${idx === currentStep ? 'w-8 h-2.5 bg-brand' : 'w-2.5 h-2.5 bg-border-muted hover:bg-border-subtle'} `}
+                                    className={`rounded-full transition-all ${idx === currentStep ? 'w-8 h-2.5 bg-brand' : 'w-2.5 h-2.5 bg-border-muted hover:bg-border-subtle'} `}
                                 />
                             ))}
                         </div>
