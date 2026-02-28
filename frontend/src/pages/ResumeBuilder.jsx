@@ -7,6 +7,8 @@ import { Card } from "../components/ui/card";
 import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 // ─── Job Title Suggestions ─────────────────────────────────────────────────
 const JOB_TITLE_SUGGESTIONS = [
     // Tech
@@ -498,6 +500,14 @@ export default function ResumeBuilder() {
         getApiKeyStatus()
             .then(status => setHasApiKey(Boolean(status.has_api_key)))
             .catch(() => setHasApiKey(false));
+    }, []);
+
+    useEffect(() => {
+        getTemplates()
+            .then(res => {
+                if (Array.isArray(res)) setTemplates(res);
+            })
+            .catch(err => console.error("Failed to fetch templates:", err));
     }, []);
 
     const [formData, setFormData] = useState({
