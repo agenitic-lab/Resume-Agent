@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminMetrics, getAdminActivityUsers } from '../services/api';
+import { getAdminMetrics } from '../services/api';
 import toast from 'react-hot-toast';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -10,7 +10,6 @@ import { format, parseISO, subDays } from 'date-fns';
 
 export default function AdminMetrics() {
     const [metrics, setMetrics] = useState(null);
-    const [activity, setActivity] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,7 +21,7 @@ export default function AdminMetrics() {
             setLoading(true);
             const metricsData = await getAdminMetrics();
             setMetrics(metricsData);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load metrics');
         } finally {
             setLoading(false);

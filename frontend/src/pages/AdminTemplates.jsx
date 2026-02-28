@@ -151,7 +151,7 @@ export default function AdminTemplates() {
             setLoading(true);
             const data = await getTemplates();
             setTemplates(data.templates || []);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load system templates');
         } finally {
             setLoading(false);
@@ -173,7 +173,7 @@ export default function AdminTemplates() {
             setFormName(data.name || templateId);
             setFormLatex(data.content || '');
             setShowForm(true);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load template content');
         } finally {
             setLoading(false);

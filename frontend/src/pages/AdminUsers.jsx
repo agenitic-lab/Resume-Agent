@@ -30,7 +30,7 @@ export default function AdminUsers() {
                 setUsers(data); // Fallback old response
                 setTotalUsers(data.length);
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load users');
         } finally {
             setLoading(false);
@@ -50,7 +50,7 @@ export default function AdminUsers() {
             await updateAdminUserRole(userId, newRole);
             toast.success(`User role updated to ${newRole}`);
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update role');
         }
     };
@@ -61,7 +61,7 @@ export default function AdminUsers() {
             await deleteAdminUser(userId);
             toast.success('User deleted successfully');
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete user');
         }
     };
@@ -74,7 +74,7 @@ export default function AdminUsers() {
             await updateAdminUserBlock(userId, !currentStatus);
             toast.success(`User ${action}ed successfully`);
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error(`Failed to ${action} user`);
         }
     };

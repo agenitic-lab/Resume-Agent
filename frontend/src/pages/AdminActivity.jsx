@@ -105,7 +105,7 @@ export default function AdminActivity() {
                 setUsers(data.items);
                 setTotalUsers(data.total);
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load activity users');
         } finally {
             setLoading(false);
@@ -128,7 +128,7 @@ export default function AdminActivity() {
                 setGlobalLogs(data.items);
                 setGlobalTotal(data.total);
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load global activity logs');
         } finally {
             setGlobalLoading(false);
@@ -157,7 +157,7 @@ export default function AdminActivity() {
                 setUserLogs(data.items);
                 setTotalLogs(data.total);
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load user logs');
         } finally {
             setLogsLoading(false);
@@ -179,6 +179,7 @@ export default function AdminActivity() {
         if (selectedUser) {
             fetchUserDetails(selectedUser.user_id, logsPage);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [logsPage]);
 
     const totalLogsPages = Math.ceil(totalLogs / pageSize) || 1;

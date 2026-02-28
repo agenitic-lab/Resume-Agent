@@ -14,13 +14,14 @@ export default function ProtectedRoute({ children }) {
                 .then(userData => {
                     setUser(userData);
                 })
-                .catch(error => {
-                    console.error('Failed to fetch user in ProtectedRoute', error);
+                .catch(_e => {
+                    console.error('Failed to fetch user in ProtectedRoute', _e);
                 })
                 .finally(() => {
                     setLoading(false);
                 });
         } else if (user) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false); // If user is already cached, no need to load
         }
     }, [user]);
