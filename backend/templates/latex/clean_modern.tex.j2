@@ -1,0 +1,78 @@
+\begin{document}
+
+\begin{center}
+    {\Huge \scshape << contact.name >>} \\ \vspace{1pt}
+    \small 
+    <%% if contact.phone %%>\raisebox{-0.1\height}\faPhone\ << contact.phone >> ~<%% endif %%>
+    <%% if contact.email %%>\href{mailto:<< contact.email >>}{\raisebox{-0.2\height}\faEnvelope\  \underline{<< contact.email >>}}<%% endif %%>
+    <%% if contact.linkedin %%>\\ \href{<< contact.linkedin >>}{\raisebox{-0.2\height}\faLinkedin\ \underline{<< contact.linkedin_label or 'LinkedIn' >>}}  ~<%% endif %%>
+    <%% if contact.github %%>\href{<< contact.github >>}{\raisebox{-0.2\height}\faGithub\ \underline{<< contact.github_label or 'GitHub' >>}}<%% endif %%>
+    <%% if contact.portfolio %%>~ \href{<< contact.portfolio >>}{\raisebox{-0.2\height}\faGlobe\ \underline{<< contact.portfolio_label or 'Portfolio' >>}}<%% endif %%>
+    \vspace{-8pt}
+\end{center}
+
+<%% if contact.summary %%>
+\section{Summary}
+\vspace{-2pt}
+\small{
+    << contact.summary >>
+}
+\vspace{-2pt}
+<%% endif %%>
+
+<%% if education|length > 0 %%>
+\section{Education}
+\resumeSubHeadingListStart
+<%% for edu in education %%>
+    \resumeSubheading
+        {<< edu.school >>}{<< edu.start_year >> -- << edu.end_year or 'Present' >>}
+        {<< edu.degree >>}{}
+<%% endfor %%>
+\resumeSubHeadingListEnd
+<%% endif %%>
+
+<%% if experience|length > 0 %%>
+\section{Experience}
+\resumeSubHeadingListStart
+<%% for exp in experience %%>
+    \resumeSubheading
+        {<< exp.title >>}{<< exp.start_date >> -- << exp.end_date or 'Present' >>}
+        {<< exp.company >>}{}
+    <%% if exp.details|length > 0 %%>
+    \resumeItemListStart
+        <%% for detail in exp.details %%>
+        \resumeItem{<< detail >>}
+        <%% endfor %%>
+    \resumeItemListEnd
+    <%% endif %%>
+<%% endfor %%>
+\resumeSubHeadingListEnd
+<%% endif %%>
+
+<%% if projects|length > 0 %%>
+\section{Projects}
+\resumeSubHeadingListStart
+<%% for proj in projects %%>
+    \resumeProjectHeading
+        {\textbf{<< proj.title >>} <%% if proj.tools %%>$|$ \emph{<< proj.tools >>}<%% endif %%>}{}
+    <%% if proj.details|length > 0 %%>
+    \resumeItemListStart
+        <%% for detail in proj.details %%>
+        \resumeItem{<< detail >>}
+        <%% endfor %%>
+    \resumeItemListEnd
+    <%% endif %%>
+<%% endfor %%>
+\resumeSubHeadingListEnd
+<%% endif %%>
+
+<%% if skills|length > 0 %%>
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+        \textbf{Skills}{: << skills | join(', ') >>}
+    }}
+\end{itemize}
+<%% endif %%>
+
+\end{document}

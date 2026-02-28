@@ -95,6 +95,14 @@
         color: var(--color-text-secondary);
     }
 
+    .text-muted {
+        color: var(--color-text-muted);
+    }
+
+    .bg-secondary {
+        background-color: var(--color-bg-secondary);
+    }
+
     .btn {
         display: inline-flex;
         align-items: center;

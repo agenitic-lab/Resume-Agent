@@ -13,7 +13,7 @@ const faqData = [
     },
     {
         q: "How does ATS resume optimization work?",
-        a: "Our AI agent extracts keywords and requirements from the job description, compares them against your resume, and identifies gaps. It then rewrites bullet points to include missing keywords while maintaining natural readability — ensuring your resume passes Applicant Tracking Systems."
+        a: "Our AI extracts keywords and requirements from the job description, compares them against your resume, and identifies gaps. It then rewrites bullet points to include missing keywords while keeping them natural and readable — so your resume passes Applicant Tracking Systems."
     },
     {
         q: "Is Resiko free to use?",
@@ -25,7 +25,7 @@ const faqData = [
     },
     {
         q: "How is Resiko different from other resume builders?",
-        a: "Unlike generic resume builders, Resiko uses a multi-agent AI workflow that iteratively scores and refines your resume against a specific job description. It doesn't just check keywords — it rewrites your content for maximum impact and ATS compatibility."
+        a: "Unlike generic resume builders, Resiko's AI scores and refines your resume against a specific job description. It doesn't just check keywords — it rewrites your content for maximum impact and ATS compatibility."
     }
 ];
 
@@ -78,7 +78,7 @@ export default function Home() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="max-w-4xl mx-auto text-5xl md:text-7xl font-extrabold text-primary leading-[1.1] tracking-tight mb-8"
+                        className="max-w-4xl mx-auto text-3xl sm:text-5xl md:text-7xl font-extrabold text-primary leading-[1.1] tracking-tight mb-8"
                     >
                         Build an <span className="text-brand">ATS-friendly resume</span>{" "}
                         <br className="hidden md:block" />
@@ -144,10 +144,10 @@ export default function Home() {
                             Everything you need to beat the ATS
                         </h2>
                         <p className="max-w-2xl mx-auto text-lg text-secondary mb-16">
-                            A multi-agent AI workflow that handles every aspect of resume optimization — from keyword extraction to content rewriting.
+                            Our AI handles every aspect of resume optimization — from keyword extraction to content rewriting.
                         </p>
 
-                        <div className="grid md:grid-cols-3 gap-8 text-left">
+                        <div className="grid md:grid-cols-3 gap-4 sm:gap-8 text-left">
                             <FeatureCard
                                 icon={<Target className="w-6 h-6" />}
                                 title="Job-Resume Matching"
@@ -161,7 +161,7 @@ export default function Home() {
                             <FeatureCard
                                 icon={<PenTool className="w-6 h-6" />}
                                 title="Smart Resume Rewriting"
-                                description="The AI agent rewrites your bullet points to highlight impact, add missing keywords, and ensure they pass ATS filters."
+                                description="Our AI rewrites your bullet points to highlight impact, add missing keywords, and ensure they pass ATS filters."
                             />
                             <FeatureCard
                                 icon={<FileText className="w-6 h-6" />}
@@ -192,7 +192,7 @@ export default function Home() {
                             Three simple steps to an ATS-optimized resume tailored to any job posting.
                         </p>
 
-                        <div className="grid md:grid-cols-3 gap-12">
+                        <div className="grid md:grid-cols-3 gap-6 sm:gap-12">
                             <StepCard
                                 step="1"
                                 icon={<Upload className="w-7 h-7" />}
@@ -203,7 +203,7 @@ export default function Home() {
                                 step="2"
                                 icon={<Cpu className="w-7 h-7" />}
                                 title="AI Analyzes & Optimizes"
-                                description="Our multi-agent AI scores your resume, identifies keyword gaps, and iteratively rewrites content for maximum ATS compatibility."
+                                description="Our AI scores your resume, identifies keyword gaps, and refines your content for maximum ATS compatibility."
                             />
                             <StepCard
                                 step="3"
@@ -280,13 +280,13 @@ export default function Home() {
 function FeatureCard({ icon, title, description }) {
     return (
         <Card className="border-gray-100 shadow-sm hover:-translate-y-1 transition-transform duration-300 rounded-3xl overflow-hidden">
-            <CardHeader className="p-8 pb-4">
-                <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-brand mb-6">
+            <CardHeader className="p-5 sm:p-8 pb-4">
+                <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-brand mb-4 sm:mb-6">
                     {icon}
                 </div>
                 <CardTitle className="text-xl font-bold text-primary">{title}</CardTitle>
             </CardHeader>
-            <CardContent className="px-8 pb-8 text-secondary leading-relaxed">
+            <CardContent className="px-5 sm:px-8 pb-5 sm:pb-8 text-secondary leading-relaxed">
                 {description}
             </CardContent>
         </Card>

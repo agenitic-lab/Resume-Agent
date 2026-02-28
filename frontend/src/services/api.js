@@ -53,6 +53,9 @@ export function isAuthenticated() {
     return !!getToken();
 }
 
+// Guard against multiple concurrent auth redirects (e.g. pending API calls after logout)
+let _isRedirecting = false;
+
 // Generic API request helper
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_URL}${endpoint}`;
@@ -85,10 +88,24 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         if (!response.ok) {
-            // Handle unauthorized globally (e.g., expired token)
-            if (response.status === 401) {
-                removeToken();
-                window.location.href = '/login?expired=true';
+            // Handle unauthorized/forbidden globally (e.g., expired token)
+            // Skip global redirect for auth endpoints — let caller handle those errors
+            const isAuthEndpoint = endpoint.startsWith('/api/auth/');
+            if ((response.status === 401 || response.status === 403) && !isAuthEndpoint) {
+                const hadToken = !!getToken();
+                if (!_isRedirecting && hadToken) {
+                    // Only treat as "session expired" when there was an active token.
+                    // If there was no token, the caller just made an unauthenticated request —
+                    // redirecting would cause an infinite loop on public routes.
+                    _isRedirecting = true;
+                    removeToken();
+                    clearSessionCaches();
+                    window.location.href = '/login?expired=true';
+                    // Return a never-resolving promise so .then() chains don't fire
+                    return new Promise(() => {});
+                }
+                // No active token — throw so callers can handle it gracefully
+                throw new Error('Unauthorized');
             }
 
             // Extract error message from backend response
@@ -476,6 +493,10 @@ export async function downloadResume(resumeId, templateName) {
     return response.blob();
 }
 
+export async function getResumeLatexSource(resumeId, templateName) {
+    return apiRequest(`/api/resume/source/${resumeId}/${templateName}`);
+}
+
 export async function generateResumeBullets(data) {
     return apiRequest('/api/resume/generate-bullets', {
         method: 'POST',
@@ -560,5 +581,83 @@ export async function updateCustomTemplate(index, name, latex) {
 export async function deleteCustomTemplate(index) {
     return apiRequest(`/api/user/custom-template/${index}`, {
         method: 'DELETE',
+    });
+}
+
+// Admin Endpoints
+export async function getAdminUsers(page = 1, size = 15, search = '', sort = 'latest') {
+    return apiRequest(`/api/admin/users?page=${page}&size=${size}&search=${encodeURIComponent(search)}&sort=${sort}`);
+}
+
+export async function updateAdminUserRole(userId, role) {
+    return apiRequest(`/api/admin/users/${userId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role }),
+    });
+}
+
+export async function deleteAdminUser(userId) {
+    return apiRequest(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function getAdminMetrics() {
+    return apiRequest('/api/admin/metrics');
+}
+
+export async function getAdminActivityUsers(page = 1, size = 15, search = '', sort = 'latest') {
+    return apiRequest(`/api/admin/activity/users?page=${page}&size=${size}&search=${encodeURIComponent(search)}&sort=${sort}`);
+}
+
+export async function getAdminActivityUserDetails(userId, page = 1, size = 15) {
+    return apiRequest(`/api/admin/activity/users/${userId}?page=${page}&size=${size}`);
+}
+
+export async function getAdminTemplates() {
+    return apiRequest('/api/admin/templates');
+}
+
+export async function getAdminTemplateContent(templateId) {
+    return apiRequest(`/api/admin/templates/${templateId}`);
+}
+
+export async function updateAdminTemplate(templateId, name, preamble) {
+    return apiRequest(`/api/admin/templates/${templateId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, preamble }),
+    });
+}
+
+export async function deleteAdminTemplate(templateId) {
+    return apiRequest(`/api/admin/templates/${templateId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function updateAdminUserBlock(userId, isBlocked) {
+    return apiRequest(`/api/admin/users/${userId}/block`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_blocked: isBlocked }),
+    });
+}
+
+export async function getAdminGlobalActivity(page = 1, size = 5) {
+    return apiRequest(`/api/admin/activity/global?page=${page}&size=${size}`);
+}
+
+export async function getAdminActivityLogDetails(activityType, entityId) {
+    return apiRequest(`/api/admin/activity/details/${activityType}/${entityId}`);
+}
+
+// Maintenance Mode
+export async function getMaintenanceStatus() {
+    return apiRequest('/api/admin/maintenance-status');
+}
+
+export async function setMaintenanceMode(active) {
+    return apiRequest('/api/admin/maintenance', {
+        method: 'PUT',
+        body: JSON.stringify({ active }),
     });
 }

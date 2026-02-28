@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
+from api.routes.admin import router as admin_router
 from database.connection import ensure_runtime_schema
 from config import settings
 
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(admin_router)
 
 if PDF_AVAILABLE:
     app.include_router(pdf_router)
@@ -81,8 +83,8 @@ def startup():
 @app.get("/")
 def root():
     return {
-        "service": "Resume Agent API",
-        "version": "1.0.0",
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "status": "running",
         "docs": "/docs"
     }

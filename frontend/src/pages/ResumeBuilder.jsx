@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createResume, getResumePreview, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus } from '../services/api';
+import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference, compileLatex as apiCompileLatex } from '../services/api';
 import toast from 'react-hot-toast';
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
+import { Skeleton } from '../components/ui/skeleton';
+import PdfViewer from '../components/PdfViewer';
 
 // ─── Job Title Suggestions ─────────────────────────────────────────────────
 const JOB_TITLE_SUGGESTIONS = [
@@ -274,10 +276,24 @@ export default function ResumeBuilder() {
     const [loading, setLoading] = useState(false);
     const [resumeId, setResumeId] = useState(null);
     const [previewHtml, setPreviewHtml] = useState(null);
-    const [selectedTemplate, setSelectedTemplate] = useState('classic');
+    const [selectedTemplate, setSelectedTemplate] = useState('clean_modern');
     const [skillInput, setSkillInput] = useState('');
     const [errors, setErrors] = useState({});
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = resolved
+    const [latexCode, setLatexCode] = useState('');
+    const [isCompiling, setIsCompiling] = useState(false);
+
+    useEffect(() => {
+        getTemplatePreference().then(res => {
+            if (res && res.template_id) {
+                setSelectedTemplate(res.template_id);
+            }
+        }).catch(err => {
+            console.error("Failed to fetch template preference:", err);
+            // Fallback to clean_modern if fetching fails
+            setSelectedTemplate('clean_modern');
+        });
+    }, []);
 
     // Check whether the user has a stored API key on mount.
     // All AI generation features require it — surface a clear warning early.
@@ -454,7 +470,7 @@ export default function ResumeBuilder() {
                 if (!formData.field.trim()) newErrors.field = 'Target job title is required';
                 if (!formData.experience_level) newErrors.experience_level = 'Please select an experience level';
                 break;
-            case 4: // Links
+            case 3: // Links
                 if (formData.contact.linkedin && !urlRegex.test(formData.contact.linkedin)) newErrors.linkedin = 'Invalid LinkedIn URL';
                 if (formData.contact.portfolio && !urlRegex.test(formData.contact.portfolio)) newErrors.portfolio = 'Invalid Portfolio URL';
                 if (formData.contact.github && !urlRegex.test(formData.contact.github)) newErrors.github = 'Invalid GitHub URL';
@@ -462,28 +478,28 @@ export default function ResumeBuilder() {
                 if (formData.contact.behance && !urlRegex.test(formData.contact.behance)) newErrors.behance = 'Invalid Behance URL';
                 if (formData.contact.medium && !urlRegex.test(formData.contact.medium)) newErrors.medium = 'Invalid Medium URL';
                 break;
-            case 5: // Experience
+            case 4: // Experience
                 formData.experience.forEach((exp, i) => {
                     if (!exp.title.trim()) newErrors[`exp_title_${i}`] = 'Job title is required';
                     if (!exp.company.trim()) newErrors[`exp_company_${i}`] = 'Company is required';
                     if (!exp.start_date) newErrors[`exp_start_${i}`] = 'Start date is required';
                 });
                 break;
-            case 6: // Projects
+            case 5: // Projects
                 formData.projects.forEach((proj, i) => {
                     if (!proj.title.trim()) newErrors[`proj_title_${i}`] = 'Project name is required';
                 });
                 break;
-            case 7: // Education
+            case 6: // Education
                 formData.education.forEach((edu, i) => {
                     if (!edu.degree.trim()) newErrors[`edu_degree_${i}`] = 'Degree is required';
                     if (!edu.school.trim()) newErrors[`edu_school_${i}`] = 'School is required';
                 });
                 break;
-            case 8: // Skills
+            case 7: // Skills
                 if (formData.skills.length === 0) newErrors.skills = 'Please add at least one skill';
                 break;
-            case 9: // Summary
+            case 8: // Summary
                 if (formData.contact.summary.trim().length < 50) newErrors.summary = 'Summary should be at least 50 characters for a professional look.';
                 break;
             default:
@@ -512,13 +528,21 @@ export default function ResumeBuilder() {
     const inputClass = (key) =>
         `w-full px-5 py-4 bg-white border rounded-xl focus:ring-2 focus:ring-brand focus:border-transparent text-primary outline-none transition-all text-base font-medium ${errors[key] ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : 'border-gray-100'
         }`;
+    const hasAutoCompiled = useRef(false);
+
     const handleSaveAndPreview = async () => {
         setLoading(true);
         try {
+            // 1. Save resume to get ID
             const res = await createResume(formData);
             setResumeId(res.resume_id);
-            const html = await getResumePreview(res.resume_id, selectedTemplate);
-            setPreviewHtml(html);
+
+            // 2. Fetch raw LaTeX source for the editor
+            const sourceData = await getResumeLatexSource(res.resume_id, selectedTemplate);
+            if (sourceData && sourceData.latex_code) {
+                setLatexCode(sourceData.latex_code);
+                hasAutoCompiled.current = false; // Reset so useEffect will auto-compile the new source
+            }
         } catch (error) {
             console.error(error);
             toast.error("Failed to generate preview");
@@ -526,6 +550,33 @@ export default function ResumeBuilder() {
             setLoading(false);
         }
     };
+
+    const compileLatex = useCallback(async (code) => {
+        setIsCompiling(true);
+        try {
+            const blob = await apiCompileLatex(code);
+
+            if (previewHtml) {
+                window.URL.revokeObjectURL(previewHtml);
+            }
+
+            setPreviewHtml(window.URL.createObjectURL(blob));
+        } catch (err) {
+            toast.error(`Failed to compile LaTeX: ${err.message}`);
+        } finally {
+            setIsCompiling(false);
+        }
+    }, [previewHtml]);
+
+    // auto-compile when latex code is first loaded
+    useEffect(() => {
+        if (latexCode && !hasAutoCompiled.current) {
+            hasAutoCompiled.current = true;
+            compileLatex(latexCode);
+        }
+    }, [latexCode, compileLatex]);
+
+    const handleRecompile = () => compileLatex(latexCode);
 
     const handleDownload = async () => {
         if (!resumeId) return;
@@ -545,24 +596,14 @@ export default function ResumeBuilder() {
             console.error(error);
             const msg = error.message.toLowerCase();
             if (msg.includes("gtk3") || msg.includes("unavailable") || error.status === 503) {
-                toast.error("Download failed. PLEASE USE THE 'PRINT / SAVE AS PDF (BROWSER)' BUTTON BELOW INSTEAD.", { id: toastId, duration: 8000 });
+                toast.error("Download failed. Please use the 'Print / Save as PDF' button below instead.", { id: toastId, duration: 8000 });
             } else {
                 toast.error(error.message || "Download failed.", { id: toastId });
             }
         }
     };
 
-    const handlePrint = () => {
-        if (!previewHtml) return;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(previewHtml);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 500);
-    };
+
 
     const handleGenerateSummary = async () => {
         if (!formData.field) { toast.error("Please enter a Target Job Title first (Step 3)."); return; }
@@ -939,9 +980,9 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.experience.map((exp, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-brand bg-brand/5 px-3 py-1 rounded-full mb-3 inline-block">
                                         Work Experience #{idx + 1}
@@ -1059,9 +1100,9 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.projects.map((proj, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 bg-purple-50 px-3 py-1 rounded-full mb-3 inline-block">
                                         Project / Initiative #{idx + 1}
@@ -1177,9 +1218,9 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-8">
                     {formData.education.map((edu, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-brand bg-brand/5 px-3 py-1 rounded-full mb-3 inline-block">
                                         Education #{idx + 1}
@@ -1334,35 +1375,10 @@ export default function ResumeBuilder() {
         },
         {
             title: "Review & Generate",
-            subtitle: "Choose a template and create your resume.",
+            subtitle: "Generate and refine your resume.",
             render: () => (
                 <div className="space-y-6">
-                    {/* Template grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                            { id: 'classic', icon: '📋', name: 'Classic Serif', desc: 'Traditional single-column serif. Best for corporate & legal.' },
-                            { id: 'executive', icon: '🏛️', name: 'Executive', desc: 'Clean serif with profile section. Best for senior roles.' },
-                            { id: 'diamond', icon: '♦️', name: 'Diamond', desc: 'Diamond bullets & dotted lines. Best for professional services.' },
-                            { id: 'sharp', icon: '⚡', name: 'Sharp', desc: 'Bold sans-serif with underlines. Best for marketing & sales.' },
-                            { id: 'twocol', icon: '📐', name: 'Two Column', desc: 'Experience left, skills right. Best for engineers & analysts.' },
-                            { id: 'accent', icon: '🔵', name: 'Accent', desc: 'Colored company names & achievement grid. Best for finance & audit.' },
-                            { id: 'centered', icon: '🎯', name: 'Centered', desc: 'Centered italic headers, 3-col achievements. Best for analysts.' },
-                            { id: 'serifpro', icon: '📜', name: 'Serif Pro', desc: 'Icon contacts, justified text, serif. Best for product & management.' },
-                            { id: 'minimal', icon: '🪶', name: 'Minimal', desc: 'Education-first, 4-col skills grid. Best for data & engineering.' },
-                        ].map(t => (
-                            <button key={t.id} onClick={() => setSelectedTemplate(t.id)}
-                                className={`p-3 rounded-2xl border-2 text-left transition-all flex gap-3 h-full items-start ${selectedTemplate === t.id ? 'border-brand-primary bg-brand/5 ring-1 ring-brand-primary' : 'border-gray-200 hover:border-gray-100 bg-surface'}`}>
-                                <TemplatePreview type={t.id} />
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-bold text-sm truncate text-primary">{t.name}</span>
-                                        {selectedTemplate === t.id && <span className="text-brand text-[10px] font-black shrink-0">✓</span>}
-                                    </div>
-                                    <div className="text-xs text-slate-500 leading-snug line-clamp-2 mt-0.5 font-medium">{t.desc}</div>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+
 
                     <Button size="lg" onClick={handleSaveAndPreview} disabled={loading}
                         className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-white shadow-xl disabled:opacity-50">
@@ -1371,22 +1387,112 @@ export default function ResumeBuilder() {
 
                     {resumeId && (
                         <div className="animate-fade-in space-y-4">
-                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3 text-green-400 font-bold">
+                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3 text-green-400 font-bold mb-8">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                 Resume Generated Successfully!
                             </div>
-                            <div className="h-[600px] border border-gray-200 rounded-2xl overflow-hidden bg-secondary">
-                                {previewHtml && <iframe srcDoc={previewHtml} className="w-full h-full" title="Preview" />}
-                            </div>
-                            <Button size="lg" onClick={handlePrint}
-                                className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2">
-                                🖨️ Print / Save as PDF (Browser)
-                            </Button>
-                            <div className="relative flex items-center py-1">
-                                <div className="flex-grow border-t border-gray-200"></div>
-                                <span className="flex-shrink mx-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">or try</span>
-                                <div className="flex-grow border-t border-gray-200"></div>
-                            </div>
+
+                            {latexCode ? (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                        {/* LaTeX Editor */}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center px-1">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Resume Editor</label>
+                                            </div>
+                                            <textarea
+                                                value={latexCode}
+                                                onChange={(e) => setLatexCode(e.target.value)}
+                                                className="w-full h-[500px] md:h-[800px] p-4 md:p-6 bg-secondary border border-gray-100 rounded-xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs leading-relaxed resize-none shadow-inner"
+                                            />
+                                        </div>
+
+                                        {/* PDF Preview */}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center px-1">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Visual Preview</label>
+                                                <Button
+                                                    onClick={handleRecompile}
+                                                    disabled={isCompiling}
+                                                    size="sm"
+                                                    className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompiling
+                                                        ? 'bg-secondary text-gray-500 cursor-not-allowed'
+                                                        : 'bg-brand hover:bg-brand-hover text-white shadow-lg shadow-black/10'
+                                                        }`}
+                                                >
+                                                    {isCompiling ? (
+                                                        <>
+                                                            <div className="w-3 h-3 border-2 border-bg-primary border-t-transparent rounded-full animate-spin" />
+                                                            <span>Updating...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                            <span>Refresh View</span>
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+
+                                            <div className="relative h-[500px] md:h-[800px] bg-white border border-gray-200 rounded-xl shadow-sm">
+                                                {previewHtml ? (
+                                                    <PdfViewer
+                                                        url={previewHtml}
+                                                        filename="resume_preview.pdf"
+                                                        className="rounded-xl"
+                                                        title="PDF Preview"
+                                                    />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full text-gray-500">
+                                                        {isCompiling ? (
+                                                            <div className="w-full h-full p-6 space-y-3">
+                                                                <Skeleton className="h-8 w-3/4 mx-auto" />
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-5/6" />
+                                                                <Skeleton className="h-4 w-full" />
+                                                                <Skeleton className="h-4 w-4/5" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-center px-8">
+                                                                <svg className="w-16 h-16 mx-auto mb-6 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Preview not ready. <br />Click "Refresh View" above.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end mt-10">
+                                        <button
+                                            onClick={handleDownload}
+                                            disabled={!previewHtml || isCompiling}
+                                            className={`px-8 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-3 ${previewHtml && !isCompiling
+                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-xl shadow-brand/10 active:scale-95'
+                                                : 'bg-secondary text-gray-500 cursor-not-allowed shadow-none border border-gray-100'
+                                                }`}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            <span>Download Final PDF</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-[600px] border border-gray-200 rounded-2xl overflow-hidden bg-secondary">
+                                    {previewHtml && (
+                                        previewHtml.startsWith('blob:')
+                                            ? <iframe src={previewHtml} className="w-full h-full" title="Preview" />
+                                            : <iframe srcDoc={previewHtml} className="w-full h-full" title="Preview" />
+                                    )}
+                                </div>
+                            )}
                             <Button variant="outline" size="lg" onClick={handleDownload}
                                 className="w-full h-14 border-2 rounded-xl font-bold uppercase tracking-widest text-gray-500 hover:text-primary transition-all text-xs flex items-center justify-center gap-2">
                                 📥 Native PDF Download
@@ -1416,19 +1522,19 @@ export default function ResumeBuilder() {
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-base font-black text-text-primary mb-1 italic tracking-tighter uppercase">Groq API Key Required for AI Features</h3>
-                            <p className="text-text-secondary text-sm font-medium mb-3 leading-relaxed">
-                                The AI summary, bullet point, and project description generators need your Groq API key.
-                                Get a free key from{' '}
+                            <h3 className="text-base font-bold text-primary mb-1">API Key Required for AI Features</h3>
+                            <p className="text-secondary text-sm font-medium mb-3 leading-relaxed">
+                                To use AI-powered summaries, bullet points, and project descriptions, you'll need a free API key.
+                                Get one from{' '}
                                 <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
-                                    className="text-brand-primary hover:underline font-black">
+                                    className="text-brand hover:underline font-bold">
                                     console.groq.com/keys
                                 </a>
                             </p>
                             <Button
                                 onClick={() => navigate('/settings')}
                                 variant="outline"
-                                className="rounded-xl font-black text-[10px] uppercase tracking-widest">
+                                className="rounded-xl font-bold text-xs">
                                 Go to Settings
                             </Button>
                         </div>
@@ -1461,7 +1567,7 @@ export default function ResumeBuilder() {
                         </p>
                     </div>
 
-                    <Card className="rounded-3xl p-8 shadow-xl shadow-black/5 mb-8">
+                    <Card className="rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-black/5 mb-8">
                         {steps[currentStep].render()}
                     </Card>
 

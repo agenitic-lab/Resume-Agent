@@ -223,7 +223,7 @@ TEMPLATES = {
         "id": "sb2nov",
         "name": "Modern Boxed",
         "description": "Distinctive layout with gray-boxed section headers, tabular contact header, compact geometry margins, and different font. Uses footnotesize dates for a dense modern look.",
-        "author": "Resume Agent",
+        "author": "Resiko",
         "source": "Built-in",
         "preview_color": "#4A5568",
         "tags": ["modern", "compact", "boxed", "ats-optimized"],
@@ -348,27 +348,50 @@ TEMPLATES = {
 }
 
 
+import json
+import os
+
+ADMIN_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "admin_templates.json")
+
+def load_admin_templates():
+    if not os.path.exists(ADMIN_TEMPLATES_FILE):
+        return {}
+    try:
+        with open(ADMIN_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def get_combined_templates():
+    combined = dict(TEMPLATES)
+    admin_tpls = load_admin_templates()
+    combined.update(admin_tpls)
+    return combined
+
 def get_all_templates():
     """Return list of template metadata (without full preamble) for UI display."""
+    combined = get_combined_templates()
     return [
         {
             "id": t["id"],
-            "name": t["name"],
-            "description": t["description"],
-            "author": t["author"],
-            "source": t["source"],
-            "preview_color": t["preview_color"],
-            "tags": t["tags"],
+            "name": t.get("name", t["id"]),
+            "description": t.get("description", "Admin created template"),
+            "author": t.get("author", "Admin"),
+            "source": t.get("source", "System"),
+            "preview_color": t.get("preview_color", "#4A5568"),
+            "tags": t.get("tags", ["ats-friendly"]),
+            "is_admin_custom": t.get("is_admin_custom", False)
         }
-        for t in TEMPLATES.values()
+        for t in combined.values()
     ]
 
 
 def get_template_preamble(template_id: str) -> str | None:
     """Return the LaTeX preamble for a given template ID."""
-    template = TEMPLATES.get(template_id)
+    combined = get_combined_templates()
+    template = combined.get(template_id)
     if template:
-        return template["preamble"]
+        return template.get("preamble")
     return None
 
 

@@ -6,7 +6,8 @@ from schemas.resume_builder import ResumeCreate
 from uuid import UUID
 from database.models.user import User
 from auth.dependencies import get_current_user
-from services.template_renderer import render_resume, generate_pdf
+from services.latex_renderer import render_latex_to_pdf, render_latex_source
+from services.latex_templates import TEMPLATES as BUILTIN_LATEX_TEMPLATES
 from services.ai_resume_generator import generate_ats_bullets, generate_ats_summary, generate_ats_project_bullets
 from core.security import decrypt_api_key
 from pydantic import BaseModel
@@ -58,20 +59,58 @@ def preview_resume(
         raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        html = render_resume(
-            f"{template_name}.html",
-            {
-                "contact": resume.contact,
-                "field": resume.field,
-                "experience": resume.experience,
-                "education": resume.education,
-                "projects": resume.projects or [],
-                "skills": resume.skills
-            }
-        )
-        return Response(content=html, media_type="text/html")
+        data = {
+            "contact": resume.contact,
+            "field": resume.field,
+            "experience": resume.experience,
+            "education": resume.education,
+            "projects": resume.projects or [],
+            "skills": resume.skills
+        }
+        
+        if template_name in BUILTIN_LATEX_TEMPLATES:
+            pdf = render_latex_to_pdf(template_name, data)
+            return Response(content=pdf, media_type="application/pdf")
+        else:
+            raise HTTPException(status_code=400, detail="Invalid template selected.")
+        
     except Exception as e:
          raise HTTPException(status_code=500, detail=f"Template rendering failed: {str(e)}")
+
+
+@router.get("/source/{resume_id}/{template_name}")
+def get_resume_source(
+    resume_id: UUID,
+    template_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resume = db.query(Resume).filter(
+        Resume.id == resume_id,
+        Resume.user_id == current_user.id
+    ).first()
+
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    try:
+        data = {
+            "contact": resume.contact,
+            "field": resume.field,
+            "experience": resume.experience,
+            "education": resume.education,
+            "projects": resume.projects or [],
+            "skills": resume.skills
+        }
+        
+        if template_name in BUILTIN_LATEX_TEMPLATES:
+            latex_code = render_latex_source(template_name, data)
+            return {"latex_code": latex_code}
+        else:
+            raise HTTPException(status_code=400, detail="Invalid template selected.")
+            
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=f"Failed to generate source code: {str(e)}")
 
 
 @router.get("/download/{resume_id}/{template_name}")
@@ -91,34 +130,25 @@ def download_resume(
          raise HTTPException(status_code=404, detail="Resume not found")
 
     try:
-        html = render_resume(
-            f"{template_name}.html",
-            {
-                "contact": resume.contact,
-                "field": resume.field,
-                "experience": resume.experience,
-                "education": resume.education,
-                "projects": resume.projects or [],
-                "skills": resume.skills
-            }
-        )
-
-        pdf = generate_pdf(html)
+        data = {
+            "contact": resume.contact,
+            "field": resume.field,
+            "experience": resume.experience,
+            "education": resume.education,
+            "projects": resume.projects or [],
+            "skills": resume.skills
+        }
+        
+        if template_name in BUILTIN_LATEX_TEMPLATES:
+            pdf = render_latex_to_pdf(template_name, data)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid template selected.")
 
         return Response(
             content=pdf,
             media_type="application/pdf",
             headers={"Content-Disposition": "attachment; filename=resume.pdf"}
         )
-    except (OSError, ImportError, RuntimeError) as e:
-        # Common error on Windows when GTK is missing
-        error_msg = str(e)
-        if any(kw in error_msg.lower() for kw in ["gobject", "pango", "cairo", "gtk3", "unavailable"]):
-             raise HTTPException(
-                status_code=503, 
-                detail=f"{error_msg}. Please install GTK3 for Windows to enable native PDF downloads."
-            )
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {error_msg}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
 

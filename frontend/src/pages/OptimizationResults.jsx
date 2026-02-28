@@ -231,8 +231,8 @@ export default function OptimizationResults() {
                     <Skeleton className="h-10 w-32 mb-8 rounded-2xl" />
 
                     {/* Score header card */}
-                    <div className="bg-surface border border-gray-100 rounded-[2.5rem] p-8 mb-6">
-                        <div className="flex flex-wrap items-center gap-8">
+                    <div className="bg-surface border border-gray-100 rounded-[2.5rem] p-4 sm:p-8 mb-6">
+                        <div className="flex flex-wrap items-center gap-4 sm:gap-8">
                             <div className="space-y-2">
                                 <Skeleton className="h-3 w-28" />
                                 <Skeleton className="h-20 w-24 rounded-2xl" />
@@ -257,7 +257,7 @@ export default function OptimizationResults() {
                     </div>
 
                     {/* Main content panel */}
-                    <div className="bg-surface border border-gray-100 rounded-[2.5rem] p-8 space-y-4">
+                    <div className="bg-surface border border-gray-100 rounded-[2.5rem] p-4 sm:p-8 space-y-4">
                         <Skeleton className="h-5 w-40 mb-6" />
                         <Skeleton className="h-4 w-full" />
                         <Skeleton className="h-4 w-11/12" />
@@ -301,17 +301,17 @@ export default function OptimizationResults() {
                             {/* Initial Score */}
                             <div className="mb-10">
                                 <p className="text-gray-500 text-xs mb-2">Initial ATS Score</p>
-                                <p className="text-7xl font-bold text-primary tracking-tight text-mono">{error.score}</p>
+                                <p className="text-4xl sm:text-7xl font-bold text-primary tracking-tight text-mono">{error.score}</p>
                             </div>
 
                             {/* Reason */}
-                            <div className="bg-secondary border border-gray-200 rounded-3xl p-8 mb-8 text-left">
+                            <div className="bg-secondary border border-gray-200 rounded-3xl p-4 sm:p-8 mb-8 text-left">
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-brand mb-4">Analysis Reasoning</h3>
                                 <p className="text-primary font-medium leading-relaxed">{error.reason}</p>
                             </div>
 
                             {/* Suggestions */}
-                            <div className="bg-surface border border-gray-200 rounded-3xl p-8 mb-10 text-left">
+                            <div className="bg-surface border border-gray-200 rounded-3xl p-4 sm:p-8 mb-10 text-left">
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-6">Suggestions</h3>
                                 <ul className="space-y-4">
                                     {[
@@ -352,7 +352,7 @@ export default function OptimizationResults() {
 
         // Generic error display
         return (
-            <div className="min-h-screen bg-primary p-8 flex items-center justify-center">
+            <div className="min-h-screen bg-primary p-4 md:p-8 flex items-center justify-center">
                 <div className="text-center">
                     <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-6">{typeof error === 'string' ? error : "Core Data Not Found"}</div>
                     <button
@@ -423,20 +423,20 @@ export default function OptimizationResults() {
                             <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-10">
                                 <div className="text-center">
-                                    <div className="text-6xl font-bold text-primary mb-2 tracking-tight text-mono">{resultsData.originalScore}</div>
+                                    <div className="text-3xl sm:text-6xl font-bold text-primary mb-2 tracking-tight text-mono">{resultsData.originalScore}</div>
                                     <div className="text-gray-500 text-xs">Original Score</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-6xl font-bold text-brand mb-2 tracking-tight text-mono">+{resultsData.improvement}</div>
+                                    <div className="text-3xl sm:text-6xl font-bold text-brand mb-2 tracking-tight text-mono">+{resultsData.improvement}</div>
                                     <div className="text-gray-500 text-xs">Improvement</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-6xl font-bold text-primary mb-2 tracking-tight underline decoration-brand-primary decoration-4 underline-offset-8 text-mono">{resultsData.optimizedScore}</div>
+                                    <div className="text-3xl sm:text-6xl font-bold text-primary mb-2 tracking-tight underline decoration-brand-primary decoration-4 underline-offset-8 text-mono">{resultsData.optimizedScore}</div>
                                     <div className="text-gray-500 text-xs">Final Score</div>
                                 </div>
                             </div>
                             <div className="text-center mb-10">
-                                <p className="text-gray-500/50 text-[10px] font-black uppercase tracking-[0.3em] text-mono">{resultsData.iterations} Iterations</p>
+                                <p className="text-gray-500/50 text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.3em] text-mono">{resultsData.iterations} Iterations</p>
                             </div>
 
                             {/* Score Progression */}
