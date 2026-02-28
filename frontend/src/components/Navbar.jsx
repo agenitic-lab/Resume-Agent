@@ -18,14 +18,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 bg-brand rounded-[10px] flex items-center justify-center text-white scale-100 group-hover:scale-105 transition-transform duration-200 shadow-sm" style={{ backgroundColor: 'var(--color-brand-primary)' }}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-primary">
-              AiRes
-            </span>
+            <img src="/resiko-logo.png" alt="Resiko" className="h-9 object-contain scale-100 group-hover:scale-105 transition-transform duration-200" />
           </Link>
 
           {/* Desktop Nav */}
