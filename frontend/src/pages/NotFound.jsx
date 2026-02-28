@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { motion as Motion } from 'framer-motion';
 
 // Replicating High-Performance Particle class for Plexus 
@@ -95,6 +96,11 @@ export default function NotFound() {
   }, []);
 
   return (
+    <>
+    <Helmet>
+      <title>Page Not Found — Resiko</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className="relative min-h-screen bg-primary text-primary overflow-hidden font-sans selection:bg-brand/30 flex flex-col items-center justify-center p-6 pt-32">
       <style>{`
         @keyframes scan {
@@ -219,5 +225,6 @@ export default function NotFound() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -9,6 +9,7 @@ export default function Navbar() {
   const navLinks = [
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
+    { label: "FAQ", href: "#faq" },
   ];
 
   return (
@@ -32,12 +33,7 @@ export default function Navbar() {
                 {link.label}
               </a>
             ))}
-            <Link
-              to="/pricing"
-              className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200"
-            >
-              Pricing
-            </Link>
+
           </nav>
 
           {/* Right Actions */}

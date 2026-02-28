@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
@@ -68,6 +69,12 @@ export default function Register() {
   };
 
   return (
+    <>
+    <Helmet>
+      <title>Sign Up Free — Resiko | AI Resume Optimizer</title>
+      <meta name="description" content="Create your free Resiko account and start optimizing your resume with AI. ATS scoring, keyword matching, and smart rewrites — all free." />
+      <link rel="canonical" href="https://resiko.app/register" />
+    </Helmet>
     <div className="min-h-screen bg-primary flex flex-col pt-20">
       <div className="flex-1 flex items-center justify-center p-6">
         <Motion.div
@@ -76,7 +83,7 @@ export default function Register() {
           className="w-full max-w-md bg-white border border-gray-100 rounded-3xl p-8 sm:p-10 shadow-sm"
         >
           <div className="mb-8 text-center pt-4">
-            <h2 className="text-2xl font-bold text-primary mb-2">Create Account</h2>
+            <h1 className="text-2xl font-bold text-primary mb-2">Create Account</h1>
             <p className="text-secondary text-sm">Your optimized resume starts here</p>
           </div>
 
@@ -180,5 +187,6 @@ export default function Register() {
         </Motion.div>
       </div>
     </div>
+    </>
   );
 }

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /new-optimization
+Disallow: /optimization
+Disallow: /history
+Disallow: /templates
+Disallow: /settings
+Disallow: /resume-builder
+Disallow: /missing-skills
+
+Sitemap: https://resiko.app/sitemap.xml

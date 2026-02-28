@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
@@ -62,6 +63,12 @@ export default function Login() {
   };
 
   return (
+    <>
+    <Helmet>
+      <title>Log In — Resiko | AI Resume Optimizer</title>
+      <meta name="description" content="Sign in to your Resiko account to optimize your resume with AI, check ATS scores, and build professional resumes." />
+      <link rel="canonical" href="https://resiko.app/login" />
+    </Helmet>
     <div className="min-h-screen bg-primary flex flex-col pt-20">
       <div className="flex-1 flex items-center justify-center p-6">
         <Motion.div
@@ -70,7 +77,7 @@ export default function Login() {
           className="w-full max-w-md bg-white border border-gray-100 rounded-3xl p-8 sm:p-10 shadow-sm"
         >
           <div className="mb-8 text-center pt-4">
-            <h2 className="text-2xl font-bold text-primary mb-2">Welcome back</h2>
+            <h1 className="text-2xl font-bold text-primary mb-2">Welcome back</h1>
             <p className="text-secondary text-sm">Sign in to your account</p>
           </div>
 
@@ -152,5 +159,6 @@ export default function Login() {
         </Motion.div>
       </div>
     </div>
+    </>
   );
 }
