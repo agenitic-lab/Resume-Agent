@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference } from '../services/api';
+import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference, analyzeResumeForATS, getTemplates } from '../services/api';
 import toast from 'react-hot-toast';
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -64,6 +64,8 @@ const SKILL_SUGGESTIONS_BY_FIELD = {
     // Default
     "default": ["Communication", "Problem Solving", "Teamwork", "Leadership", "Time Management", "Critical Thinking", "Adaptability", "Microsoft Office", "Project Management"],
 };
+
+const ALL_SKILLS = Array.from(new Set(Object.values(SKILL_SUGGESTIONS_BY_FIELD).flat())).sort();
 
 function getSkillSuggestions(field, existingSkills) {
     const fieldLower = (field || '').toLowerCase();
@@ -152,7 +154,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
     }, [value]);
 
     const handleSelect = (month, year) => {
-        const formatted = `${month} ${year}`;
+        const formatted = `${month} ${year} `;
         onChange(formatted);
         setSelectedMonth(month);
         setSelectedYear(year);
@@ -190,7 +192,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
                             {years.map(y => (
                                 <button key={y} type="button"
                                     onClick={() => setSelectedYear(String(y))}
-                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedYear === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'}`}>
+                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedYear === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'} `}>
                                     {y}
                                 </button>
                             ))}
@@ -206,7 +208,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
                                         setSelectedMonth(m);
                                         if (selectedYear) handleSelect(m, selectedYear);
                                     }}
-                                    className={`text-xs py-1 rounded-lg font-medium transition-all ${selectedMonth === m ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'}`}>
+                                    className={`text - xs py - 1 rounded - lg font - medium transition - all ${selectedMonth === m ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'} `}>
                                     {m}
                                 </button>
                             ))}
@@ -253,8 +255,8 @@ function YearPicker({ value, onChange, placeholder, allowPresent = false }) {
                         {years.map(y => (
                             <button key={y} type="button"
                                 onClick={() => { onChange(String(y)); setOpen(false); }}
-                                className={`text-xs py-1.5 rounded-lg font-medium transition-all ${value === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'
-                                    }`}>
+                                className={`text - xs py - 1.5 rounded - lg font - medium transition - all ${value === String(y) ? 'bg-brand text-white' : 'hover:bg-secondary text-secondary'
+                                    } `}>
                                 {y}
                             </button>
                         ))}
@@ -272,6 +274,189 @@ function YearPicker({ value, onChange, placeholder, allowPresent = false }) {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────
+
+// ─── Shared UI Components ──────────────────────────────────────────────────
+const AIButton = ({ onClick, label = "AI Generate" }) => (
+    <Button onClick={onClick} variant="outline" size="sm" type="button"
+        className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide border-gray-200 hover:bg-brand/10 hover:text-brand hover:border-brand/30 transition-all rounded-lg">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        {label}
+    </Button>
+);
+
+const TAG_COLORS = {
+    'modern': 'bg-blue-50 text-blue-600',
+    'minimal': 'bg-gray-50 text-gray-500',
+    'sans-serif': 'bg-purple-50 text-purple-600',
+    'ats-friendly': 'bg-green-50 text-green-600',
+    'ats-optimized': 'bg-green-50 text-green-600',
+    'classic': 'bg-amber-50 text-amber-600',
+    'popular': 'bg-orange-50 text-orange-600',
+    'compact': 'bg-teal-50 text-teal-600',
+    'single-column': 'bg-slate-50 text-slate-500',
+    'clean': 'bg-emerald-50 text-emerald-600',
+    'professional': 'bg-indigo-50 text-indigo-600',
+    'tech': 'bg-violet-50 text-violet-600',
+};
+
+function getTagClass(tag) {
+    return TAG_COLORS[tag] || 'bg-gray-50 text-gray-500';
+}
+
+const TemplatePreview = ({ type }) => {
+    const layouts = {
+        modern: (
+            <div className="w-full h-full bg-white flex overflow-hidden rounded shadow-inner">
+                <div className="w-1/3 bg-neutral-800 h-full p-1 space-y-1">
+                    <div className="w-2/3 h-2 bg-neutral-600 rounded-px" />
+                    <div className="w-full h-1 bg-neutral-700 rounded-px" />
+                    <div className="w-full h-1 bg-neutral-700 rounded-px" />
+                </div>
+                <div className="flex-1 p-1 space-y-1.5">
+                    <div className="w-1/2 h-2 bg-neutral-200 rounded-px" />
+                    <div className="w-full h-1 bg-neutral-100 rounded-px" />
+                    <div className="w-full h-1 bg-neutral-100 rounded-px" />
+                    <div className="w-full h-1 bg-neutral-100 rounded-px" />
+                </div>
+            </div>
+        ),
+        classic: (
+            <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
+                <div className="w-1/2 h-2 bg-neutral-300 rounded-px" />
+                <div className="w-1/3 h-1 bg-neutral-200 rounded-px" />
+                <div className="flex gap-1 py-1">
+                    <div className="w-1 h-1 bg-neutral-400 rounded-full" />
+                    <div className="w-1 h-1 bg-neutral-400 rounded-full" />
+                    <div className="w-1 h-1 bg-neutral-400 rounded-full" />
+                    <div className="w-1 h-1 bg-neutral-400 rounded-full" />
+                </div>
+                <div className="w-full h-px bg-neutral-200" />
+                <div className="w-full h-1 bg-neutral-100 rounded-px" />
+                <div className="w-full h-1 bg-neutral-100 rounded-px" />
+                <div className="w-full h-px bg-neutral-200" />
+                <div className="flex w-full justify-between gap-1">
+                    <div className="w-1/2 h-1 bg-neutral-100 rounded-px" />
+                    <div className="w-1/4 h-1 bg-neutral-100 rounded-px" />
+                </div>
+            </div>
+        ),
+        executive: (
+            <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
+                <div className="w-1/3 h-1.5 bg-neutral-400 rounded-px" />
+                <div className="w-full h-2 bg-neutral-100 rounded-px mt-2" />
+                <div className="w-full h-px bg-neutral-200" />
+                <div className="w-full h-1 bg-neutral-50 rounded-px" />
+                <div className="w-full h-1 bg-neutral-50 rounded-px" />
+            </div>
+        ),
+        diamond: (
+            <div className="w-full h-full bg-white p-2 space-y-2 shadow-inner rounded">
+                <div className="w-2/3 h-2 bg-neutral-200 mx-auto" />
+                <div className="space-y-1">
+                    <div className="flex items-center gap-1"><div className="w-1 h-1 bg-neutral-400 rotate-45" /><div className="flex-1 h-1 bg-neutral-100" /></div>
+                    <div className="flex items-center gap-1 pl-2"><div className="w-full h-0.5 bg-neutral-50" /></div>
+                    <div className="w-full border-t border-dotted border-neutral-200 mt-1" />
+                    <div className="flex items-center gap-1"><div className="w-1 h-1 bg-neutral-400 rotate-45" /><div className="flex-1 h-1 bg-neutral-100" /></div>
+                </div>
+            </div>
+        ),
+        twocol: (
+            <div className="w-full h-full bg-white flex overflow-hidden rounded shadow-inner">
+                <div className="w-2/3 p-2 space-y-2 border-r border-neutral-100">
+                    <div className="w-1/2 h-2 bg-neutral-200" />
+                    <div className="w-full h-1 bg-neutral-100" />
+                    <div className="w-full h-1 bg-neutral-100" />
+                </div>
+                <div className="flex-1 p-2 space-y-2 bg-neutral-50">
+                    <div className="w-full h-1.5 bg-neutral-200" />
+                    <div className="w-full h-1 bg-neutral-100" />
+                </div>
+            </div>
+        ),
+        sharp: (
+            <div className="w-full h-full bg-white p-2 space-y-2 shadow-inner rounded">
+                <div className="flex justify-between items-center mb-2">
+                    <div className="w-1/3 h-3 bg-neutral-800" />
+                    <div className="w-1/3 h-1 bg-neutral-200" />
+                </div>
+                <div className="w-1/2 h-2 bg-neutral-400" />
+                <div className="w-full border-b-2 border-neutral-800" />
+                <div className="w-full h-1 bg-neutral-100" />
+            </div>
+        ),
+        accent: (
+            <div className="w-full h-full bg-white p-2 space-y-2 shadow-inner rounded">
+                <div className="w-2/3 h-3 bg-neutral-900 mx-auto" />
+                <div className="space-y-1">
+                    <div className="w-1/2 h-1.5 bg-blue-500" />
+                    <div className="w-full h-1 bg-neutral-100" />
+                    <div className="w-1/2 h-1.5 bg-blue-500" />
+                    <div className="w-full h-1 bg-neutral-100" />
+                </div>
+            </div>
+        ),
+        centered: (
+            <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
+                <div className="w-2/3 h-3 bg-neutral-800 mt-1" />
+                <div className="w-1/2 h-1.5 bg-neutral-200 italic font-serif" />
+                <div className="w-full h-px bg-neutral-300 my-1" />
+                <div className="w-full flex gap-1 mt-1">
+                    <div className="flex-1 h-3 bg-neutral-50 border border-neutral-100" />
+                    <div className="flex-1 h-3 bg-neutral-50 border border-neutral-100" />
+                    <div className="flex-1 h-3 bg-neutral-50 border border-neutral-100" />
+                </div>
+            </div>
+        ),
+        serifpro: (
+            <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
+                <div className="w-1/2 h-3 bg-neutral-900" />
+                <div className="flex gap-2 mb-2"><div className="w-1 h-1 bg-neutral-400 rounded-full" /><div className="w-1 h-1 bg-neutral-400 rounded-full" /><div className="w-1 h-1 bg-neutral-400 rounded-full" /></div>
+                <div className="w-full text-left h-2 bg-neutral-100 font-bold uppercase tracking-tighter" />
+                <div className="w-full h-px bg-neutral-900 mb-1" />
+                <div className="w-full h-1 bg-neutral-50 mb-1" />
+                <div className="w-full h-1 bg-neutral-50" />
+            </div>
+        ),
+        minimal: (
+            <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
+                <div className="w-1/3 h-2 bg-neutral-300 mb-4" />
+                <div className="w-full flex gap-1">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="flex-1 h-2 bg-neutral-100" />)}
+                </div>
+                <div className="w-full h-2 bg-neutral-200 mt-2" />
+                <div className="w-full h-1 bg-neutral-50" />
+            </div>
+        )
+    };
+    return (
+        <div className="w-16 h-20 shrink-0 bg-secondary p-1 rounded-md border border-gray-100">
+            {layouts[type] || layouts.classic}
+        </div>
+    );
+};
+
+// ─── Score Banner ─────────────────────────────────────────────────────────
+const ScoreBanner = ({ score, label }) => {
+    let bgClass = "bg-gradient-to-r from-red-500 to-rose-600";
+    if (score >= 80) bgClass = "bg-gradient-to-r from-green-500 to-emerald-600";
+    else if (score >= 50) bgClass = "bg-gradient-to-r from-amber-500 to-orange-500";
+
+    return (
+        <div className={`w - full ${bgClass} rounded - t - 2xl p - 6 text - center text - white shadow - md relative overflow - hidden`}>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+            <div className="relative z-10">
+                <h2 className="text-5xl font-black mb-1 drop-shadow-sm">{score}</h2>
+                <p className="text-sm font-bold uppercase tracking-widest opacity-90">Professional Score</p>
+                <div className="mt-3 inline-block px-4 py-1.5 bg-white text-gray-800 rounded-full text-xs font-bold shadow-sm">
+                    {label || 'Needs Work'}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function ResumeBuilder() {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(0);
@@ -279,9 +464,21 @@ export default function ResumeBuilder() {
     const [resumeId, setResumeId] = useState(null);
     const [previewHtml, setPreviewHtml] = useState(null);
     const [selectedTemplate, setSelectedTemplate] = useState('clean_modern');
+    const [templates, setTemplates] = useState([]); // New state for templates
     const [skillInput, setSkillInput] = useState('');
     const [errors, setErrors] = useState({});
-    const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = resolved
+    const [hasApiKey, setHasApiKey] = useState(null);
+    // AI Optimization State
+    const [selectedRecs, setSelectedRecs] = useState([]);
+    const [isOptimizing, setIsOptimizing] = useState(false);
+    const [optimizationComplete, setOptimizationComplete] = useState(false);
+    const [pendingOptimizedData, setPendingOptimizedData] = useState(null);
+    const [originalDataSnapshot, setOriginalDataSnapshot] = useState(null);
+
+    // Resume Analysis
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const [analysisStatus, setAnalysisStatus] = useState("Initializing...");
+    // null = loading, true/false = resolved
     const [latexCode, setLatexCode] = useState('');
     const [isCompiling, setIsCompiling] = useState(false);
 
@@ -327,7 +524,8 @@ export default function ResumeBuilder() {
         experience: [],
         projects: [],
         education: [],
-        skills: []
+        skills: [],
+        custom_sections: []
     });
 
     const updateField = (path, value) => {
@@ -453,6 +651,25 @@ export default function ResumeBuilder() {
     };
 
     // ── Validation ──
+    const addCustomSection = (type) => {
+        let defaultTitle = type === 'Custom Section' ? '' : type;
+        setFormData(prev => ({
+            ...prev,
+            custom_sections: [...(prev.custom_sections || []), { type: type, title: defaultTitle, content: '' }]
+        }));
+    };
+    const removeCustomSection = (index) => {
+        setFormData(prev => ({ ...prev, custom_sections: prev.custom_sections.filter((_, i) => i !== index) }));
+    };
+    const updateCustomSection = (index, field, value) => {
+        setFormData(prev => {
+            const newCustom = [...(prev.custom_sections || [])];
+            newCustom[index] = { ...newCustom[index], [field]: value };
+            return { ...prev, custom_sections: newCustom };
+        });
+    };
+
+    // ── Validation ──
     const validateStep = () => {
         const newErrors = {};
         const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
@@ -482,20 +699,20 @@ export default function ResumeBuilder() {
                 break;
             case 5: // Experience
                 formData.experience.forEach((exp, i) => {
-                    if (!exp.title.trim()) newErrors[`exp_title_${i}`] = 'Job title is required';
-                    if (!exp.company.trim()) newErrors[`exp_company_${i}`] = 'Company is required';
-                    if (!exp.start_date) newErrors[`exp_start_${i}`] = 'Start date is required';
+                    if (!exp.title.trim()) newErrors[`exp_title_${i} `] = 'Job title is required';
+                    if (!exp.company.trim()) newErrors[`exp_company_${i} `] = 'Company is required';
+                    if (!exp.start_date) newErrors[`exp_start_${i} `] = 'Start date is required';
                 });
                 break;
             case 6: // Projects
                 formData.projects.forEach((proj, i) => {
-                    if (!proj.title.trim()) newErrors[`proj_title_${i}`] = 'Project name is required';
+                    if (!proj.title.trim()) newErrors[`proj_title_${i} `] = 'Project name is required';
                 });
                 break;
             case 7: // Education
                 formData.education.forEach((edu, i) => {
-                    if (!edu.degree.trim()) newErrors[`edu_degree_${i}`] = 'Degree is required';
-                    if (!edu.school.trim()) newErrors[`edu_school_${i}`] = 'School is required';
+                    if (!edu.degree.trim()) newErrors[`edu_degree_${i} `] = 'Degree is required';
+                    if (!edu.school.trim()) newErrors[`edu_school_${i} `] = 'School is required';
                 });
                 break;
             case 8: // Skills
@@ -532,11 +749,12 @@ export default function ResumeBuilder() {
         }`;
     const hasAutoCompiled = useRef(false);
 
-    const handleSaveAndPreview = async () => {
+    const handleSaveAndPreview = async (overrideData = null) => {
         setLoading(true);
         try {
+            const dataToSave = overrideData || formData;
             // 1. Save resume to get ID
-            const res = await createResume(formData);
+            const res = await createResume(dataToSave);
             setResumeId(res.resume_id);
 
             // 2. Fetch raw LaTeX source for the editor
@@ -552,6 +770,98 @@ export default function ResumeBuilder() {
             setLoading(false);
         }
     };
+
+
+    // --- AI Optimization Logic ---
+    useEffect(() => {
+        if (analysisResult && analysisResult.recommendations) {
+            setSelectedRecs(analysisResult.recommendations);
+        }
+    }, [analysisResult]);
+
+    const handleToggleRec = (rec) => {
+        setSelectedRecs(prev => {
+            const exists = prev.find(r => r.issue === rec.issue);
+            if (exists) return prev.filter(r => r.issue !== rec.issue);
+            else return [...prev, rec];
+        });
+    };
+
+    const handleToggleAll = (e) => {
+        if (e.target.checked && analysisResult && analysisResult.recommendations) {
+            setSelectedRecs(analysisResult.recommendations);
+        } else {
+            setSelectedRecs([]);
+        }
+    };
+
+    const runAIAnalyzer = async () => {
+        if (!hasApiKey) {
+            toast.error("API Key required to perform ATS analysis.");
+            return;
+        }
+        try {
+            toast("Running analysis...");
+            setAnalysisStatus("Evaluating ATS compatibility...");
+            const res = await analyzeResumeForATS(formData);
+            setAnalysisResult(res);
+            setAnalysisStatus("Analysis complete!");
+            toast.success("Analysis complete!");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to analyze resume");
+            setAnalysisStatus("Analysis failed.");
+        }
+    };
+
+    const handleOptimizeWithAI = async () => {
+        if (!selectedRecs || selectedRecs.length === 0) {
+            toast.error("Please select at least one recommendation to apply.");
+            return;
+        }
+
+        setIsOptimizing(true);
+        const loadingToast = toast.loading("Applying AI optimizations... This takes 10-15 seconds...");
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/resume/optimize`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem('token') || ''} `
+                },
+                body: JSON.stringify({
+                    resume_data: formData,
+                    selected_recommendations: selectedRecs
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || "Optimization failed");
+            }
+
+            const optimizedData = await response.json();
+
+            // Store original and optimized data for review instead of applying immediately
+            setOriginalDataSnapshot(JSON.parse(JSON.stringify(formData)));
+            setPendingOptimizedData(optimizedData);
+
+            toast.success("Resume optimized successfully!", { id: loadingToast });
+            setOptimizationComplete(true);
+        } catch (error) {
+            toast.error(error.message, { id: loadingToast });
+        } finally {
+            setIsOptimizing(false);
+        }
+    };
+
+    // Auto-run analysis when hitting step 10 (AI Analysis)
+    useEffect(() => {
+        if (currentStep === 10 && !analysisResult && !isOptimizing) {
+            runAIAnalyzer();
+        }
+    }, [currentStep, analysisResult, isOptimizing]);
 
     const compileLatex = useCallback(async (code) => {
         setIsCompiling(true);
@@ -579,7 +889,7 @@ export default function ResumeBuilder() {
 
             setPreviewHtml(window.URL.createObjectURL(blob));
         } catch (err) {
-            toast.error(`Failed to compile LaTeX: ${err.message}`);
+            toast.error(`Failed to compile LaTeX: ${err.message} `);
         } finally {
             setIsCompiling(false);
         }
@@ -603,7 +913,7 @@ export default function ResumeBuilder() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `resume-${selectedTemplate}.pdf`;
+            a.download = `resume - ${selectedTemplate}.pdf`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -636,6 +946,10 @@ export default function ResumeBuilder() {
                 skills: formData.skills
             });
             if (data.summary) {
+                if (data.summary.startsWith("Error") || data.summary.startsWith("Failed")) {
+                    toast.error(data.summary, { id: toastId });
+                    return;
+                }
                 updateField('contact.summary', data.summary);
                 toast.success("Summary generated!", { id: toastId });
             } else {
@@ -654,6 +968,10 @@ export default function ResumeBuilder() {
         try {
             const data = await generateResumeBullets({ role: exp.title, technologies: formData.skills, keywords: [], field: formData.field });
             if (data.bullets && data.bullets.length > 0) {
+                if (data.bullets[0].startsWith("Error") || data.bullets[0].startsWith("Failed")) {
+                    toast.error(data.bullets[0], { id: toastId });
+                    return;
+                }
                 setFormData(prev => {
                     const newExp = [...prev.experience];
                     const currentDetails = newExp[index].details.filter(d => d.trim() !== '');
@@ -684,6 +1002,10 @@ export default function ResumeBuilder() {
                 field: formData.field
             });
             if (data.bullets && data.bullets.length > 0) {
+                if (data.bullets[0].startsWith("Error") || data.bullets[0].startsWith("Failed")) {
+                    toast.error(data.bullets[0], { id: toastId });
+                    return;
+                }
                 setFormData(prev => {
                     const newProj = [...prev.projects];
                     const currentDetails = newProj[index].details.filter(d => d.trim() !== '');
@@ -700,149 +1022,7 @@ export default function ResumeBuilder() {
         }
     };
 
-    // ── AI Button ──
-    const AIButton = ({ onClick, label = "AI Generate" }) => (
-        <Button onClick={onClick} variant="outline" size="sm" type="button"
-            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide border-gray-200 hover:bg-brand/10 hover:text-brand hover:border-brand/30 transition-all rounded-lg">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            {label}
-        </Button>
-    );
 
-    // ── Template Preview Component (CSS-based) ──
-    const TemplatePreview = ({ type }) => {
-        const layouts = {
-            modern: (
-                <div className="w-full h-full bg-white flex overflow-hidden rounded shadow-inner">
-                    <div className="w-1/3 bg-neutral-800 h-full p-1 space-y-1">
-                        <div className="w-2/3 h-2 bg-neutral-600 rounded-px" />
-                        <div className="w-full h-1 bg-neutral-700 rounded-px" />
-                        <div className="w-full h-1 bg-neutral-700 rounded-px" />
-                    </div>
-                    <div className="flex-1 p-1 space-y-1.5">
-                        <div className="w-1/2 h-2 bg-neutral-200 rounded-px" />
-                        <div className="w-full h-1 bg-neutral-100 rounded-px" />
-                        <div className="w-full h-1 bg-neutral-100 rounded-px" />
-                        <div className="w-full h-1 bg-neutral-100 rounded-px" />
-                    </div>
-                </div>
-            ),
-            classic: (
-                <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
-                    <div className="w-1/2 h-2 bg-neutral-300 rounded-px" />
-                    <div className="w-1/3 h-1 bg-neutral-200 rounded-px" />
-                    <div className="flex gap-1 py-1">
-                        <div className="w-1 h-1 bg-neutral-400 rounded-full" />
-                        <div className="w-1 h-1 bg-neutral-400 rounded-full" />
-                        <div className="w-1 h-1 bg-neutral-400 rounded-full" />
-                        <div className="w-1 h-1 bg-neutral-400 rounded-full" />
-                    </div>
-                    <div className="w-full h-px bg-neutral-200" />
-                    <div className="w-full h-1 bg-neutral-100 rounded-px" />
-                    <div className="w-full h-1 bg-neutral-100 rounded-px" />
-                    <div className="w-full h-px bg-neutral-200" />
-                    <div className="flex w-full justify-between gap-1">
-                        <div className="w-1/2 h-1 bg-neutral-100 rounded-px" />
-                        <div className="w-1/4 h-1 bg-neutral-100 rounded-px" />
-                    </div>
-                </div>
-            ),
-            executive: (
-                <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
-                    <div className="w-1/3 h-1.5 bg-neutral-400 rounded-px" />
-                    <div className="w-full h-2 bg-neutral-100 rounded-px mt-2" />
-                    <div className="w-full h-px bg-neutral-200" />
-                    <div className="w-full h-1 bg-neutral-50 rounded-px" />
-                    <div className="w-full h-1 bg-neutral-50 rounded-px" />
-                </div>
-            ),
-            diamond: (
-                <div className="w-full h-full bg-white p-2 space-y-2 shadow-inner rounded">
-                    <div className="w-2/3 h-2 bg-neutral-200 mx-auto" />
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-1"><div className="w-1 h-1 bg-neutral-400 rotate-45" /><div className="flex-1 h-1 bg-neutral-100" /></div>
-                        <div className="flex items-center gap-1 pl-2"><div className="w-full h-0.5 bg-neutral-50" /></div>
-                        <div className="w-full border-t border-dotted border-neutral-200 mt-1" />
-                        <div className="flex items-center gap-1"><div className="w-1 h-1 bg-neutral-400 rotate-45" /><div className="flex-1 h-1 bg-neutral-100" /></div>
-                    </div>
-                </div>
-            ),
-            twocol: (
-                <div className="w-full h-full bg-white flex overflow-hidden rounded shadow-inner">
-                    <div className="w-2/3 p-2 space-y-2 border-r border-neutral-100">
-                        <div className="w-1/2 h-2 bg-neutral-200" />
-                        <div className="w-full h-1 bg-neutral-100" />
-                        <div className="w-full h-1 bg-neutral-100" />
-                    </div>
-                    <div className="flex-1 p-2 space-y-2 bg-neutral-50">
-                        <div className="w-full h-1.5 bg-neutral-200" />
-                        <div className="w-full h-1 bg-neutral-100" />
-                    </div>
-                </div>
-            ),
-            sharp: (
-                <div className="w-full h-full bg-white p-2 space-y-2 shadow-inner rounded">
-                    <div className="flex justify-between items-center mb-2">
-                        <div className="w-1/3 h-3 bg-neutral-800" />
-                        <div className="w-1/3 h-1 bg-neutral-200" />
-                    </div>
-                    <div className="w-1/2 h-2 bg-neutral-400" />
-                    <div className="w-full border-b-2 border-neutral-800" />
-                    <div className="w-full h-1 bg-neutral-100" />
-                </div>
-            ),
-            accent: (
-                <div className="w-full h-full bg-white p-2 space-y-2 shadow-inner rounded">
-                    <div className="w-2/3 h-3 bg-neutral-900 mx-auto" />
-                    <div className="space-y-1">
-                        <div className="w-1/2 h-1.5 bg-blue-500" />
-                        <div className="w-full h-1 bg-neutral-100" />
-                        <div className="w-1/2 h-1.5 bg-blue-500" />
-                        <div className="w-full h-1 bg-neutral-100" />
-                    </div>
-                </div>
-            ),
-            centered: (
-                <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
-                    <div className="w-2/3 h-3 bg-neutral-800 mt-1" />
-                    <div className="w-1/2 h-1.5 bg-neutral-200 italic font-serif" />
-                    <div className="w-full h-px bg-neutral-300 my-1" />
-                    <div className="w-full flex gap-1 mt-1">
-                        <div className="flex-1 h-3 bg-neutral-50 border border-neutral-100" />
-                        <div className="flex-1 h-3 bg-neutral-50 border border-neutral-100" />
-                        <div className="flex-1 h-3 bg-neutral-50 border border-neutral-100" />
-                    </div>
-                </div>
-            ),
-            serifpro: (
-                <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
-                    <div className="w-1/2 h-3 bg-neutral-900" />
-                    <div className="flex gap-2 mb-2"><div className="w-1 h-1 bg-neutral-400 rounded-full" /><div className="w-1 h-1 bg-neutral-400 rounded-full" /><div className="w-1 h-1 bg-neutral-400 rounded-full" /></div>
-                    <div className="w-full text-left h-2 bg-neutral-100 font-bold uppercase tracking-tighter" />
-                    <div className="w-full h-px bg-neutral-900 mb-1" />
-                    <div className="w-full h-1 bg-neutral-50 mb-1" />
-                    <div className="w-full h-1 bg-neutral-50" />
-                </div>
-            ),
-            minimal: (
-                <div className="w-full h-full bg-white p-2 flex flex-col items-center space-y-1 shadow-inner rounded">
-                    <div className="w-1/3 h-2 bg-neutral-300 mb-4" />
-                    <div className="w-full flex gap-1">
-                        {[1, 2, 3, 4].map(i => <div key={i} className="flex-1 h-2 bg-neutral-100" />)}
-                    </div>
-                    <div className="w-full h-2 bg-neutral-200 mt-2" />
-                    <div className="w-full h-1 bg-neutral-50" />
-                </div>
-            )
-        };
-        return (
-            <div className="w-16 h-20 shrink-0 bg-secondary p-1 rounded-md border border-gray-100">
-                {layouts[type] || layouts.classic}
-            </div>
-        );
-    };
 
     // ── Steps ──
     const steps = [
@@ -938,7 +1118,7 @@ export default function ResumeBuilder() {
                     <div className="space-y-5 text-left">
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">LinkedIn Profile</label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <input placeholder="Profile URL" value={formData.contact.linkedin} onChange={e => updateField('contact.linkedin', e.target.value)}
                                     className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.linkedin ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
                                 <input placeholder="Label" value={formData.contact.linkedin_label} onChange={e => updateField('contact.linkedin_label', e.target.value)}
@@ -948,7 +1128,7 @@ export default function ResumeBuilder() {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Portfolio / Personal Website</label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <input placeholder="Website URL" value={formData.contact.portfolio} onChange={e => updateField('contact.portfolio', e.target.value)}
                                     className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.portfolio ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
                                 <input placeholder="Label" value={formData.contact.portfolio_label} onChange={e => updateField('contact.portfolio_label', e.target.value)}
@@ -959,7 +1139,7 @@ export default function ResumeBuilder() {
                         {(isTech || !role) && (
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">GitHub Repository</label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <input placeholder="GitHub URL" value={formData.contact.github} onChange={e => updateField('contact.github', e.target.value)}
                                         className={`flex-1 p-4 bg-secondary border rounded-xl focus:border-brand-primary text-primary outline-none transition-all text-base font-medium ${errors.github ? 'border-red-500/50 bg-red-500/5' : 'border-gray-100'}`} />
                                     <input placeholder="Label" value={formData.contact.github_label} onChange={e => updateField('contact.github_label', e.target.value)}
@@ -1021,7 +1201,7 @@ export default function ResumeBuilder() {
                             </div>
 
                             {/* Form Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Job Title</label>
                                     <AutocompleteInput
@@ -1065,12 +1245,12 @@ export default function ResumeBuilder() {
 
                             {/* Detail Section */}
                             <div className="pt-8 border-t border-gray-100 space-y-6">
-                                <div className="flex justify-between items-end pb-2">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-2">
                                     <div>
                                         <h4 className="text-sm font-black text-secondary uppercase tracking-[0.15em] mb-1">Impact & Responsibilities</h4>
                                         <p className="text-xs text-slate-500 font-medium italic">Describe your key achievements using action verbs.</p>
                                     </div>
-                                    <AIButton onClick={() => handleGenerateBullets(idx)} />
+                                    <AIButton onClick={() => handleGenerateBullets(idx)} className="w-full sm:w-auto" />
                                 </div>
 
                                 <div className="space-y-4">
@@ -1141,7 +1321,7 @@ export default function ResumeBuilder() {
                             </div>
 
                             {/* Form Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Project Name</label>
                                     <input
@@ -1153,9 +1333,9 @@ export default function ResumeBuilder() {
                                     {err(`proj_title_${idx}`)}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Your Role</label>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">What is this project?</label>
                                     <input
-                                        placeholder="e.g. Lead Frontend Engineer"
+                                        placeholder="e.g. A web app that generates portfolios"
                                         value={proj.role}
                                         onChange={e => updateProject(idx, 'role', e.target.value)}
                                         className="p-4 bg-secondary rounded-xl border border-gray-100 hover:border-gray-200 w-full text-base font-medium transition-all focus:ring-2 focus:ring-purple-500/20"
@@ -1183,12 +1363,12 @@ export default function ResumeBuilder() {
 
                             {/* Detail Section */}
                             <div className="pt-8 border-t border-gray-100 space-y-6">
-                                <div className="flex justify-between items-end pb-2">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-2">
                                     <div>
                                         <h4 className="text-sm font-black text-secondary uppercase tracking-[0.15em] mb-1">Highlights & Achievements</h4>
                                         <p className="text-xs text-slate-500 font-medium italic">Describe what you built and the impact it had.</p>
                                     </div>
-                                    <AIButton onClick={() => handleGenerateProjectBullets(idx)} label="AI Describe" />
+                                    <AIButton onClick={() => handleGenerateProjectBullets(idx)} label="AI Describe" className="w-full sm:w-auto" />
                                 </div>
 
                                 <div className="space-y-4">
@@ -1267,7 +1447,7 @@ export default function ResumeBuilder() {
                                         onChange={e => updateEducation(idx, 'degree', e.target.value)}
                                         className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`edu_degree_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                     />
-                                    {errors[`edu_degree_${idx}`] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_degree_${idx}`]}</p>}
+                                    {errors[`edu_degree_${idx} `] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_degree_${idx} `]}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Institution</label>
@@ -1277,9 +1457,9 @@ export default function ResumeBuilder() {
                                         onChange={e => updateEducation(idx, 'school', e.target.value)}
                                         className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`edu_school_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                     />
-                                    {errors[`edu_school_${idx}`] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_school_${idx}`]}</p>}
+                                    {errors[`edu_school_${idx} `] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_school_${idx} `]}</p>}
                                 </div>
-                                <div className="grid grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Start Year</label>
                                         <YearPicker
@@ -1287,7 +1467,7 @@ export default function ResumeBuilder() {
                                             onChange={val => updateEducation(idx, 'start_year', val)}
                                             placeholder="YYYY"
                                         />
-                                        {err(`edu_start_${idx}`)}
+                                        {err(`edu_start_${idx} `)}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">End Year / Expected</label>
@@ -1328,20 +1508,22 @@ export default function ResumeBuilder() {
                             ))}
                         </div>
 
-                        {/* Manual input */}
-                        <input
-                            value={skillInput}
-                            onChange={e => setSkillInput(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    addSkill(skillInput);
-                                    setSkillInput('');
-                                }
-                            }}
-                            placeholder="Type a skill and press Enter..."
-                            className="w-full p-3 bg-secondary border border-gray-200 rounded-xl focus:border-brand-primary text-primary outline-none"
-                        />
+                        {/* Manual input with Autocomplete */}
+                        <div onKeyDown={e => {
+                            if (e.key === 'Enter' && skillInput.trim()) {
+                                e.preventDefault();
+                                addSkill(skillInput.trim());
+                                setSkillInput('');
+                            }
+                        }}>
+                            <AutocompleteInput
+                                value={skillInput}
+                                onChange={setSkillInput}
+                                placeholder="Search or type a skill..."
+                                className="w-full p-3 bg-secondary border border-gray-200 rounded-xl focus:border-brand-primary text-primary outline-none"
+                                suggestions={ALL_SKILLS.filter(s => !formData.skills.includes(s))}
+                            />
+                        </div>
 
                         {/* Suggestions */}
                         {suggestions.length > 0 && (
@@ -1364,16 +1546,90 @@ export default function ResumeBuilder() {
             }
         },
         {
+            title: "Custom Sections",
+            subtitle: "Add specific sections for certifications, languages, awards...",
+            render: () => {
+                const CUSTOM_TYPES = ["Certifications", "Awards & Recognition", "Achievements", "Publications", "Languages", "Volunteer Experience", "Custom Section"];
+                return (
+                    <div className="space-y-8">
+                        {(!formData.custom_sections || formData.custom_sections.length === 0) && (
+                            <div className="text-center py-8">
+                                <p className="text-sm font-medium text-gray-500 mb-4">No custom sections added yet.</p>
+                            </div>
+                        )}
+
+                        {formData.custom_sections && formData.custom_sections.map((sec, idx) => (
+                            <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                                <div className="flex justify-between items-start mb-6">
+                                    <h3 className="text-xl font-black text-primary tracking-tight">
+                                        {sec.type}
+                                    </h3>
+                                    <button
+                                        onClick={() => removeCustomSection(idx)}
+                                        className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                        title="Remove Section"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Section Title</label>
+                                        <input
+                                            placeholder="e.g. Certifications"
+                                            value={sec.title}
+                                            onChange={e => updateCustomSection(idx, 'title', e.target.value)}
+                                            className="p-4 bg-secondary rounded-xl border border-gray-100 hover:border-gray-200 w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Content details</label>
+                                        <textarea
+                                            placeholder="e.g. AWS Certified Solutions Architect - 2023"
+                                            value={sec.content}
+                                            onChange={e => updateCustomSection(idx, 'content', e.target.value)}
+                                            className="p-4 h-32 resize-none bg-secondary rounded-xl border border-gray-100 hover:border-gray-200 w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 focus:bg-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="border border-dashed border-gray-200 rounded-3xl p-6 bg-slate-50/50">
+                            <h4 className="text-center text-sm font-bold text-gray-800 mb-6">Choose a Section Template</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {CUSTOM_TYPES.map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => addCustomSection(type)}
+                                        className="p-4 text-left border border-gray-200 rounded-2xl bg-white hover:border-brand hover:shadow-lg hover:-translate-y-1 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-gray-400 group-hover:text-brand transition-colors">
+                                                {type === "Custom Section" ? '+' : '📄'}
+                                            </span>
+                                            <h5 className="font-bold text-sm text-gray-800">{type}</h5>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 px-6 font-medium">Add {type.toLowerCase()}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+        },
+        {
             title: "Professional Summary",
             subtitle: "A brief overview of your career and value.",
             render: () => (
                 <div className="space-y-6">
-                    <div className="flex justify-between items-end">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                         <div className="space-y-1">
                             <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Summary</label>
                             <p className="text-xs text-slate-500 font-medium italic">A brief overview of your career and value.</p>
                         </div>
-                        <AIButton onClick={handleGenerateSummary} label="AI Auto-Write" />
+                        <AIButton onClick={handleGenerateSummary} label="AI Auto-Write" className="w-full sm:w-auto" />
                     </div>
                     <div>
                         <textarea
@@ -1391,15 +1647,285 @@ export default function ResumeBuilder() {
             )
         },
         {
+            title: "AI Resume Analysis",
+            subtitle: "We analyzed your inputs against ATS best practices.",
+            render: () => (
+                <div className="space-y-6 text-left">
+                    {!analysisResult && !optimizationComplete && (
+                        <div className="text-center py-20">
+                            <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="font-bold text-gray-600 text-lg">{analysisStatus}</p>
+                        </div>
+                    )}
+
+                    {optimizationComplete && (
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-8 overflow-hidden animate-fade-in">
+                            <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-8 text-center text-white relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                                <div className="relative z-10 space-y-4">
+                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-lg">
+                                        <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                    </div>
+                                    <h2 className="text-3xl font-black drop-shadow-sm">Optimization Ready to Review!</h2>
+                                    <p className="text-sm font-medium opacity-90 max-w-md mx-auto leading-relaxed">
+                                        The AI has prepared updates for your resume. Review the changes below before applying them.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="p-8 space-y-6 bg-slate-50/50">
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                        Summary of AI Changes
+                                    </h4>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="border border-red-100 bg-white rounded-xl overflow-hidden shadow-sm">
+                                            <div className="bg-red-50/50 px-4 py-3 border-b border-red-100 text-xs font-bold text-red-800 uppercase tracking-wider">Before (Original)</div>
+                                            <div className="p-4 space-y-4 text-sm max-h-64 overflow-y-auto">
+                                                <div className="flex items-center justify-between mb-4 bg-red-50 p-3 rounded-lg border border-red-100">
+                                                    <span className="text-xs font-bold text-red-800 uppercase">Original ATS Score</span>
+                                                    <span className="text-lg font-black text-red-600">{analysisResult?.score || 20}/100</span>
+                                                </div>
+                                                <div><strong className="text-gray-500 text-xs uppercase">Summary:</strong><p className="text-gray-600 mt-1">{originalDataSnapshot?.contact?.summary || 'N/A'}</p></div>
+                                                <div><strong className="text-gray-500 text-xs uppercase">Skills ({originalDataSnapshot?.skills?.length || 0}):</strong><p className="text-gray-600 mt-1">{originalDataSnapshot?.skills?.join(', ') || 'N/A'}</p></div>
+                                            </div>
+                                        </div>
+                                        <div className="border border-green-100 bg-white rounded-xl overflow-hidden shadow-sm shadow-green-100">
+                                            <div className="bg-green-50/80 px-4 py-3 border-b border-green-100 text-xs font-bold text-green-800 uppercase tracking-wider flex items-center justify-between">
+                                                <span>After (Optimized)</span>
+                                                <span className="bg-green-200 text-green-800 px-2 py-0.5 rounded text-[10px]">AI Enhanced</span>
+                                            </div>
+                                            <div className="p-4 space-y-4 text-sm max-h-64 overflow-y-auto">
+                                                <div className="flex items-center justify-between mb-4 bg-green-100/50 p-3 rounded-lg border border-green-200">
+                                                    <span className="text-xs font-bold text-green-800 uppercase">Projected ATS Score</span>
+                                                    <span className="text-lg font-black text-emerald-600">
+                                                        {Math.min(100, (analysisResult?.score || 20) + (selectedRecs.length * 15))}/100
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <strong className="text-green-700 text-xs uppercase mb-1 block">Summary:</strong>
+                                                    <textarea
+                                                        className="w-full text-gray-800 font-medium bg-green-50 focus:bg-white border-2 border-transparent focus:border-green-300 focus:ring-4 focus:ring-green-100 p-3 rounded-lg outline-none transition-all resize-none min-h-[100px]"
+                                                        value={pendingOptimizedData?.contact?.summary || ''}
+                                                        onChange={(e) => setPendingOptimizedData(prev => ({
+                                                            ...prev,
+                                                            contact: { ...prev.contact, summary: e.target.value }
+                                                        }))}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <strong className="text-green-700 text-xs uppercase mb-1 block">Skills ({pendingOptimizedData?.skills?.length || 0}):</strong>
+                                                    <textarea
+                                                        className="w-full text-gray-800 font-medium bg-green-50 focus:bg-white border-2 border-transparent focus:border-green-300 focus:ring-4 focus:ring-green-100 p-3 rounded-lg outline-none transition-all resize-none min-h-[80px]"
+                                                        value={pendingOptimizedData?.skills?.join(', ') || ''}
+                                                        onChange={(e) => setPendingOptimizedData(prev => ({
+                                                            ...prev,
+                                                            skills: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                                                        }))}
+                                                        placeholder="Skill 1, Skill 2, Skill 3"
+                                                    />
+                                                    <p className="text-[10px] text-green-600/70 mt-1 pl-1">Comma separated</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 italic mt-2 text-center">Note: Experience and Project bullet points may have also been expanded for stronger impact.</p>
+                                </div>
+
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm mt-6">
+                                    <h4 className="text-sm font-black text-amber-800 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        ⚠️ What You Should Add Extra
+                                    </h4>
+                                    <p className="text-sm text-amber-900/80 font-medium leading-relaxed mb-4">
+                                        The AI has automatically injected high-impact keywords and rewritten your summary/bullet points. However, to ensure maximum authenticity, please click <b>"Back"</b> later to review and add any extra personal details the AI might not know about:
+                                    </p>
+                                    <ul className="space-y-2 mb-2">
+                                        <li className="flex items-start gap-2 text-sm text-amber-900 font-medium">
+                                            <span className="mt-0.5 text-amber-600">•</span>
+                                            <span><strong>Experience:</strong> Ensure the newly generated impact metrics align with your actual achievements. Fill in exact numbers if the AI left placeholders.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-200">
+                                    <Button onClick={() => {
+                                        setOptimizationComplete(false);
+                                        setPendingOptimizedData(null);
+                                    }} variant="ghost" className="w-full sm:w-auto text-sm font-bold text-gray-500 hover:text-gray-800">
+                                        Discard Changes
+                                    </Button>
+                                    <Button onClick={() => {
+                                        // Apply the data on confirmation via state for the rest of UI
+                                        const newlyOptimizedData = { ...formData, ...pendingOptimizedData };
+                                        setFormData(newlyOptimizedData);
+                                        setCurrentStep(11);
+                                        // Pass directly to save to avoid React batching async issues
+                                        handleSaveAndPreview(newlyOptimizedData);
+                                    }} className="w-full sm:w-auto bg-brand hover:bg-brand-hover text-white font-black uppercase tracking-widest text-xs px-8 py-5 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95">
+                                        Apply & Continue to PDF →
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {analysisResult && !optimizationComplete && (
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-8 flex flex-col overflow-hidden animate-fade-in">
+                            <ScoreBanner score={analysisResult.score || 20} label={analysisResult.score_label || 'Needs Work'} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50/30">
+                                <div className="border border-green-100 bg-green-50/50 rounded-xl p-5 shadow-sm">
+                                    <h4 className="text-sm font-black text-green-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Strengths
+                                    </h4>
+                                    <ul className="space-y-3">
+                                        {analysisResult.strengths && analysisResult.strengths.length > 0 ? (
+                                            analysisResult.strengths.map((str, i) => (
+                                                <li key={i} className="text-sm text-green-800 font-medium leading-relaxed">{str}</li>
+                                            ))
+                                        ) : (
+                                            <li className="text-sm text-green-800/70 font-medium italic">No significant strengths identified yet. Keep building!</li>
+                                        )}
+                                    </ul>
+                                </div>
+                                <div className="border border-amber-100 bg-amber-50/50 rounded-xl p-5 shadow-sm">
+                                    <h4 className="text-sm font-black text-amber-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        Areas for Improvement
+                                    </h4>
+                                    <ul className="space-y-3">
+                                        {analysisResult.weaknesses && analysisResult.weaknesses.map((weak, i) => (
+                                            <li key={i} className="text-sm text-amber-800 font-medium leading-relaxed">{weak}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="p-6 pt-0 bg-gray-50/30">
+                                <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border-b border-gray-100 bg-slate-50 gap-4">
+                                        <div>
+                                            <h4 className="text-base font-black text-gray-800">AI Recommendations</h4>
+                                            <p className="text-xs text-slate-500 font-medium mt-0.5">Select the issues you want our AI to automatically fix.</p>
+                                        </div>
+                                        <label className="flex items-center gap-2 text-xs font-bold text-gray-500 cursor-pointer bg-white px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                            <input type="checkbox" className="w-4 h-4 rounded text-brand border-gray-300 focus:ring-brand"
+                                                checked={selectedRecs.length === (analysisResult.recommendations?.length || 0) && selectedRecs.length > 0}
+                                                onChange={handleToggleAll}
+                                            />
+                                            Select All
+                                        </label>
+                                    </div>
+                                    <div className="p-3 divide-y divide-gray-100">
+                                        {analysisResult.recommendations && analysisResult.recommendations.map((rec, i) => (
+                                            <div className="bg-white p-4 flex gap-4 hover:bg-slate-50/50 transition-colors" key={i}>
+                                                <input type="checkbox" className="w-5 h-5 mt-1 rounded text-brand border-gray-300 focus:ring-brand cursor-pointer"
+                                                    checked={selectedRecs.some(r => r.issue === rec.issue)}
+                                                    onChange={() => handleToggleRec(rec)}
+                                                />
+                                                <div className="w-full">
+                                                    <p className="text-sm text-gray-600 mb-2 leading-relaxed"><strong className="text-gray-800 uppercase text-[10px] tracking-widest mr-2">Issue detected:</strong> {rec.issue}</p>
+                                                    <div className="bg-green-50/80 border border-green-100 p-3 rounded-lg">
+                                                        <p className="text-sm text-green-900 font-medium leading-relaxed"><strong className="text-green-700 uppercase text-[10px] tracking-widest mr-2">AI Solution:</strong> {rec.solution}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(!analysisResult.recommendations || analysisResult.recommendations.length === 0) && (
+                                            <p className="text-sm text-gray-500 font-medium text-center py-8">No critical AI recommendations identified. You're good to go!</p>
+                                        )}
+                                    </div>
+                                    <div className="p-5 border-t border-gray-100 bg-slate-50 flex flex-col sm:flex-row justify-end items-center gap-4">
+                                        <span className="text-xs font-bold text-slate-500 order-2 sm:order-1">{selectedRecs.length} selected</span>
+                                        <Button onClick={handleOptimizeWithAI} disabled={isOptimizing || selectedRecs.length === 0}
+                                            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-xs px-8 py-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 order-1 sm:order-2">
+                                            {isOptimizing ? 'Optimizing...' : `Auto - Fix with AI`}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
             title: "Review & Generate",
+
             subtitle: "Generate and refine your resume.",
             render: () => (
                 <div className="space-y-6">
 
 
-                    <Button size="lg" onClick={handleSaveAndPreview} disabled={loading}
-                        className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-white shadow-xl disabled:opacity-50">
-                        {loading ? 'Generating...' : '✨ Generate Preview'}
+                    <div className="space-y-4 mb-6">
+                        <label className="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                            <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                            Choose Template
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[600px] overflow-y-auto p-2 pb-6">
+                            {(templates.length > 0 ? templates : [{ id: 'clean_modern', name: 'Classic Professional' }, { id: 'sb2nov', name: 'Modern Boxed' }, { id: 'jake', name: 'Bold Accent' }]).map(tmpl => {
+                                const isActive = selectedTemplate === tmpl.id;
+                                return (
+                                    <div
+                                        key={tmpl.id}
+                                        onClick={() => {
+                                            setSelectedTemplate(tmpl.id);
+                                            if (resumeId) {
+                                                setTimeout(() => handleSaveAndPreview(), 100);
+                                            }
+                                        }}
+                                        className={`bg-surface border rounded-[2rem] p-5 shadow-xl shadow-black/5 transition-all cursor-pointer hover:shadow-2xl hover:-translate-y-0.5 relative overflow-hidden ${isActive ? 'border-brand-primary/40 ring-2 ring-brand/20 bg-brand/5' : 'border-gray-200 hover:border-gray-300'}`}
+                                    >
+                                        {isActive && <div className="absolute top-0 left-0 w-full h-1 bg-brand" />}
+
+                                        {/* Clickable preview area */}
+                                        <div className="w-full h-40 rounded-xl mb-4 bg-white border border-gray-100 flex flex-col items-center justify-center overflow-hidden relative group transition-all">
+                                            {/* Template color accent bar */}
+                                            <div
+                                                className="absolute top-0 left-0 w-full h-1.5 rounded-t-xl"
+                                                style={{ backgroundColor: tmpl.preview_color || '#4A5568' }}
+                                            />
+                                            {/* Stylized document wireframe */}
+                                            <div className="w-24 bg-white rounded-lg shadow-sm p-3 border border-gray-100 space-y-1.5 transition-transform group-hover:scale-105">
+                                                <div className="h-2 rounded-sm w-16" style={{ backgroundColor: tmpl.preview_color || '#4A5568', opacity: 0.85 }} />
+                                                <div className="h-1 bg-gray-200 rounded-sm w-20" />
+                                                <div className="h-px w-full mt-1" style={{ backgroundColor: tmpl.preview_color || '#4A5568', opacity: 0.4 }} />
+                                                <div className="h-1 rounded-sm w-10" style={{ backgroundColor: tmpl.preview_color || '#4A5568', opacity: 0.6 }} />
+                                                <div className="space-y-1">
+                                                    <div className="h-1 bg-gray-100 rounded-sm w-full" />
+                                                    <div className="h-1 bg-gray-100 rounded-sm w-5/6" />
+                                                    <div className="h-1 bg-gray-100 rounded-sm w-4/6" />
+                                                </div>
+                                            </div>
+
+                                            {isActive && (
+                                                <div className="absolute top-3 right-3 w-7 h-7 bg-brand text-white rounded-full flex items-center justify-center shadow-lg z-10">
+                                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Info */}
+                                        <h3 className={`text-base font-bold mb-1 ${isActive ? 'text-brand' : 'text-primary'}`}>{tmpl.name}</h3>
+                                        <p className="text-gray-500 text-xs leading-relaxed mb-3 line-clamp-2">{tmpl.description}</p>
+
+                                        {/* Tags */}
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {(tmpl.tags || []).slice(0, 3).map((tag) => (
+                                                <span key={tag} className={`px-2 py-0.5 text-[9px] font-semibold rounded-full ${getTagClass(tag)}`}>
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <Button size="lg" onClick={() => handleSaveAndPreview()} disabled={loading}
+                        className="w-full h-14 rounded-xl font-black uppercase tracking-widest text-white shadow-xl disabled:opacity-50 mt-4">
+                        {loading ? 'Generating...' : resumeId ? '✨ Regenerate PDF' : '✨ Generate PDF'}
                     </Button>
 
                     {resumeId && (
@@ -1417,11 +1943,14 @@ export default function ResumeBuilder() {
                                             <div className="flex justify-between items-center px-1">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Resume Editor</label>
                                             </div>
-                                            <textarea
-                                                value={latexCode}
-                                                onChange={(e) => setLatexCode(e.target.value)}
-                                                className="w-full h-[500px] md:h-[800px] p-4 md:p-6 bg-secondary border border-gray-100 rounded-xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs leading-relaxed resize-none shadow-inner"
-                                            />
+                                            <div className="relative aspect-[8.5/11] w-full bg-white border border-gray-200 xl:max-h-[850px] mx-auto rounded-xl shadow-sm overflow-hidden flex flex-col">
+                                                <textarea
+                                                    value={latexCode}
+                                                    onChange={(e) => setLatexCode(e.target.value)}
+                                                    className="w-full h-full p-4 md:p-8 bg-transparent text-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all font-mono text-[11px] leading-snug resize-none"
+                                                    spellCheck="false"
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* PDF Preview */}
@@ -1432,10 +1961,10 @@ export default function ResumeBuilder() {
                                                     onClick={handleRecompile}
                                                     disabled={isCompiling}
                                                     size="sm"
-                                                    className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompiling
+                                                    className={`px - 5 py - 2 rounded - full text - [9px] font - black uppercase tracking - widest transition - all flex items - center gap - 2 ${isCompiling
                                                         ? 'bg-secondary text-gray-500 cursor-not-allowed'
                                                         : 'bg-brand hover:bg-brand-hover text-white shadow-lg shadow-black/10'
-                                                        }`}
+                                                        } `}
                                                 >
                                                     {isCompiling ? (
                                                         <>
@@ -1453,7 +1982,7 @@ export default function ResumeBuilder() {
                                                 </Button>
                                             </div>
 
-                                            <div className="relative h-[500px] md:h-[800px] bg-white border border-gray-200 rounded-xl shadow-sm">
+                                            <div className="relative aspect-[8.5/11] w-full bg-white border border-gray-200 xl:max-h-[850px] mx-auto rounded-xl shadow-sm overflow-hidden">
                                                 {previewHtml ? (
                                                     <PdfViewer
                                                         url={previewHtml}
@@ -1485,13 +2014,13 @@ export default function ResumeBuilder() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex justify-end mt-10">
+                                    <div className="mt-8">
                                         <button
                                             onClick={handleDownload}
                                             disabled={!previewHtml || isCompiling}
-                                            className={`px-8 py-4 rounded-2xl font-semibold text-sm tracking-wide transition-all flex items-center gap-3 ${previewHtml && !isCompiling
-                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-xl shadow-brand/10 active:scale-95'
-                                                : 'bg-secondary text-gray-500 cursor-not-allowed shadow-none border border-gray-100'
+                                            className={`w-full h-14 rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${previewHtml && !isCompiling
+                                                ? 'bg-brand text-white hover:bg-brand-hover shadow-xl shadow-brand/20 active:scale-[0.98]'
+                                                : 'bg-secondary text-gray-400 cursor-not-allowed shadow-none border border-gray-200'
                                                 }`}
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1510,14 +2039,6 @@ export default function ResumeBuilder() {
                                     )}
                                 </div>
                             )}
-                            <Button variant="outline" size="lg" onClick={handleDownload}
-                                className="w-full h-14 border-2 rounded-xl font-bold uppercase tracking-widest text-gray-500 hover:text-primary transition-all text-xs flex items-center justify-center gap-2">
-                                📥 Native PDF Download
-                            </Button>
-                            <p className="text-xs text-slate-500 text-center px-4 leading-relaxed font-medium">
-                                💡 <b className="text-slate-700">Recommended:</b> Use the "Print" button. <br />
-                                <b className="text-slate-700">Important:</b> In the print window, uncheck <b>"Headers and footers"</b> to get a clean PDF.
-                            </p>
                         </div>
                     )}
                 </div>
@@ -1563,7 +2084,7 @@ export default function ResumeBuilder() {
             <div className="w-full h-1.5 bg-secondary">
                 <div
                     className="h-full bg-gradient-to-r from-brand-primary to-brand-hover transition-all duration-500 ease-out"
-                    style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                    style={{ width: `${((currentStep + 1) / steps.length) * 100}% ` }}
                 />
             </div>
 
@@ -1588,19 +2109,19 @@ export default function ResumeBuilder() {
                         {steps[currentStep].render()}
                     </Card>
 
-                    <div className="flex justify-between items-center px-4">
+                    <div className="flex flex-col-reverse sm:flex-row justify-between items-center px-4 gap-8 sm:gap-4 mt-8 sm:mt-4">
                         <Button
                             variant="ghost"
                             onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
                             disabled={currentStep === 0}
-                            className={`font-bold text-gray-500 uppercase tracking-widest text-xs hover:text-gray-900 transition-colors ${currentStep === 0 ? 'opacity-0 cursor-default' : ''}`}>
+                            className={`w-full sm:w-auto font - bold text - gray - 500 uppercase tracking - widest text - xs hover: text - gray - 900 transition - colors ${currentStep === 0 ? 'opacity-0 cursor-default' : ''} `}>
                             ← Back
                         </Button>
 
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-2">
                             {steps.map((_, idx) => (
                                 <button key={idx} onClick={() => setCurrentStep(idx)}
-                                    className={`rounded-full transition-all ${idx === currentStep ? 'w-6 h-2 bg-brand' : 'w-2 h-2 bg-border-muted hover:bg-border-subtle'}`}
+                                    className={`rounded - full transition - all ${idx === currentStep ? 'w-8 h-2.5 bg-brand' : 'w-2.5 h-2.5 bg-border-muted hover:bg-border-subtle'} `}
                                 />
                             ))}
                         </div>
@@ -1608,11 +2129,11 @@ export default function ResumeBuilder() {
                         {!isLastStep ? (
                             <Button
                                 onClick={handleNext}
-                                className="rounded-full px-8 py-6 font-bold uppercase tracking-widest text-xs text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+                                className="w-full sm:w-auto rounded-full px-12 py-7 font-bold uppercase tracking-widest text-sm text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
                                 Next →
                             </Button>
                         ) : (
-                            <div className="w-24" />
+                            <div className="hidden sm:block w-24" />
                         )}
                     </div>
                 </div>

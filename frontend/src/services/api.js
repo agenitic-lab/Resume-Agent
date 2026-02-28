@@ -436,9 +436,15 @@ export async function compileLatex(latexCode) {
     return response.blob();
 }
 
-// Resume Builder Endpoints
 export async function createResume(data) {
     return apiRequest('/api/resume/create', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function analyzeResumeForATS(data) {
+    return apiRequest('/api/resume/analyze', {
         method: 'POST',
         body: JSON.stringify(data),
     });

@@ -68,6 +68,19 @@
 \vspace{-12pt}
 <%% endif %%>
 
+<%% if custom_sections|length > 0 %%>
+<%% for sec in custom_sections %%>
+\section{\textls[100]{<< sec.type | upper >>}}
+\begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+        <%% if sec.title %%>\textbf{\normalsize{<< sec.title >>}} \\ \vspace{2pt} <%% endif %%>
+        <%% if sec.content %%>\normalsize{<< sec.content >>}<%% endif %%>
+    }}
+\end{itemize}
+\vspace{-12pt}
+<%% endfor %%>
+<%% endif %%>
+
 <%% if skills|length > 0 %%>
 \section{TECHNICAL SKILLS}
  \begin{itemize}[leftmargin=0.15in, label={}]

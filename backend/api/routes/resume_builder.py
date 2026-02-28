@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, Response, HTTPException
 from sqlalchemy.orm import Session
 from database.connection import get_db
 from database.models.resume import Resume
-from schemas.resume_builder import ResumeCreate
+from schemas.resume_builder import ResumeCreate, ATSAnalysisResponse
 from uuid import UUID
 from database.models.user import User
 from auth.dependencies import get_current_user
 from services.latex_renderer import render_latex_to_pdf, render_latex_source
 from services.latex_templates import TEMPLATES as BUILTIN_LATEX_TEMPLATES
-from services.ai_resume_generator import generate_ats_bullets, generate_ats_summary, generate_ats_project_bullets
+from services.ai_resume_generator import generate_ats_bullets, generate_ats_summary, generate_ats_project_bullets, analyze_resume_for_ats, apply_ai_optimizations
 from core.security import decrypt_api_key
 from pydantic import BaseModel
 from typing import List
@@ -22,11 +22,14 @@ def create_resume(
     current_user: User = Depends(get_current_user)
 ):
     
+    contact_data = payload.contact.copy()
+    contact_data["custom_sections"] = payload.custom_sections
+
     resume = Resume(
         user_id=current_user.id,
         field=payload.field,
         experience_level=payload.experience_level,
-        contact=payload.contact,
+        contact=contact_data,
         experience=payload.experience,
         education=payload.education,
         projects=payload.projects or [],
@@ -41,6 +44,47 @@ def create_resume(
         "resume_id": str(resume.id),
         "message": "Resume draft saved successfully"
     }
+
+@router.post("/analyze", response_model=ATSAnalysisResponse)
+def analyze_resume(
+    payload: ResumeCreate,
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.encrypted_api_key:
+        raise HTTPException(status_code=400, detail="Set your API key in Settings before analyzing resume.")
+    
+    try:
+        api_key = decrypt_api_key(current_user.encrypted_api_key)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt API key. Please reset it in Settings.")
+
+    # Convert payload to dict for analysis
+    resume_data = payload.dict()
+    analysis_result = analyze_resume_for_ats(resume_data, api_key)
+    
+    return analysis_result
+
+from schemas.resume_builder import OptimizationRequest
+
+@router.post("/optimize")
+def optimize_resume(
+    payload: OptimizationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.encrypted_api_key:
+        raise HTTPException(status_code=400, detail="Set your API key in Settings before optimizing resume.")
+    
+    try:
+        api_key = decrypt_api_key(current_user.encrypted_api_key)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt API key. Please reset it in Settings.")
+
+    resume_data = payload.resume_data.dict()
+    recommendations = [r.dict() for r in payload.selected_recommendations]
+    
+    optimized_data = apply_ai_optimizations(resume_data, recommendations, api_key)
+    
+    return optimized_data
 
 @router.get("/preview/{resume_id}/{template_name}")
 def preview_resume(
@@ -100,7 +144,8 @@ def get_resume_source(
             "experience": resume.experience,
             "education": resume.education,
             "projects": resume.projects or [],
-            "skills": resume.skills
+            "skills": resume.skills,
+            "custom_sections": resume.contact.get("custom_sections", [])
         }
         
         if template_name in BUILTIN_LATEX_TEMPLATES:
@@ -136,7 +181,8 @@ def download_resume(
             "experience": resume.experience,
             "education": resume.education,
             "projects": resume.projects or [],
-            "skills": resume.skills
+            "skills": resume.skills,
+            "custom_sections": resume.contact.get("custom_sections", [])
         }
         
         if template_name in BUILTIN_LATEX_TEMPLATES:
