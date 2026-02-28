@@ -69,13 +69,7 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md bg-white border border-gray-100 rounded-3xl p-8 sm:p-10 shadow-sm"
         >
-          <div className="mb-8 text-center">
-            {/* Logo */}
-            <Link to="/" className="inline-flex items-center justify-center w-12 h-12 bg-brand rounded-xl mb-6 text-white shadow-sm" style={{ backgroundColor: 'var(--color-brand-primary)' }}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </Link>
+          <div className="mb-8 text-center pt-4">
             <h2 className="text-2xl font-bold text-primary mb-2">Welcome back</h2>
             <p className="text-secondary text-sm">Sign in to your account</p>
           </div>
