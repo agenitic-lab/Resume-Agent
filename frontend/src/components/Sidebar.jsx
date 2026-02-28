@@ -111,10 +111,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
             <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
                 {/* Logo */}
                 <div className="p-6 flex items-center gap-3 border-b border-gray-100">
-                    <img src="/resiko-logo.png" alt="Resiko" className="w-10 h-10 object-contain" />
-                    <span className="text-lg font-semibold text-primary tracking-tight">
-                        Resiko
-                    </span>
+                    <img src="/resiko-logo.png" alt="Resiko" className="h-10 object-contain" />
                     <button
                         onClick={() => setMobileOpen(false)}
                         className="md:hidden ml-auto p-2 text-gray-500 hover:text-primary transition-colors"
