@@ -1,16 +1,28 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Button } from "./ui/button";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navLinks = [
-    { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Features", hash: "#features" },
+    { label: "How It Works", hash: "#how-it-works" },
+    { label: "FAQ", hash: "#faq" },
   ];
+
+  const handleNavClick = (hash) => {
+    setMobileOpen(false);
+    if (location.pathname === "/") {
+      const el = document.querySelector(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/" + hash);
+    }
+  };
 
   return (
     <>
@@ -25,13 +37,13 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
-              <a
+              <button
                 key={link.label}
-                href={link.href}
-                className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200"
+                onClick={() => handleNavClick(link.hash)}
+                className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200 bg-transparent border-none cursor-pointer"
               >
                 {link.label}
-              </a>
+              </button>
             ))}
 
           </nav>
@@ -71,14 +83,13 @@ export default function Navbar() {
             >
               <div className="p-6 flex flex-col gap-4">
                 {navLinks.map((link) => (
-                  <a
+                  <button
                     key={link.label}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="text-base font-medium text-secondary hover:text-primary py-2"
+                    onClick={() => handleNavClick(link.hash)}
+                    className="text-base font-medium text-secondary hover:text-primary py-2 bg-transparent border-none cursor-pointer text-left"
                   >
                     {link.label}
-                  </a>
+                  </button>
                 ))}
                 <div className="h-px bg-gray-100 my-2" />
                 <Link
@@ -102,3 +113,4 @@ export default function Navbar() {
     </>
   );
 }
+
