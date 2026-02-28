@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, Boolean, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 
@@ -27,4 +27,8 @@ class User(Base):
     custom_template_latex = Column(Text, nullable=True)  # legacy single custom template
     custom_templates = Column(JSONB, nullable=True, default=None)  # list of up to 3 custom templates [{name, latex}]
     
+    # Admin / moderation
+    role = Column(String, nullable=True, default='user')  # 'user' or 'admin'
+    is_blocked = Column(Boolean, nullable=True, default=False)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
