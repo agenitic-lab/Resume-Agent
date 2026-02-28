@@ -1,13 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference, analyzeResumeForATS, getTemplates } from '../services/api';
+import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference, analyzeResumeForATS, getTemplates, compileLatex as apiCompileLatex } from '../services/api';
 import toast from 'react-hot-toast';
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // ─── Job Title Suggestions ─────────────────────────────────────────────────
 const JOB_TITLE_SUGGESTIONS = [
@@ -689,7 +687,7 @@ export default function ResumeBuilder() {
                 if (!formData.field.trim()) newErrors.field = 'Target job title is required';
                 if (!formData.experience_level) newErrors.experience_level = 'Please select an experience level';
                 break;
-            case 4: // Links
+            case 3: // Links
                 if (formData.contact.linkedin && !urlRegex.test(formData.contact.linkedin)) newErrors.linkedin = 'Invalid LinkedIn URL';
                 if (formData.contact.portfolio && !urlRegex.test(formData.contact.portfolio)) newErrors.portfolio = 'Invalid Portfolio URL';
                 if (formData.contact.github && !urlRegex.test(formData.contact.github)) newErrors.github = 'Invalid GitHub URL';
@@ -697,28 +695,28 @@ export default function ResumeBuilder() {
                 if (formData.contact.behance && !urlRegex.test(formData.contact.behance)) newErrors.behance = 'Invalid Behance URL';
                 if (formData.contact.medium && !urlRegex.test(formData.contact.medium)) newErrors.medium = 'Invalid Medium URL';
                 break;
-            case 5: // Experience
+            case 4: // Experience
                 formData.experience.forEach((exp, i) => {
                     if (!exp.title.trim()) newErrors[`exp_title_${i} `] = 'Job title is required';
                     if (!exp.company.trim()) newErrors[`exp_company_${i} `] = 'Company is required';
                     if (!exp.start_date) newErrors[`exp_start_${i} `] = 'Start date is required';
                 });
                 break;
-            case 6: // Projects
+            case 5: // Projects
                 formData.projects.forEach((proj, i) => {
                     if (!proj.title.trim()) newErrors[`proj_title_${i} `] = 'Project name is required';
                 });
                 break;
-            case 7: // Education
+            case 6: // Education
                 formData.education.forEach((edu, i) => {
                     if (!edu.degree.trim()) newErrors[`edu_degree_${i} `] = 'Degree is required';
                     if (!edu.school.trim()) newErrors[`edu_school_${i} `] = 'School is required';
                 });
                 break;
-            case 8: // Skills
+            case 7: // Skills
                 if (formData.skills.length === 0) newErrors.skills = 'Please add at least one skill';
                 break;
-            case 9: // Summary
+            case 8: // Summary
                 if (formData.contact.summary.trim().length < 50) newErrors.summary = 'Summary should be at least 50 characters for a professional look.';
                 break;
             default:
@@ -866,22 +864,7 @@ export default function ResumeBuilder() {
     const compileLatex = useCallback(async (code) => {
         setIsCompiling(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ latex_code: code }),
-            });
-
-            if (!response.ok) {
-                let detail = 'LaTeX compilation failed';
-                try {
-                    const errData = await response.json();
-                    detail = errData.detail || errData.message || detail;
-                } catch { /* non-JSON response */ }
-                throw new Error(detail);
-            }
-
-            const blob = await response.blob();
+            const blob = await apiCompileLatex(code);
 
             if (previewHtml) {
                 window.URL.revokeObjectURL(previewHtml);
@@ -923,7 +906,7 @@ export default function ResumeBuilder() {
             console.error(error);
             const msg = error.message.toLowerCase();
             if (msg.includes("gtk3") || msg.includes("unavailable") || error.status === 503) {
-                toast.error("Download failed. PLEASE USE THE 'PRINT / SAVE AS PDF (BROWSER)' BUTTON BELOW INSTEAD.", { id: toastId, duration: 8000 });
+                toast.error("Download failed. Please use the 'Print / Save as PDF' button below instead.", { id: toastId, duration: 8000 });
             } else {
                 toast.error(error.message || "Download failed.", { id: toastId });
             }
@@ -1177,9 +1160,9 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.experience.map((exp, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-brand bg-brand/5 px-3 py-1 rounded-full mb-3 inline-block">
                                         Work Experience #{idx + 1}
@@ -1297,9 +1280,9 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.projects.map((proj, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-purple-600 bg-purple-50 px-3 py-1 rounded-full mb-3 inline-block">
                                         Project / Initiative #{idx + 1}
@@ -1415,9 +1398,9 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-8">
                     {formData.education.map((edu, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
                                     <span className="text-xs font-black uppercase tracking-[0.2em] text-brand bg-brand/5 px-3 py-1 rounded-full mb-3 inline-block">
                                         Education #{idx + 1}
@@ -2060,19 +2043,19 @@ export default function ResumeBuilder() {
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-base font-black text-text-primary mb-1 italic tracking-tighter uppercase">Groq API Key Required for AI Features</h3>
-                            <p className="text-text-secondary text-sm font-medium mb-3 leading-relaxed">
-                                The AI summary, bullet point, and project description generators need your Groq API key.
-                                Get a free key from{' '}
+                            <h3 className="text-base font-bold text-primary mb-1">API Key Required for AI Features</h3>
+                            <p className="text-secondary text-sm font-medium mb-3 leading-relaxed">
+                                To use AI-powered summaries, bullet points, and project descriptions, you'll need a free API key.
+                                Get one from{' '}
                                 <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
-                                    className="text-brand-primary hover:underline font-black">
+                                    className="text-brand hover:underline font-bold">
                                     console.groq.com/keys
                                 </a>
                             </p>
                             <Button
                                 onClick={() => navigate('/settings')}
                                 variant="outline"
-                                className="rounded-xl font-black text-[10px] uppercase tracking-widest">
+                                className="rounded-xl font-bold text-xs">
                                 Go to Settings
                             </Button>
                         </div>
@@ -2105,7 +2088,7 @@ export default function ResumeBuilder() {
                         </p>
                     </div>
 
-                    <Card className="rounded-3xl p-8 shadow-xl shadow-black/5 mb-8">
+                    <Card className="rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl shadow-black/5 mb-8">
                         {steps[currentStep].render()}
                     </Card>
 

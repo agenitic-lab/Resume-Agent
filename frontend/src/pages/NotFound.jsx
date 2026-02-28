@@ -1,223 +1,139 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion as Motion } from 'framer-motion';
-
-// Replicating High-Performance Particle class for Plexus 
-class Particle {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.vx = (Math.random() - 0.5) * 0.4;
-    this.vy = (Math.random() - 0.5) * 0.4;
-    this.radius = Math.random() * 1.5;
-  }
-
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-
-    if (this.x < 0) this.x = this.canvas.width;
-    if (this.x > this.canvas.width) this.x = 0;
-    if (this.y < 0) this.y = this.canvas.height;
-    if (this.y > this.canvas.height) this.y = 0;
-  }
-
-  draw(ctx) {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(141, 163, 74, 0.4)'; // brand-primary accent
-    ctx.fill();
-  }
-}
-
-// Generate static points once outside the component to ensure purity
-const INITIAL_POINTS = [...Array(6)].map(() => ({
-  top: `${20 + Math.random() * 60}%`,
-  left: `${20 + Math.random() * 60}%`,
-  duration: 2 + Math.random() * 2,
-  delay: Math.random() * 5
-}));
+import { Helmet } from 'react-helmet-async';
 
 export default function NotFound() {
   const canvasRef = useRef(null);
 
-  // Plexus Animation Effect
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resizeCanvas();
-
-    const particles = [];
-    const particleCount = Math.min(Math.floor(window.innerWidth / 12), 100);
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle(canvas));
-    }
-
-    let animationFrameId;
-    const animate = () => {
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    const pts = Array.from({ length: 70 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.5 + 0.4,
+    }));
+    let raf;
+    const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((particle, i) => {
-        particle.update();
-        particle.draw(ctx);
-        for (let j = i + 1; j < particles.length; j++) {
-          const other = particles[j];
-          const dx = particle.x - other.x;
-          const dy = particle.y - other.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 150) {
-            const opacity = 0.12 * (1 - distance / 150);
+      pts.forEach((p, i) => {
+        p.x = (p.x + p.vx + canvas.width) % canvas.width;
+        p.y = (p.y + p.vy + canvas.height) % canvas.height;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,75,114,0.25)'; ctx.fill();
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = p.x - pts[j].x, dy = p.y - pts[j].y, d = Math.hypot(dx, dy);
+          if (d < 120) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(141, 163, 74, ${opacity})`; // brand-primary accent
-            ctx.lineWidth = 0.5;
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(other.x, other.y);
-            ctx.stroke();
+            ctx.strokeStyle = `rgba(255,75,114,${0.08 * (1 - d / 120)})`;
+            ctx.lineWidth = 0.6; ctx.moveTo(p.x, p.y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke();
           }
         }
       });
-      animationFrameId = requestAnimationFrame(animate);
+      raf = requestAnimationFrame(draw);
     };
-
-    animate();
-    window.addEventListener('resize', resizeCanvas);
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resizeCanvas);
-    };
+    draw();
+    window.addEventListener('resize', resize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-primary text-primary overflow-hidden font-sans selection:bg-brand/30 flex flex-col items-center justify-center p-6 pt-32">
+    <>
+    <Helmet>
+      <title>Page Not Found — Resiko</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
+    <div className="relative h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-white font-sans select-none">
+
       <style>{`
-        @keyframes scan {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes glitch {
-          0% { transform: translate(0); }
-          20% { transform: translate(-2px, 2px); }
-          40% { transform: translate(-2px, -2px); }
-          60% { transform: translate(2px, 2px); }
-          80% { transform: translate(2px, -2px); }
-          100% { transform: translate(0); }
-        }
-        .animate-scan {
-          animation: scan 4s linear infinite;
-        }
-        .animate-glitch {
-          animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) infinite;
-        }
+        @keyframes float-y { 0%,100% { transform: translateY(0px) rotate(-2deg); } 50% { transform: translateY(-14px) rotate(2deg); } }
+        @keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.8); opacity: 0; } }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .float-y { animation: float-y 4s ease-in-out infinite; }
+        .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+        .slide-up { animation: slide-up 0.6s ease both; }
+        .slide-up-2 { animation: slide-up 0.6s 0.1s ease both; }
+        .slide-up-3 { animation: slide-up 0.6s 0.2s ease both; }
       `}</style>
 
-      {/* Background Layer */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-100"
-          style={{
-            backgroundImage: 'linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)',
-            backgroundSize: '60px 60px'
-          }}
-        />
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60 mix-blend-screen" />
+      {/* Particle canvas */}
+      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+
+      {/* Background glow */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255,75,114,0.07) 0%, transparent 70%)' }} />
+
+      {/* Top-left branding */}
+      <div className="absolute top-6 left-4 sm:left-8 text-sm font-black tracking-wider sm:tracking-widest uppercase text-brand opacity-50">
+        Resiko
       </div>
 
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
-        {/* Radar Scanner Visual */}
-        <div className="relative w-64 h-64 md:w-96 md:h-96 mb-12">
-          {/* Main Circle */}
-          <div className="absolute inset-0 rounded-full border border-gray-200 bg-surface/50 backdrop-blur-xl" />
-          <div className="absolute inset-8 rounded-full border border-gray-100/50" />
-          <div className="absolute inset-20 rounded-full border border-gray-100/30" />
+      {/* Main content */}
+      <div className="relative z-10 flex flex-col items-center text-center px-6">
 
-          {/* Scanning Line */}
-          <div className="absolute inset-0 rounded-full flex items-center justify-center animate-scan pointer-events-none">
-            <div className="w-[50%] h-[2px] bg-gradient-to-r from-brand-primary/40 to-transparent absolute right-0 origin-left" />
+        {/* Giant floating 404 icon */}
+        <div className="float-y relative mb-6">
+          {/* Pulse rings */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="pulse-ring w-28 h-28 rounded-full border-2" style={{ borderColor: 'rgba(255,75,114,0.3)' }} />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ animationDelay: '0.8s' }}>
+            <div className="pulse-ring w-28 h-28 rounded-full border-2" style={{ borderColor: 'rgba(255,75,114,0.2)', animationDelay: '0.8s' }} />
           </div>
 
-          {/* Central Visual */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <Motion.h1
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-8xl md:text-9xl font-black italic tracking-tighter text-primary/90 drop-shadow-[0_0_20px_rgba(255,75,114,0.15)] animate-glitch"
-            >
-              404
-            </Motion.h1>
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-brand/60 mt-2">
-              Page Not Found
-            </div>
+          {/* Icon circle */}
+          <div className="w-28 h-28 rounded-full flex items-center justify-center shadow-2xl relative z-10"
+            style={{ background: 'linear-gradient(135deg, #ff4b72 0%, #ff7695 100%)', boxShadow: '0 16px 48px rgba(255,75,114,0.40)' }}>
+            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-
-          {/* Data Points */}
-          {INITIAL_POINTS.map((p, i) => (
-            <Motion.div
-              key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 1, 0] }}
-              transition={{ repeat: Infinity, duration: p.duration, delay: p.delay }}
-              className="absolute w-1 h-1 bg-neutral-900 rounded-full"
-              style={{
-                top: p.top,
-                left: p.left,
-                boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)'
-              }}
-            />
-          ))}
         </div>
 
-        {/* Messaging */}
-        <div className="text-center space-y-6 max-w-lg">
-          <Motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h2 className="text-3xl font-black text-neutral-900 italic tracking-tighter mb-4 uppercase">
-              Page Not Found.
-            </h2>
-            <p className="text-neutral-500 font-medium leading-relaxed">
-              The page you are looking for doesn't exist or has been moved. Let's get you back on track.
-            </p>
-          </Motion.div>
-
-          {/* Technical Metadata */}
-          <div className="flex justify-center gap-8 py-4 border-y border-gray-200/50">
-            <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Status</div>
-              <div className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-none">Not Found</div>
-            </div>
-            <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Vector</div>
-              <div className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">-</div>
-            </div>
-            <div className="text-left">
-              <div className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Signal</div>
-              <div className="text-[10px] font-black text-brand uppercase tracking-widest leading-none italic">None</div>
-            </div>
-          </div>
-
-          <Motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="pt-4"
-          >
-            <Link
-              to="/"
-              className="inline-flex items-center px-12 py-4 bg-brand text-white font-semibold text-sm tracking-wide rounded-2xl hover:bg-brand-hover transition-all active:scale-95 shadow-xl shadow-brand/10"
-            >
-              Return Home
-            </Link>
-          </Motion.div>
+        {/* 404 number */}
+        <div className="slide-up text-6xl sm:text-9xl font-black leading-none tracking-tighter mb-1 text-brand"
+          style={{ textShadow: '0 8px 32px rgba(255,75,114,0.2)' }}>
+          404
         </div>
+
+        {/* Title */}
+        <h1 className="slide-up-2 text-xl font-bold text-primary mb-2 tracking-tight">
+          Page not found
+        </h1>
+
+        {/* Description */}
+        <p className="slide-up-3 text-muted text-sm leading-relaxed max-w-xs mb-8">
+          This page doesn't exist or has been moved. Let's get you back on track.
+        </p>
+
+        {/* Buttons */}
+        <div className="slide-up-3 flex gap-3 flex-wrap justify-center">
+          <Link to="/"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #ff4b72, #ff7695)', boxShadow: '0 4px 16px rgba(255,75,114,0.4)' }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Go Home
+          </Link>
+          <Link to="/dashboard"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-secondary bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-95">
+            Dashboard &rarr;
+          </Link>
+        </div>
+      </div>
+
+      {/* Bottom watermark */}
+      <div className="absolute bottom-6 text-xs text-muted font-mono tracking-wider sm:tracking-widest opacity-50">
+        ERROR · 404 · NOT FOUND
       </div>
     </div>
+    </>
   );
 }

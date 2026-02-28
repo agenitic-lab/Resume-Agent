@@ -402,7 +402,7 @@ export default function NewOptimization() {
     };
 
     return (
-        <div className="min-h-screen bg-primary text-primary p-8">
+        <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
             {/* Compact prerequisites bar — shown only when something is missing */}
             {(hasApiKey === false || hasTemplate === false) && (
                 <div className="max-w-5xl mx-auto mb-6">
@@ -523,7 +523,7 @@ export default function NewOptimization() {
                                     className="space-y-12"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_01 // SELECT_RESUME</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.2em] sm:tracking-[0.5em] mb-4">STEP_01 // SELECT_RESUME</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
                                             Select <span className="text-brand">Resume.</span>
                                         </h2>
@@ -540,13 +540,13 @@ export default function NewOptimization() {
                                             <button
                                                 key={opt.id}
                                                 onClick={() => setInputType(opt.id)}
-                                                className={`group relative p-8 md:p-12 rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
+                                                className={`group relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
                                                     ? 'border-brand-primary bg-brand/5 shadow-[0_0_40px_rgba(255,75,114,0.1)]'
                                                     : 'border-gray-200 hover:border-text-secondary hover:bg-white/[0.02]'
                                                     }`}
                                             >
                                                 {/* Numeric Anchor */}
-                                                <div className="absolute -bottom-8 -right-4 text-9xl font-black text-primary opacity-[0.03] select-none italic group-hover:opacity-[0.06] transition-opacity">
+                                                <div className="absolute -bottom-8 -right-4 text-7xl sm:text-9xl font-black text-primary opacity-[0.03] select-none italic group-hover:opacity-[0.06] transition-opacity">
                                                     0{opt.id === 'pdf' ? 1 : 2}
                                                 </div>
 
@@ -599,7 +599,7 @@ export default function NewOptimization() {
                                     className="space-y-10"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_02 // UPLOAD_&_EXTRACT</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.2em] sm:tracking-[0.5em] mb-4">STEP_02 // UPLOAD_&_EXTRACT</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
                                             {inputType === 'pdf' ? 'Upload' : 'Paste'} <span className="text-brand">{inputType === 'pdf' ? 'Resume.' : 'Code.'}</span>
                                         </h2>
@@ -768,7 +768,7 @@ export default function NewOptimization() {
                                     className="space-y-10"
                                 >
                                     <div className="text-center max-w-2xl mx-auto">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_03 // JOB_DETAILS</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.2em] sm:tracking-[0.5em] mb-4">STEP_03 // JOB_DETAILS</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
                                             Job <span className="text-brand">Description.</span>
                                         </h2>
@@ -863,7 +863,7 @@ export default function NewOptimization() {
                                     className="space-y-8"
                                 >
                                     <div className="text-center max-w-2xl mx-auto mb-10">
-                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.5em] mb-4">STEP_04 // RESULTS</div>
+                                        <div className="text-mono text-[10px] text-brand font-black uppercase tracking-[0.2em] sm:tracking-[0.5em] mb-4">STEP_04 // RESULTS</div>
                                         <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight leading-tight">
                                             Optimized <span className="text-brand">Resume.</span>
                                         </h2>
@@ -942,18 +942,18 @@ export default function NewOptimization() {
 
                                             {/* Score Summary - Issue 4 */}
                                             {optimizationData && (
-                                                <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
-                                                    <div className="grid grid-cols-3 gap-8 text-center">
+                                                <div className="bg-surface/50 border border-gray-200 rounded-2xl p-4 sm:p-8">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 text-center">
                                                         <div>
-                                                            <div className="text-4xl font-bold text-primary mb-1 tracking-tight text-mono">{optimizationData.originalScore}</div>
+                                                            <div className="text-2xl sm:text-4xl font-bold text-primary mb-1 tracking-tight text-mono">{optimizationData.originalScore}</div>
                                                             <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Original Score</div>
                                                         </div>
                                                         <div>
-                                                            <div className="text-4xl font-bold text-brand mb-1 tracking-tight text-mono">+{optimizationData.improvement}</div>
+                                                            <div className="text-2xl sm:text-4xl font-bold text-brand mb-1 tracking-tight text-mono">+{optimizationData.improvement}</div>
                                                             <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Improvement</div>
                                                         </div>
                                                         <div>
-                                                            <div className="text-4xl font-bold text-primary mb-1 tracking-tight underline decoration-brand-primary decoration-4 underline-offset-4 text-mono">{optimizationData.optimizedScore}</div>
+                                                            <div className="text-2xl sm:text-4xl font-bold text-primary mb-1 tracking-tight underline decoration-brand-primary decoration-4 underline-offset-4 text-mono">{optimizationData.optimizedScore}</div>
                                                             <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Final Score</div>
                                                         </div>
                                                     </div>
@@ -964,7 +964,7 @@ export default function NewOptimization() {
                                             )}
 
                                             {/* Tab Navigation - Issue 4 */}
-                                            <div className="flex gap-2 border-b border-gray-200 pb-0">
+                                            <div className="flex gap-1 sm:gap-2 border-b border-gray-200 pb-0 overflow-x-auto">
                                                 {[
                                                     { id: 'resume', label: 'Resume Output', icon: '📄' },
                                                     { id: 'details', label: 'Analysis Details', icon: '📊' },
@@ -973,7 +973,7 @@ export default function NewOptimization() {
                                                     <button
                                                         key={tab.id}
                                                         onClick={() => setActiveResultTab(tab.id)}
-                                                        className={`px-6 py-3 text-sm font-semibold tracking-tight transition-all rounded-t-xl border border-b-0 ${activeResultTab === tab.id
+                                                        className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold tracking-tight transition-all rounded-t-xl border border-b-0 whitespace-nowrap ${activeResultTab === tab.id
                                                             ? 'bg-surface border-gray-200 text-primary -mb-[1px]'
                                                             : 'border-transparent text-gray-500 hover:text-primary hover:bg-white/5'
                                                         }`}
@@ -1164,10 +1164,10 @@ export default function NewOptimization() {
                                                     </div>
 
                                                     {/* Resume Analysis */}
-                                                    <div className="bg-surface/50 border border-gray-200 rounded-2xl p-8">
+                                                    <div className="bg-surface/50 border border-gray-200 rounded-2xl p-4 sm:p-8">
                                                         <h3 className="text-lg font-semibold text-primary mb-1 tracking-tight">Resume Analysis</h3>
                                                         <p className="text-gray-500 text-sm mb-6">Internal profile audit</p>
-                                                        <div className="grid grid-cols-2 gap-8">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                                                             <div>
                                                                 <h4 className="text-brand font-black text-[10px] uppercase tracking-widest mb-4 italic">Strengths</h4>
                                                                 <ul className="space-y-2">

@@ -69,6 +69,10 @@ def ensure_user_template_columns():
         statements.append("ALTER TABLE users ADD COLUMN custom_template_latex TEXT")
     if "custom_templates" not in existing:
         statements.append("ALTER TABLE users ADD COLUMN custom_templates JSONB")
+    if "role" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'")
+    if "is_blocked" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN is_blocked BOOLEAN DEFAULT FALSE")
 
     if not statements:
         return
@@ -83,9 +87,16 @@ def ensure_runtime_schema():
     from database.models.user import User
     from database.models.run import Run
     from database.models.missing_skills_run import MissingSkillsRun
+    from database.models.resume import Resume, ResumeTemplate
 
     # Ensure core tables exist (safe with checkfirst behavior).
-    Base.metadata.create_all(bind=engine, tables=[User.__table__, Run.__table__, MissingSkillsRun.__table__])
+    Base.metadata.create_all(bind=engine, tables=[
+        User.__table__,
+        Run.__table__,
+        MissingSkillsRun.__table__,
+        Resume.__table__,
+        ResumeTemplate.__table__,
+    ])
 
     # Ensure incremental user columns exist for BYOK.
     ensure_user_api_key_columns()

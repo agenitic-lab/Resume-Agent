@@ -123,6 +123,14 @@ def get_current_user(
             detail="User account not found or has been deleted"
         )
     
+    # Step 4: Check if user is blocked
+    if getattr(user, 'is_blocked', False):
+        logger.warning(f"Authentication failed: User is blocked (ID: {user_id})")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked. Please contact support."
+        )
+    
     # Success - log and return user
     logger.info(f"User authenticated successfully: {user.email} (ID: {user_id})")
     
@@ -168,3 +176,16 @@ def get_current_user_optional(
     except (AuthenticationError, HTTPException):
         # Silently fail for optional authentication
         return None
+
+def get_current_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Dependency to require admin privileges.
+    """
+    if getattr(current_user, 'role', 'user') != 'admin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return current_user

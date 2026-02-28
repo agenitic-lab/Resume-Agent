@@ -52,7 +52,10 @@ def get_current_user_info(
     return UserResponse(
         id=str(current_user.id),
         email=current_user.email,
-        created_at=current_user.created_at
+        created_at=current_user.created_at,
+        role=current_user.role,
+        full_name=current_user.full_name,
+        profile_picture=current_user.profile_picture
     )
 
 
@@ -115,7 +118,7 @@ def get_user_profile(
                         "authenticated": {
                             "summary": "Authenticated user",
                             "value": {
-                                "service": "Resume Agent API",
+                                "service": "Resiko",
                                 "status": "operational",
                                 "authenticated": True,
                                 "user_email": "user@example.com"
@@ -124,7 +127,7 @@ def get_user_profile(
                         "anonymous": {
                             "summary": "Anonymous user",
                             "value": {
-                                "service": "Resume Agent API",
+                                "service": "Resiko",
                                 "status": "operational",
                                 "authenticated": False
                             }
@@ -140,7 +143,7 @@ def get_service_status(
 ):
     # Get service status (optional auth - enhanced response when authenticated)
     response = {
-        "service": "Resume Agent API",
+        "service": "Resiko",
         "status": "operational",
         "authenticated": current_user is not None
     }

@@ -452,8 +452,8 @@ export default function Templates() {
                                                 key={idx}
                                                 className={`bg-secondary rounded-2xl p-5 border transition-all ${isActive ? 'border-brand-primary/30 ring-1 ring-brand/10' : 'border-gray-100'}`}
                                             >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className="flex items-center gap-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                                                <div className="flex items-center gap-3 min-w-0 flex-wrap">
                                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${isActive ? 'bg-brand text-white' : 'bg-gray-200 text-gray-500'}`}>
                                                             {idx + 1}
                                                         </div>
@@ -462,7 +462,7 @@ export default function Templates() {
                                                             <span className="px-2 py-0.5 bg-brand/10 text-brand text-[10px] font-bold rounded-full">Active</span>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() => handleSelectCustom(idx)}
                                                             disabled={saving || isActive}
@@ -538,7 +538,7 @@ export default function Templates() {
                                 customTemplates.length < MAX_CUSTOM && (
                                     <button
                                         onClick={openAddForm}
-                                        className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide hover:bg-white transition-all active:scale-95 flex items-center gap-2"
+                                        className="px-8 py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />

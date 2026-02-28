@@ -1,15 +1,28 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Button } from "./ui/button";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navLinks = [
-    { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
+    { label: "Features", hash: "#features" },
+    { label: "How It Works", hash: "#how-it-works" },
+    { label: "FAQ", hash: "#faq" },
   ];
+
+  const handleNavClick = (hash) => {
+    setMobileOpen(false);
+    if (location.pathname === "/") {
+      const el = document.querySelector(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate("/" + hash);
+    }
+  };
 
   return (
     <>
@@ -18,33 +31,21 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 bg-brand rounded-[10px] flex items-center justify-center text-white scale-100 group-hover:scale-105 transition-transform duration-200 shadow-sm" style={{ backgroundColor: 'var(--color-brand-primary)' }}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-primary">
-              AiRes
-            </span>
+            <img src="/resiko-logo.png" alt="Resiko" className="h-4 sm:h-5 md:h-6 lg:h-7 w-auto scale-100 group-hover:scale-105 transition-transform duration-200" />
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
-              <a
+              <button
                 key={link.label}
-                href={link.href}
-                className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200"
+                onClick={() => handleNavClick(link.hash)}
+                className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200 bg-transparent border-none cursor-pointer"
               >
                 {link.label}
-              </a>
+              </button>
             ))}
-            <Link
-              to="/pricing"
-              className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200"
-            >
-              Pricing
-            </Link>
+
           </nav>
 
           {/* Right Actions */}
@@ -82,14 +83,13 @@ export default function Navbar() {
             >
               <div className="p-6 flex flex-col gap-4">
                 {navLinks.map((link) => (
-                  <a
+                  <button
                     key={link.label}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="text-base font-medium text-secondary hover:text-primary py-2"
+                    onClick={() => handleNavClick(link.hash)}
+                    className="text-base font-medium text-secondary hover:text-primary py-2 bg-transparent border-none cursor-pointer text-left"
                   >
                     {link.label}
-                  </a>
+                  </button>
                 ))}
                 <div className="h-px bg-gray-100 my-2" />
                 <Link
@@ -113,3 +113,4 @@ export default function Navbar() {
     </>
   );
 }
+

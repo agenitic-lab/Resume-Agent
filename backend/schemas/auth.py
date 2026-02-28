@@ -31,8 +31,9 @@ class RegisterRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     
-    email: EmailStr = Field(
+    email: str = Field(
         ...,
+        min_length=1,
         description="User's email address",
         examples=["user@example.com"]
     )
@@ -81,6 +82,16 @@ class UserResponse(BaseModel):
         description="URL to user's profile picture",
         examples=["https://lh3.googleusercontent.com/a/ACg8oc..."]
     )
+    role: str = Field(
+        default="user",
+        description="User's role (admin or user)",
+        examples=["user", "admin"]
+    )
+    is_blocked: bool = Field(
+        default=False,
+        description="Whether the user is blocked from accessing the system",
+        examples=[False, True]
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -90,7 +101,9 @@ class UserResponse(BaseModel):
                 "email": "john.doe@example.com",
                 "created_at": "2024-01-15T10:30:00Z",
                 "full_name": "John Doe",
-                "profile_picture": "https://lh3.googleusercontent.com/a/ACg8oc..."
+                "profile_picture": "https://lh3.googleusercontent.com/a/ACg8oc...",
+                "role": "user",
+                "is_blocked": False
             }
         }
     )
@@ -246,3 +259,10 @@ class ApiKeyUpsertRequest(BaseModel):
 class ApiKeyStatusResponse(BaseModel):
     has_api_key: bool
     updated_at: Optional[datetime] = None
+
+
+class PaginatedUserResponse(BaseModel):
+    items: list[UserResponse] = Field(description="List of users for the current page")
+    total: int = Field(description="Total number of users matching the filter")
+    page: int = Field(description="Current page number")
+    size: int = Field(description="Number of items per page")

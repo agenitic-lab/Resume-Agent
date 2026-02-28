@@ -204,7 +204,7 @@ def test_optional_auth_with_token(valid_token):
     assert response.status_code == 200
     data = response.json()
     
-    assert data["service"] == "Resume Agent API"
+    assert data["service"] == "Resiko"
     assert data["status"] == "operational"
     assert data["authenticated"] is True
     assert data["user_email"] == "test@example.com"
@@ -217,7 +217,7 @@ def test_optional_auth_without_token():
     assert response.status_code == 200
     data = response.json()
     
-    assert data["service"] == "Resume Agent API"
+    assert data["service"] == "Resiko"
     assert data["status"] == "operational"
     assert data["authenticated"] is False
     assert "user_email" not in data

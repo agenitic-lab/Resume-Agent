@@ -248,7 +248,7 @@ def test_login_invalid_email_format():
         }
     )
     
-    assert response.status_code == 422  # Validation error
+    assert response.status_code == 401
 
 
 def test_login_missing_fields():
