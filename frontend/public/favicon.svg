@@ -1,4 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="25" fill="#FF4B72" />
-  <path fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" d="M35 50h30m-30 15h30m5 17.5H27.5a7.5 7.5 0 01-7.5-7.5V22.5A7.5 7.5 0 0127.5 15h20.947a3.75 3.75 0 012.652 1.099l20.303 20.303a3.75 3.75 0 011.098 2.651v35.947a7.5 7.5 0 01-7.5 7.5z" />
+  <rect width="100" height="100" rx="22" fill="#ff4b72"/>
+  <text x="50" y="72" font-family="system-ui, -apple-system, sans-serif" font-size="62" font-weight="800" fill="white" text-anchor="middle">R</text>
 </svg>
