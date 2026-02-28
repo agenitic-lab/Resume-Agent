@@ -31,8 +31,9 @@ class RegisterRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     
-    email: EmailStr = Field(
+    email: str = Field(
         ...,
+        min_length=1,
         description="User's email address",
         examples=["user@example.com"]
     )
