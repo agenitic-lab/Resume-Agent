@@ -82,6 +82,32 @@ def ensure_user_template_columns():
             conn.execute(text(stmt))
 
 
+def ensure_user_oauth_columns():
+    """Ensure OAuth-related columns exist (google_id, auth_provider, profile_picture, full_name)."""
+    inspector = inspect(engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing = {col["name"] for col in inspector.get_columns("users")}
+    statements = []
+
+    if "google_id" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN google_id VARCHAR UNIQUE")
+    if "auth_provider" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN auth_provider VARCHAR DEFAULT 'email' NOT NULL")
+    if "profile_picture" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN profile_picture VARCHAR")
+    if "full_name" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN full_name VARCHAR")
+
+    if not statements:
+        return
+
+    with engine.begin() as conn:
+        for stmt in statements:
+            conn.execute(text(stmt))
+
+
 def ensure_runtime_schema():
     # Import models lazily to avoid circular import at module load time.
     from database.models.user import User
@@ -103,3 +129,6 @@ def ensure_runtime_schema():
 
     # Ensure template preference columns exist.
     ensure_user_template_columns()
+
+    # Ensure OAuth columns exist (google_id, auth_provider, etc.).
+    ensure_user_oauth_columns()
