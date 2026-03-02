@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import logging
 from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
@@ -45,6 +46,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------------------------
+# Global exception handler — ensures unhandled errors produce a proper JSON
+# response *inside* the middleware chain so CORSMiddleware can still inject
+# Access-Control-Allow-Origin headers.  Without this, unhandled exceptions
+# bubble past CORSMiddleware and are caught by Starlette's outer
+# ServerErrorMiddleware, which returns a bare 500 with NO CORS headers.
+# ---------------------------------------------------------------------------
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 
 app.include_router(auth_router)
 app.include_router(user_router)
