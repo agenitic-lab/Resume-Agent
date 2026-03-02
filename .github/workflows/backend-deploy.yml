@@ -94,11 +94,13 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/resume-agent-backend:latest
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/resume-agent-backend:latest
+            ghcr.io/${{ github.repository_owner }}/resume-agent-backend:sha-${{ github.sha }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-          images: ghcr.io/${{ github.repository_owner }}/resume-agent-backend:latest
+          images: ghcr.io/${{ github.repository_owner }}/resume-agent-backend:sha-${{ github.sha }}
