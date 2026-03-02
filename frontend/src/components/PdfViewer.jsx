@@ -39,7 +39,7 @@ export default function PdfViewer({
     if (!isMobile) {
         return (
             <iframe
-                src={`${url}#toolbar=1&view=FitH`}
+                src={`${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                 className={`w-full h-full block border-0 ${className}`}
                 title={title}
             />

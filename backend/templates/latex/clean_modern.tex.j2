@@ -66,6 +66,18 @@
 \resumeSubHeadingListEnd
 <%% endif %%>
 
+<%% if custom_sections|length > 0 %%>
+<%% for sec in custom_sections %%>
+\section{<< sec.type >>}
+\begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+        <%% if sec.title %%>\textbf{<< sec.title >>} \\ \vspace{2pt} <%% endif %%>
+        <%% if sec.content %%><< sec.content >><%% endif %%>
+    }}
+\end{itemize}
+<%% endfor %%>
+<%% endif %%>
+
 <%% if skills|length > 0 %%>
 \section{Technical Skills}
 \begin{itemize}[leftmargin=0.15in, label={}]

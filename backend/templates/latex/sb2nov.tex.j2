@@ -63,6 +63,19 @@
 \vspace{-8.5mm}
 <%% endif %%>
 
+<%% if custom_sections|length > 0 %%>
+<%% for sec in custom_sections %%>
+\cvsection{<< sec.type >>}
+ \begin{itemize}[leftmargin=0.05in, label={}]
+    \small{\item{
+        <%% if sec.title %%>\textbf{<< sec.title >>} \\ \vspace{2pt} <%% endif %%>
+        <%% if sec.content %%><< sec.content >><%% endif %%>
+    }}
+ \end{itemize}
+ \vspace{-8.5mm}
+<%% endfor %%>
+<%% endif %%>
+
 <%% if skills|length > 0 %%>
 \cvsection{Technical Skills and Interests}
  \begin{itemize}[leftmargin=0.05in, label={}]

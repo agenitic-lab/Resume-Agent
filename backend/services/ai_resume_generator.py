@@ -269,3 +269,143 @@ Rules:
     except Exception as e:
         logger.error(f"Error generating project bullets with Groq: {str(e)}")
         return [f"Error generating content: {str(e)}"]
+
+import json
+
+def analyze_resume_for_ats(
+    resume_data: dict,
+    api_key: str
+) -> dict:
+    """
+    Analyzes a resume againstATS requirements and returns a JSON dict with score, keywords, and improvements.
+    """
+    client = get_groq_client(api_key)
+    if not client:
+        return {
+            "score": 0,
+            "score_label": "Needs Work",
+            "strengths": ["None identified due to missing API key."],
+            "weaknesses": ["Cannot analyze without a valid Groq API key."],
+            "recommendations": [
+                {
+                    "issue": "API Key Missing",
+                    "solution": "Go to Settings and add your Groq API key.",
+                    "impact": "High",
+                    "tags": ["System"]
+                }
+            ]
+        }
+    
+    target_role = resume_data.get("field", "Professional")
+    ctx = _get_field_context(target_role)
+    
+    prompt = f"""You are an expert ATS (Applicant Tracking System) parser and technical recruiter for the {ctx['field']} industry.
+Evaluate the following resume data for a candidate aiming for a '{target_role}' role.
+
+Resume Data:
+{json.dumps(resume_data, indent=2)}
+
+Provide your evaluation STRICTLY IN JSON format matching this exact schema:
+{{
+    "score": <integer from 0 to 100 based on keyword match, impact metrics, and clarity>,
+    "score_label": <string, one of: "Needs Work", "Good", "Excellent">,
+    "strengths": [<list of 3-5 specific strings highlighting what the resume does well>],
+    "weaknesses": [<list of 3-5 specific strings highlighting areas for improvement, like missing summary, weak experience, etc>],
+    "recommendations": [
+        {{
+            "issue": <string briefly describing the problem (e.g., "Missing professional summary")>,
+            "solution": <string describing how to fix it (e.g., "Add a concise professional summary that outlines key skills")>,
+            "impact": <string, one of: "High", "Medium", "Low">,
+            "tags": [<list of 1-3 short strings like "T/ATS", "Formatting", "Content">]
+        }}
+    ]
+}}
+
+Ensure you provide at least 3-4 actionable recommendations. Do NOT wrap the JSON in markdown blocks (no ```json ... ```). Return ONLY the raw JSON string.
+"""
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You output only raw valid JSON arrays/objects."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content.strip()
+        data = json.loads(content)
+        return {
+            "score": data.get("score", 50),
+            "score_label": data.get("score_label", "Needs Work"),
+            "strengths": data.get("strengths", ["Has basic contact information."]),
+            "weaknesses": data.get("weaknesses", ["Needs more detailed experience."]),
+            "recommendations": data.get("recommendations", [])
+        }
+    except Exception as e:
+        logger.error(f"Error analyzing resume with Groq: {str(e)}")
+        return {
+            "score": 40,
+            "score_label": "Needs Work",
+            "strengths": ["None identified due to error."],
+            "weaknesses": ["Error analyzing resume.", str(e)],
+            "recommendations": [
+                {
+                    "issue": "API Key Missing or Invalid",
+                    "solution": "Please check your Groq API key in Settings.",
+                    "impact": "High",
+                    "tags": ["System", "Error"]
+                }
+            ]
+        }
+
+
+def apply_ai_optimizations(resume_data: dict, recommendations: list, api_key: str) -> dict:
+    """
+    Takes the original resume JSON and a list of selected recommendations to apply,
+    returning a modified resume JSON.
+    """
+    client = get_groq_client(api_key)
+    if not client:
+        return resume_data
+    
+    target_role = resume_data.get("field", "Professional")
+    ctx = _get_field_context(target_role)
+
+    prompt = f"""You are an expert ATS resume optimizer for the {ctx['field']} industry.
+The user wants to apply the following improvements to their resume:
+
+SELECTED RECOMMENDATIONS TO APPLY:
+{json.dumps(recommendations, indent=2)}
+
+ORIGINAL RESUME DATA:
+{json.dumps(resume_data, indent=2)}
+
+Please seamlessly integrate the solutions into the resume data while STRICTLY adhering to the following rules:
+1. ONLY ENHANCE EXISTING ENTRIES. Do NOT hallucinate, invent, or add new items to the `education`, `experience`, `projects`, or `custom_sections` arrays. The number of entries in these arrays must remain exactly the same.
+2. If a recommendation suggests adding something you don't have information for, add a generalized statement based only on the existing context, but never invent fake degrees, companies, or job roles.
+3. You may add relevant universally applicable technical skills or keywords to the `skills` array if it helps ATS optimization.
+4. You may rewrite and expand bullet points and the professional summary to make them stronger and more impactful.
+5. Ensure the tone remains highly professional and matches the target role '{target_role}'.
+
+OUTPUT FORMAT:
+Provide the fully updated resume data STRICTLY IN JSON format matching the original exact schema. 
+Ensure ALL original sections (contact, education, skills, experience, projects, custom_sections) are preserved or enhanced, but never fabricated.
+Do NOT wrap the JSON in markdown blocks. Return ONLY the raw JSON string.
+"""
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You output only raw valid JSON maintaining the exact original schema structure."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content.strip()
+        data = json.loads(content)
+        return data
+    except Exception as e:
+        logger.error(f"Error applying optimizations with Groq: {str(e)}")
+        return resume_data
