@@ -224,55 +224,65 @@ def google_auth(
             headers={"WWW-Authenticate": "Bearer"}
         )
     
-    # Step 2: Check if user exists by google_id
-    user = db.query(User).filter(User.google_id == google_user.google_id).first()
-    
-    if user:
-        # Existing user - update profile info if changed
-        logger.info(f"Existing Google user logging in: {user.email}")
-        if google_user.profile_picture and user.profile_picture != google_user.profile_picture:
-            user.profile_picture = google_user.profile_picture
-        if google_user.full_name and user.full_name != google_user.full_name:
-            user.full_name = google_user.full_name
-        db.commit()
-        db.refresh(user)
-    else:
-        # Check if email already exists (user might have registered with email/password)
-        user = db.query(User).filter(User.email == google_user.email).first()
+    # Step 2: Find or create user (all DB ops wrapped to prevent bare 500)
+    try:
+        user = db.query(User).filter(User.google_id == google_user.google_id).first()
         
         if user:
-            # Email exists but not linked to Google - link it
-            logger.info(f"Linking existing email account to Google: {user.email}")
-            user.google_id = google_user.google_id
-            user.auth_provider = 'google'
-            user.profile_picture = google_user.profile_picture
-            user.full_name = google_user.full_name
+            # Existing user - update profile info if changed
+            logger.info(f"Existing Google user logging in: {user.email}")
+            if google_user.profile_picture and user.profile_picture != google_user.profile_picture:
+                user.profile_picture = google_user.profile_picture
+            if google_user.full_name and user.full_name != google_user.full_name:
+                user.full_name = google_user.full_name
             db.commit()
             db.refresh(user)
         else:
-            # New user - create account
-            logger.info(f"Creating new Google user: {google_user.email}")
-            user = User(
-                email=google_user.email,
-                google_id=google_user.google_id,
-                auth_provider='google',
-                profile_picture=google_user.profile_picture,
-                full_name=google_user.full_name,
-                password_hash=None  # OAuth users don't have passwords
-            )
-            db.add(user)
+            # Check if email already exists (user might have registered with email/password)
+            user = db.query(User).filter(User.email == google_user.email).first()
             
-            try:
+            if user:
+                # Email exists but not linked to Google - link it
+                logger.info(f"Linking existing email account to Google: {user.email}")
+                user.google_id = google_user.google_id
+                user.auth_provider = 'google'
+                user.profile_picture = google_user.profile_picture
+                user.full_name = google_user.full_name
                 db.commit()
                 db.refresh(user)
-                logger.info(f"Google user created successfully: {user.id}")
-            except IntegrityError:
-                db.rollback()
-                logger.error(f"Failed to create Google user - integrity error: {google_user.email}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to create user account"
+            else:
+                # New user - create account
+                logger.info(f"Creating new Google user: {google_user.email}")
+                user = User(
+                    email=google_user.email,
+                    google_id=google_user.google_id,
+                    auth_provider='google',
+                    profile_picture=google_user.profile_picture,
+                    full_name=google_user.full_name,
+                    password_hash=None  # OAuth users don't have passwords
                 )
+                db.add(user)
+                
+                try:
+                    db.commit()
+                    db.refresh(user)
+                    logger.info(f"Google user created successfully: {user.id}")
+                except IntegrityError:
+                    db.rollback()
+                    logger.error(f"Failed to create Google user - integrity error: {google_user.email}")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to create user account"
+                    )
+    except HTTPException:
+        raise  # re-raise HTTPExceptions as-is
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Database error during Google auth: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error during authentication. Please try again."
+        )
     
     # Step 3: Generate JWT token
     try:
