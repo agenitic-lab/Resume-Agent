@@ -102,7 +102,7 @@ async function apiRequest(endpoint, options = {}) {
                     clearSessionCaches();
                     window.location.href = '/login?expired=true';
                     // Return a never-resolving promise so .then() chains don't fire
-                    return new Promise(() => {});
+                    return new Promise(() => { });
                 }
                 // No active token — throw so callers can handle it gracefully
                 throw new Error('Unauthorized');
@@ -628,10 +628,10 @@ export async function getAdminTemplateContent(templateId) {
     return apiRequest(`/api/admin/templates/${templateId}`);
 }
 
-export async function updateAdminTemplate(templateId, name, preamble) {
+export async function updateAdminTemplate(templateId, name, preamble, description, tags) {
     return apiRequest(`/api/admin/templates/${templateId}`, {
         method: 'PUT',
-        body: JSON.stringify({ name, preamble }),
+        body: JSON.stringify({ name, preamble, description, tags }),
     });
 }
 
