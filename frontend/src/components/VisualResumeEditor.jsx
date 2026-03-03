@@ -246,10 +246,9 @@ function replaceBullet(sectionRaw, bulletIndex, newValue) {
     // try \resumeItem first
     let updated = sectionRaw.replace(
         /\\resumeItem\{(?:\\normalsize\{)?([\s\S]*?)(?:\}\}|\})\s*/g,
-        (fullMatch, content) => {
+        (fullMatch) => {
             if (count === bulletIndex) {
                 count++;
-                // preserve \normalsize wrapper if present
                 if (fullMatch.includes('\\normalsize')) {
                     return `\\resumeItem{\\normalsize{${newValue}}}\n        `;
                 }
@@ -264,7 +263,7 @@ function replaceBullet(sectionRaw, bulletIndex, newValue) {
         count = 0;
         updated = sectionRaw.replace(
             /\\item\s*\{([\s\S]*?)\}\s*(?=\\item|\\resumeItemListEnd)/g,
-            (fullMatch, content) => {
+            (fullMatch) => {
                 if (count === bulletIndex) {
                     count++;
                     return `\\item {${newValue}}\n        `;
@@ -537,7 +536,7 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                                                     let count = 0;
                                                     updated = updated.replace(
                                                         /\\emph\{([\s\S]*?)\}/g,
-                                                        (m, old) => {
+                                                        (m) => {
                                                             if (count === pi) { count++; return `\\emph{${v}}`; }
                                                             count++;
                                                             return m;
@@ -598,8 +597,8 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                     onClick={onRecompile}
                     disabled={isCompiling}
                     className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${isCompiling
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-brand text-white hover:bg-brand-hover shadow-lg shadow-brand/10 active:scale-[0.98]'
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-brand text-white hover:bg-brand-hover shadow-lg shadow-brand/10 active:scale-[0.98]'
                         }`}
                 >
                     {isCompiling ? (

@@ -23,7 +23,6 @@ export default function NewOptimization() {
     const [isCompiling, setIsCompiling] = useState(false);
     const [isOptimizing, setIsOptimizing] = useState(false);
     const [toast, setToast] = useState(null);
-    const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = status
     const [hasTemplate, setHasTemplate] = useState(null); // null = loading, true/false = status
     const [optimizationData, setOptimizationData] = useState(null); // full optimization response

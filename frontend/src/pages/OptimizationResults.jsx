@@ -19,7 +19,6 @@ export default function OptimizationResults() {
     const [latexCode, setLatexCode] = useState('');
     const [compiledPdfUrl, setCompiledPdfUrl] = useState(null);
     const [isCompiling, setIsCompiling] = useState(false);
-    const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [toast, setToast] = useState(null);
     const hasAutoCompiled = useRef(false);
 
@@ -211,11 +210,7 @@ export default function OptimizationResults() {
         a.click();
     };
 
-    const handleCopyLatex = () => {
-        navigator.clipboard.writeText(latexCode);
-        setCopyButtonText('Copied!');
-        setTimeout(() => setCopyButtonText('Copy'), 2000);
-    };
+
 
     const handleCopyCoverLetter = () => {
         if (!resultsData?.coverLetter) return;
