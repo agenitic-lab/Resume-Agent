@@ -727,7 +727,7 @@ export default function ResumeBuilder() {
             case 7: // Skills
                 if (formData.skills.length === 0) newErrors.skills = 'Please add at least one skill';
                 break;
-            case 8: // Summary
+            case 9: // Summary
                 if (formData.contact.summary.trim().length < 50) newErrors.summary = 'Summary should be at least 50 characters for a professional look.';
                 break;
             default:
