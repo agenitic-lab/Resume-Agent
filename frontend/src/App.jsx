@@ -1,8 +1,7 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NewOptimization from "./pages/NewOptimization";
 import OptimizationResults from "./pages/OptimizationResults";
@@ -114,9 +113,9 @@ function AppContent() {
       {showNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/signup" element={<Register />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Navigate to="/login" replace />} />
+        <Route path="/signup" element={<Navigate to="/login" replace />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<ProtectedRoute><DashboardLayout><AdminDashboard><AdminMetrics /></AdminDashboard></DashboardLayout></ProtectedRoute>} />

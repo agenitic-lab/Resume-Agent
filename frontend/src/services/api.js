@@ -102,7 +102,7 @@ async function apiRequest(endpoint, options = {}) {
                     clearSessionCaches();
                     window.location.href = '/login?expired=true';
                     // Return a never-resolving promise so .then() chains don't fire
-                    return new Promise(() => {});
+                    return new Promise(() => { });
                 }
                 // No active token — throw so callers can handle it gracefully
                 throw new Error('Unauthorized');
@@ -122,28 +122,6 @@ async function apiRequest(endpoint, options = {}) {
         }
         throw new Error('Network error. Please check your connection.');
     }
-}
-
-// Auth endpoints
-export async function register(email, password) {
-    return apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-    });
-}
-
-export async function login(email, password) {
-    const data = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-    });
-
-    // Store token on successful login
-    if (data.access_token) {
-        setToken(data.access_token);
-    }
-
-    return data;
 }
 
 export async function googleAuth(credential) {

@@ -94,7 +94,7 @@ def ensure_user_oauth_columns():
     if "google_id" not in existing:
         statements.append("ALTER TABLE users ADD COLUMN google_id VARCHAR UNIQUE")
     if "auth_provider" not in existing:
-        statements.append("ALTER TABLE users ADD COLUMN auth_provider VARCHAR DEFAULT 'email' NOT NULL")
+        statements.append("ALTER TABLE users ADD COLUMN auth_provider VARCHAR DEFAULT 'google' NOT NULL")
     if "profile_picture" not in existing:
         statements.append("ALTER TABLE users ADD COLUMN profile_picture VARCHAR")
     if "full_name" not in existing:
