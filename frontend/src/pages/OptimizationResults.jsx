@@ -4,6 +4,7 @@ import { getRunDetails } from '../services/api';
 import Toast from '../components/Toast';
 import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
+import VisualResumeEditor from '../components/VisualResumeEditor';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -18,7 +19,6 @@ export default function OptimizationResults() {
     const [latexCode, setLatexCode] = useState('');
     const [compiledPdfUrl, setCompiledPdfUrl] = useState(null);
     const [isCompiling, setIsCompiling] = useState(false);
-    const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [toast, setToast] = useState(null);
     const hasAutoCompiled = useRef(false);
 
@@ -210,11 +210,7 @@ export default function OptimizationResults() {
         a.click();
     };
 
-    const handleCopyLatex = () => {
-        navigator.clipboard.writeText(latexCode);
-        setCopyButtonText('Copied!');
-        setTimeout(() => setCopyButtonText('Copy'), 2000);
-    };
+
 
     const handleCopyCoverLetter = () => {
         if (!resultsData?.coverLetter) return;
@@ -600,52 +596,18 @@ export default function OptimizationResults() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* LaTeX Editor */}
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center px-1">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Resume Editor</label>
-                                            <button
-                                                onClick={handleCopyLatex}
-                                                className="text-brand hover:text-brand-hover text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                </svg>
-                                                {copyButtonText}
-                                            </button>
-                                        </div>
-                                        <textarea
-                                            value={latexCode}
-                                            onChange={(e) => setLatexCode(e.target.value)}
-                                            className="w-full h-[500px] md:h-[800px] p-4 md:p-6 bg-secondary border border-gray-100 rounded-xl text-primary focus:outline-none focus:border-brand-primary/30 transition-all font-mono text-xs leading-relaxed resize-none shadow-inner"
+                                    <div className="lg:h-[800px]">
+                                        <VisualResumeEditor
+                                            latexCode={latexCode}
+                                            onChange={setLatexCode}
+                                            onRecompile={handleRecompile}
+                                            isCompiling={isCompiling}
                                         />
                                     </div>
 
-                                    {/* PDF Preview */}
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Visual Preview</label>
-                                            <button
-                                                onClick={handleRecompile}
-                                                disabled={isCompiling}
-                                                className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompiling
-                                                    ? 'bg-secondary text-gray-500 cursor-not-allowed'
-                                                    : 'bg-brand hover:bg-brand-hover text-white shadow-lg shadow-black/10'
-                                                    }`}
-                                            >
-                                                {isCompiling ? (
-                                                    <>
-                                                        <div className="w-3 h-3 border-2 border-bg-primary border-t-transparent rounded-full animate-spin" />
-                                                        <span>Updating...</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                        </svg>
-                                                        <span>Refresh View</span>
-                                                    </>
-                                                )}
-                                            </button>
                                         </div>
 
                                         <div className="relative h-[500px] md:h-[800px] bg-white border border-gray-200 rounded-xl shadow-sm">

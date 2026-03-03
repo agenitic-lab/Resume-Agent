@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Toast from '../components/Toast';
 import PdfViewer from '../components/PdfViewer';
+import VisualResumeEditor from '../components/VisualResumeEditor';
 import { optimizeResumeStream, getApiKeyStatus, getTemplatePreference } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -22,7 +23,6 @@ export default function NewOptimization() {
     const [isCompiling, setIsCompiling] = useState(false);
     const [isOptimizing, setIsOptimizing] = useState(false);
     const [toast, setToast] = useState(null);
-    const [copyButtonText, setCopyButtonText] = useState('Copy');
     const [hasApiKey, setHasApiKey] = useState(null); // null = loading, true/false = status
     const [hasTemplate, setHasTemplate] = useState(null); // null = loading, true/false = status
     const [optimizationData, setOptimizationData] = useState(null); // full optimization response
@@ -976,7 +976,7 @@ export default function NewOptimization() {
                                                         className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold tracking-tight transition-all rounded-t-xl border border-b-0 whitespace-nowrap ${activeResultTab === tab.id
                                                             ? 'bg-surface border-gray-200 text-primary -mb-[1px]'
                                                             : 'border-transparent text-gray-500 hover:text-primary hover:bg-white/5'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <span className="mr-2">{tab.icon}</span>
                                                         {tab.label}
@@ -994,35 +994,14 @@ export default function NewOptimization() {
                                                 >
                                                     {/* Split Pane Layout */}
                                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:h-[650px]">
-                                                        {/* Left: LaTeX Editor */}
-                                                        <div className="flex flex-col space-y-4 h-[400px] lg:h-auto">
-                                                            <div className="flex justify-between items-center px-1">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                                                                    <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">LaTeX_Editor</label>
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        navigator.clipboard.writeText(optimizedLatex);
-                                                                        setCopyButtonText('Copied');
-                                                                        setTimeout(() => setCopyButtonText('Copy'), 2000);
-                                                                    }}
-                                                                    className="text-brand hover:text-brand-hover text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
-                                                                >
-                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                                    </svg>
-                                                                    {copyButtonText}
-                                                                </button>
-                                                            </div>
-                                                            <div className="flex-1 relative group">
-                                                                <textarea
-                                                                    value={optimizedLatex}
-                                                                    onChange={(e) => setOptimizedLatex(e.target.value)}
-                                                                    className="w-full h-full p-6 md:p-8 bg-secondary border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-xs resize-none custom-scrollbar"
-                                                                />
-                                                                <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Editable</div>
-                                                            </div>
+                                                        {/* Left: Visual Editor */}
+                                                        <div className="flex flex-col h-[400px] lg:h-auto">
+                                                            <VisualResumeEditor
+                                                                latexCode={optimizedLatex}
+                                                                onChange={setOptimizedLatex}
+                                                                onRecompile={handleCompileLatex}
+                                                                isCompiling={isCompiling}
+                                                            />
                                                         </div>
 
                                                         {/* Right: PDF Preview */}
@@ -1032,28 +1011,6 @@ export default function NewOptimization() {
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
                                                                     <label className="text-mono text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500">PDF_Preview</label>
                                                                 </div>
-                                                                <button
-                                                                    onClick={handleCompileLatex}
-                                                                    disabled={isCompiling}
-                                                                    className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isCompiling
-                                                                        ? 'bg-white/5 border-white/5 text-gray-500 cursor-not-allowed'
-                                                                        : 'bg-brand border-brand-primary hover:bg-brand-hover text-white shadow-lg'
-                                                                    }`}
-                                                                >
-                                                                    {isCompiling ? (
-                                                                        <>
-                                                                            <div className="w-2.5 h-2.5 border-2 border-text-muted border-t-transparent rounded-full animate-spin" />
-                                                                            <span>Loading...</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                                            </svg>
-                                                                            <span>Refresh View</span>
-                                                                        </>
-                                                                    )}
-                                                                </button>
                                                             </div>
 
                                                             {/* PDF Viewer Container */}
@@ -1112,7 +1069,7 @@ export default function NewOptimization() {
                                                                         <div className={`flex-1 py-3 px-4 rounded-xl text-center font-black italic tracking-tighter text-xl text-mono ${index === optimizationData.scoreProgression.length - 1
                                                                             ? 'bg-brand text-white shadow-lg scale-105'
                                                                             : 'bg-secondary text-gray-500 border border-gray-200'
-                                                                        }`}>
+                                                                            }`}>
                                                                             {score}
                                                                         </div>
                                                                         {index < optimizationData.scoreProgression.length - 1 && (
@@ -1319,7 +1276,7 @@ export default function NewOptimization() {
                                                         className={`group relative px-12 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-4 ${compiledPdfUrl
                                                             ? 'bg-brand text-white hover:bg-brand-hover shadow-[0_20px_40px_-10px_rgba(255,75,114,0.3)] hover:scale-105 active:scale-95'
                                                             : 'bg-secondary text-gray-500 cursor-not-allowed border border-gray-200/50'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
