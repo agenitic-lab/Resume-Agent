@@ -352,6 +352,7 @@ import json
 import os
 
 ADMIN_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "admin_templates.json")
+DELETED_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "deleted_templates.json")
 
 def load_admin_templates():
     if not os.path.exists(ADMIN_TEMPLATES_FILE):
@@ -362,10 +363,25 @@ def load_admin_templates():
     except Exception:
         return {}
 
+def load_deleted_templates():
+    if not os.path.exists(DELETED_TEMPLATES_FILE):
+        return []
+    try:
+        with open(DELETED_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
 def get_combined_templates():
     combined = dict(TEMPLATES)
     admin_tpls = load_admin_templates()
     combined.update(admin_tpls)
+    
+    deleted_tpls = load_deleted_templates()
+    for t_id in deleted_tpls:
+        if t_id in combined:
+            del combined[t_id]
+            
     return combined
 
 def get_all_templates():
