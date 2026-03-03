@@ -20,7 +20,7 @@ class User(Base):
     
     # OAuth fields
     google_id = Column(String, unique=True, nullable=True, index=True)
-    auth_provider = Column(String, default='email', nullable=False)  # 'email' or 'google'
+    auth_provider = Column(String, default='google', nullable=False)
     profile_picture = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
     

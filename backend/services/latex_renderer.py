@@ -46,16 +46,16 @@ env.filters['latex_escape'] = escape_latex
 def render_latex_source(template_id: str, data: dict) -> str:
     from services.latex_templates import get_template_preamble
     
-    # 1. Get the preamble for the template
     preamble = get_template_preamble(template_id)
     if not preamble:
         raise ValueError(f"Template '{template_id}' not found.")
         
-    # 2. Get the jinja body template file
     template_filename = f"{template_id}.tex.j2"
     jinja_template = env.get_template(template_filename)
     
-    # Escape data
+    # Sanitize before escaping: strip whitespace, remove empty details
+    data = _sanitize_resume_data(data)
+
     def escape_dict(d):
         if isinstance(d, dict):
             return {k: escape_dict(v) for k, v in d.items()}
@@ -67,13 +67,26 @@ def render_latex_source(template_id: str, data: dict) -> str:
     
     escaped_data = escape_dict(data)
     
-    # 3. Render the body
     body_latex = jinja_template.render(**escaped_data)
     
-    # 4. Combine
     full_latex = preamble.strip() + "\n" + body_latex.strip() + "\n"
     
     return full_latex
+
+
+def _sanitize_resume_data(data: dict) -> dict:
+    """Strip whitespace and remove empty detail entries before rendering."""
+    if 'experience' in data:
+        for exp in data['experience']:
+            exp['details'] = [d.strip() for d in exp.get('details', []) if isinstance(d, str) and d.strip()]
+    if 'projects' in data:
+        for proj in data['projects']:
+            proj['details'] = [d.strip() for d in proj.get('details', []) if isinstance(d, str) and d.strip()]
+    if 'contact' in data and isinstance(data['contact'], dict):
+        for key, val in data['contact'].items():
+            if isinstance(val, str):
+                data['contact'][key] = val.strip()
+    return data
 
 def render_latex_to_pdf(template_id: str, data: dict) -> bytes:
     full_latex = render_latex_source(template_id, data)

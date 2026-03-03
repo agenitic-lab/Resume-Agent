@@ -57,7 +57,7 @@ export default function Navbar() {
               Log in
             </Link>
             <Button asChild className="rounded-full px-6 shadow-sm hover:-translate-y-0.5 transition-all duration-200">
-              <Link to="/register">Get Started</Link>
+              <Link to="/login">Get Started</Link>
             </Button>
 
             {/* Mobile Hamburger */}
@@ -100,7 +100,7 @@ export default function Navbar() {
                   Log in
                 </Link>
                 <Button asChild className="w-full" size="lg">
-                  <Link to="/register" onClick={() => setMobileOpen(false)}>Get Started</Link>
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>Get Started</Link>
                 </Button>
               </div>
             </Motion.div>

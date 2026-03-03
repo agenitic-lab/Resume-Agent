@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict
 
 class ResumeCreate(BaseModel):
-    field: str
-    experience_level: str
+    field: str = Field(..., min_length=1)
+    experience_level: str = Field(..., min_length=1)
     contact: Dict
     experience: List[Dict]
     education: List[Dict]

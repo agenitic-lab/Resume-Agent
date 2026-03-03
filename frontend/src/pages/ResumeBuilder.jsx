@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference, analyzeResumeForATS, getTemplates, compileLatex as apiCompileLatex } from '../services/api';
+import { createResume, getResumeLatexSource, downloadResume, generateResumeBullets, generateResumeSummary, generateProjectBullets, getApiKeyStatus, getTemplatePreference, analyzeResumeForATS, getTemplates, compileLatex as apiCompileLatex, optimizeResumeBuilder } from '../services/api';
 import toast from 'react-hot-toast';
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -154,7 +154,7 @@ function MonthYearPicker({ value, onChange, placeholder, allowPresent = false })
     }, [value]);
 
     const handleSelect = (month, year) => {
-        const formatted = `${month} ${year} `;
+        const formatted = `${month} ${year}`;
         onChange(formatted);
         setSelectedMonth(month);
         setSelectedYear(year);
@@ -682,7 +682,7 @@ export default function ResumeBuilder() {
         const newErrors = {};
         const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-        const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-s.]?[0-9]{3}[-s.]?[0-9]{4,6}$/;
+        const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
 
         switch (currentStep) {
             case 1: // Contact
@@ -707,20 +707,21 @@ export default function ResumeBuilder() {
                 break;
             case 4: // Experience
                 formData.experience.forEach((exp, i) => {
-                    if (!exp.title.trim()) newErrors[`exp_title_${i} `] = 'Job title is required';
-                    if (!exp.company.trim()) newErrors[`exp_company_${i} `] = 'Company is required';
-                    if (!exp.start_date) newErrors[`exp_start_${i} `] = 'Start date is required';
+                    if (!exp.title.trim()) newErrors[`exp_title_${i}`] = 'Job title is required';
+                    if (!exp.company.trim()) newErrors[`exp_company_${i}`] = 'Company is required';
+                    if (!exp.start_date) newErrors[`exp_start_${i}`] = 'Start date is required';
                 });
                 break;
             case 5: // Projects
                 formData.projects.forEach((proj, i) => {
-                    if (!proj.title.trim()) newErrors[`proj_title_${i} `] = 'Project name is required';
+                    if (!proj.title.trim()) newErrors[`proj_title_${i}`] = 'Project name is required';
                 });
                 break;
             case 6: // Education
+                if (formData.education.length === 0) newErrors.education = 'Add at least one education entry';
                 formData.education.forEach((edu, i) => {
-                    if (!edu.degree.trim()) newErrors[`edu_degree_${i} `] = 'Degree is required';
-                    if (!edu.school.trim()) newErrors[`edu_school_${i} `] = 'School is required';
+                    if (!edu.degree.trim()) newErrors[`edu_degree_${i}`] = 'Degree is required';
+                    if (!edu.school.trim()) newErrors[`edu_school_${i}`] = 'School is required';
                 });
                 break;
             case 7: // Skills
@@ -760,20 +761,29 @@ export default function ResumeBuilder() {
     const handleSaveAndPreview = async (overrideData = null) => {
         setLoading(true);
         try {
-            const dataToSave = overrideData || formData;
-            // 1. Save resume to get ID
+            const raw = overrideData || formData;
+            // Strip empty details before sending
+            const dataToSave = {
+                ...raw,
+                experience: raw.experience.map(exp => ({
+                    ...exp, details: exp.details.filter(d => d.trim())
+                })),
+                projects: raw.projects.map(proj => ({
+                    ...proj, details: proj.details.filter(d => d.trim())
+                }))
+            };
+
             const res = await createResume(dataToSave);
             setResumeId(res.resume_id);
 
-            // 2. Fetch raw LaTeX source for the editor
             const sourceData = await getResumeLatexSource(res.resume_id, selectedTemplate);
             if (sourceData && sourceData.latex_code) {
                 setLatexCode(sourceData.latex_code);
-                hasAutoCompiled.current = false; // Reset so useEffect will auto-compile the new source
+                hasAutoCompiled.current = false;
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to generate preview");
+            toast.error(error.message || "Failed to generate preview");
         } finally {
             setLoading(false);
         }
@@ -832,33 +842,15 @@ export default function ResumeBuilder() {
         const loadingToast = toast.loading("Applying AI optimizations... This takes 10-15 seconds...");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/resume/optimize`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('token') || ''} `
-                },
-                body: JSON.stringify({
-                    resume_data: formData,
-                    selected_recommendations: selectedRecs
-                })
-            });
+            const optimizedData = await optimizeResumeBuilder(formData, selectedRecs);
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || "Optimization failed");
-            }
-
-            const optimizedData = await response.json();
-
-            // Store original and optimized data for review instead of applying immediately
             setOriginalDataSnapshot(JSON.parse(JSON.stringify(formData)));
             setPendingOptimizedData(optimizedData);
 
             toast.success("Resume optimized successfully!", { id: loadingToast });
             setOptimizationComplete(true);
         } catch (error) {
-            toast.error(error.message, { id: loadingToast });
+            toast.error(error.message || "Optimization failed", { id: loadingToast });
         } finally {
             setIsOptimizing(false);
         }
@@ -1440,7 +1432,7 @@ export default function ResumeBuilder() {
                                         onChange={e => updateEducation(idx, 'degree', e.target.value)}
                                         className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`edu_degree_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                     />
-                                    {errors[`edu_degree_${idx} `] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_degree_${idx} `]}</p>}
+                                    {err(`edu_degree_${idx}`)}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Institution</label>
@@ -1450,7 +1442,7 @@ export default function ResumeBuilder() {
                                         onChange={e => updateEducation(idx, 'school', e.target.value)}
                                         className={`p-4 bg-secondary rounded-xl border w-full text-base font-medium transition-all focus:ring-2 focus:ring-brand/20 ${errors[`edu_school_${idx}`] ? 'border-red-500/30 bg-red-50/50' : 'border-gray-100 hover:border-gray-200'}`}
                                     />
-                                    {errors[`edu_school_${idx} `] && <p className="text-xs font-bold text-red-400 mt-1 ml-1 italic">{errors[`edu_school_${idx} `]}</p>}
+                                    {err(`edu_school_${idx}`)}
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div className="space-y-2">

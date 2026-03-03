@@ -1,4 +1,3 @@
-# Auth endpoints - register and login
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -6,188 +5,16 @@ from sqlalchemy.exc import IntegrityError
 
 from database.connection import get_db
 from database.models.user import User
-from schemas.auth import (
-    RegisterRequest,
-    RegisterResponse,
-    LoginRequest,
-    LoginResponse,
-    UserResponse,
-    ErrorResponse
-)
+from schemas.auth import LoginResponse, UserResponse, ErrorResponse
 from schemas.google import GoogleLoginRequest
-from core.security import hash_password, verify_password
 from auth.jwt import create_access_token
 from auth.google_oauth import verify_google_token
 from auth.dependencies import get_current_user
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
-
-# Registration Endpoint
-
-@router.post(
-    "/register",
-    response_model=RegisterResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new user",
-    description="Create a new user account with email and password",
-    responses={
-        201: {
-            "description": "User successfully registered",
-            "model": RegisterResponse
-        },
-        400: {
-            "description": "Email already registered",
-            "model": ErrorResponse
-        },
-        422: {
-            "description": "Validation error",
-            "model": ErrorResponse
-        }
-    }
-)
-def register_user(
-    data: RegisterRequest,
-    db: Session = Depends(get_db)
-) -> RegisterResponse:
-    logger.info(f"Registration attempt for email: {data.email}")
-    
-    # Hash password securely
-    hashed_password = hash_password(data.password)
-
-    # Create user instance
-    user = User(
-        email=data.email,
-        password_hash=hashed_password,
-        auth_provider='email'
-    )
-
-    # Add to database
-    db.add(user)
-
-    try:
-        db.commit()
-        db.refresh(user)
-        logger.info(f"User registered successfully: {user.id}")
-        
-    except IntegrityError:
-        db.rollback()
-        logger.warning(f"Registration failed - email already exists: {data.email}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-
-    return RegisterResponse(
-        user_id=str(user.id),
-        email=user.email,
-        message="User registered successfully"
-    )
-
-
-# Login Endpoint
-
-@router.post(
-    "/login",
-    response_model=LoginResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Login and receive JWT token",
-    description="Authenticate with email and password to receive a JWT access token",
-    responses={
-        200: {
-            "description": "Login successful, returns JWT token and user info",
-            "model": LoginResponse
-        },
-        401: {
-            "description": "Invalid credentials",
-            "model": ErrorResponse,
-            "content": {
-                "application/json": {
-                    "example": {
-                        "error": "AuthenticationError",
-                        "message": "Invalid email or password",
-                        "details": None
-                    }
-                }
-            }
-        },
-        422: {
-            "description": "Validation error",
-            "model": ErrorResponse
-        }
-    }
-)
-def login(
-    credentials: LoginRequest,
-    db: Session = Depends(get_db)
-) -> LoginResponse:
-    # Authenticate user and return JWT token
-    logger.info(f"Login attempt for email: {credentials.email}")
-    
-    # Step 1: Find user by email
-    user = db.query(User).filter(User.email == credentials.email).first()
-    
-    if not user:
-        logger.warning(f"Login failed - user not found: {credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    # Step 2: Check if user is OAuth user
-    if user.auth_provider != 'email':
-        logger.warning(f"Login failed - OAuth user attempted password login: {credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"This account uses {user.auth_provider} authentication. Please sign in with {user.auth_provider}.",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    # Step 3: Verify password
-    if not verify_password(credentials.password, user.password_hash):
-        logger.warning(f"Login failed - invalid password for: {credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    # Step 4: Generate JWT token
-    try:
-        access_token, expires_in = create_access_token(
-            user_id=str(user.id),
-            email=user.email
-        )
-        logger.info(f"Login successful for user: {user.id}")
-        
-    except Exception as e:
-        logger.error(f"Token generation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate access token"
-        )
-    
-    # Step 5: Return response with token and user info
-    return LoginResponse(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=expires_in,
-        user=UserResponse(
-            id=str(user.id),
-            email=user.email,
-            created_at=user.created_at,
-            role=user.role
-        )
-    )
-
-
-# ============================================================================
-# Google OAuth Endpoint
-# ============================================================================
 
 @router.post(
     "/google",
@@ -210,10 +37,8 @@ def google_auth(
     data: GoogleLoginRequest,
     db: Session = Depends(get_db)
 ) -> LoginResponse:
-    # Authenticate via Google OAuth (handles both sign-in and sign-up)
     logger.info("Google OAuth authentication attempt")
-    
-    # Step 1: Verify Google token and extract user info
+
     try:
         google_user = verify_google_token(data.credential)
     except ValueError as e:
@@ -223,13 +48,11 @@ def google_auth(
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
-    # Step 2: Find or create user (all DB ops wrapped to prevent bare 500)
+
     try:
         user = db.query(User).filter(User.google_id == google_user.google_id).first()
-        
+
         if user:
-            # Existing user - update profile info if changed
             logger.info(f"Existing Google user logging in: {user.email}")
             if google_user.profile_picture and user.profile_picture != google_user.profile_picture:
                 user.profile_picture = google_user.profile_picture
@@ -238,12 +61,11 @@ def google_auth(
             db.commit()
             db.refresh(user)
         else:
-            # Check if email already exists (user might have registered with email/password)
+            # Check if email exists from a previous registration method
             user = db.query(User).filter(User.email == google_user.email).first()
-            
+
             if user:
-                # Email exists but not linked to Google - link it
-                logger.info(f"Linking existing email account to Google: {user.email}")
+                logger.info(f"Linking existing account to Google: {user.email}")
                 user.google_id = google_user.google_id
                 user.auth_provider = 'google'
                 user.profile_picture = google_user.profile_picture
@@ -251,7 +73,6 @@ def google_auth(
                 db.commit()
                 db.refresh(user)
             else:
-                # New user - create account
                 logger.info(f"Creating new Google user: {google_user.email}")
                 user = User(
                     email=google_user.email,
@@ -259,10 +80,10 @@ def google_auth(
                     auth_provider='google',
                     profile_picture=google_user.profile_picture,
                     full_name=google_user.full_name,
-                    password_hash=None  # OAuth users don't have passwords
+                    password_hash=None
                 )
                 db.add(user)
-                
+
                 try:
                     db.commit()
                     db.refresh(user)
@@ -275,7 +96,7 @@ def google_auth(
                         detail="Failed to create user account"
                     )
     except HTTPException:
-        raise  # re-raise HTTPExceptions as-is
+        raise
     except Exception as e:
         db.rollback()
         logger.error(f"Database error during Google auth: {str(e)}", exc_info=True)
@@ -283,23 +104,21 @@ def google_auth(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error during authentication. Please try again."
         )
-    
-    # Step 3: Generate JWT token
+
     try:
         access_token, expires_in = create_access_token(
             user_id=str(user.id),
             email=user.email
         )
         logger.info(f"Google authentication successful for user: {user.id}")
-        
+
     except Exception as e:
         logger.error(f"Token generation failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate access token"
         )
-    
-    # Step 4: Return response with token and user info
+
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
@@ -312,10 +131,6 @@ def google_auth(
         )
     )
 
-
-# ============================================================================
-# User Profile Endpoint
-# ============================================================================
 
 @router.get(
     "/me",
@@ -337,7 +152,6 @@ def google_auth(
 def get_current_user_profile(
     current_user: User = Depends(get_current_user)
 ) -> UserResponse:
-    # Get current authenticated user profile
     return UserResponse(
         id=str(current_user.id),
         email=current_user.email,

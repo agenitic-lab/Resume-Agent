@@ -4,57 +4,6 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
-class RegisterRequest(BaseModel):
-    
-    email: EmailStr = Field(
-        ...,
-        description="User's email address",
-        examples=["user@example.com"]
-    )
-    password: str = Field(
-        ...,
-        min_length=8,
-        max_length=100,
-        description="User password (min 8 characters)",
-        examples=["SecurePass123!"]
-    )
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "email": "john.doe@example.com",
-                "password": "MySecurePassword123!"
-            }
-        }
-    )
-
-
-class LoginRequest(BaseModel):
-    
-    email: str = Field(
-        ...,
-        min_length=1,
-        description="User's email address",
-        examples=["user@example.com"]
-    )
-    password: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        description="User password",
-        examples=["SecurePass123!"]
-    )
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "email": "john.doe@example.com",
-                "password": "MySecurePassword123!"
-            }
-        }
-    )
-
-
 class UserResponse(BaseModel):
     
     id: str = Field(
@@ -171,35 +120,6 @@ class LoginResponse(BaseModel):
                     "email": "john.doe@example.com",
                     "created_at": "2024-01-15T10:30:00Z"
                 }
-            }
-        }
-    )
-
-
-class RegisterResponse(BaseModel):
-    
-    user_id: str = Field(
-        ...,
-        description="Newly created user's unique identifier",
-        examples=["123e4567-e89b-12d3-a456-426614174000"]
-    )
-    email: str = Field(
-        ...,
-        description="Registered email address",
-        examples=["user@example.com"]
-    )
-    message: str = Field(
-        default="User registered successfully",
-        description="Success message",
-        examples=["User registered successfully"]
-    )
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "user_id": "123e4567-e89b-12d3-a456-426614174000",
-                "email": "john.doe@example.com",
-                "message": "User registered successfully"
             }
         }
     )

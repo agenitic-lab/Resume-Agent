@@ -16,7 +16,7 @@ from main import app
 from database.connection import Base, get_db
 from database.models.user import User
 from auth.jwt import create_access_token
-from core.security import hash_password
+
 
 # Use the same DB engine as CI/production for test isolation
 TEST_DB_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
@@ -60,23 +60,25 @@ def setup_database():
 
 @pytest.fixture
 def test_user():
-    """Create a test user in the database."""
+    """Create a test user in the database (Google OAuth user)."""
     db = TestingSessionLocal()
-    
+
     user = User(
         email="test@example.com",
-        password_hash=hash_password("testpassword123")
+        auth_provider="google",
+        google_id="test-google-id-123",
+        password_hash=None
     )
-    
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    
+
     user_id = str(user.id)
     user_email = user.email
-    
+
     db.close()
-    
+
     return {"id": user_id, "email": user_email}
 
 

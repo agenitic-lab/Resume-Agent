@@ -104,7 +104,7 @@ export default function Home() {
                         className="flex flex-col sm:flex-row items-center gap-4 mb-20"
                     >
                         <Button asChild size="lg" className="w-full sm:w-auto h-14 px-8 rounded-full text-base">
-                            <Link to="/register">
+                            <Link to="/login">
                                 Optimize My Resume — Free
                                 <Sparkles className="w-4 h-4 ml-2" />
                             </Link>
@@ -215,7 +215,7 @@ export default function Home() {
 
                         <div className="mt-16">
                             <Button asChild size="lg" className="h-14 px-10 rounded-full text-base">
-                                <Link to="/register">
+                                <Link to="/login">
                                     Start Optimizing — It's Free
                                     <Sparkles className="w-4 h-4 ml-2" />
                                 </Link>
@@ -253,7 +253,7 @@ export default function Home() {
                             and get past applicant tracking systems. Free to start, no credit card required.
                         </p>
                         <Button asChild size="lg" className="h-14 px-10 rounded-full text-base">
-                            <Link to="/register">
+                            <Link to="/login">
                                 Get Started Free
                                 <Sparkles className="w-4 h-4 ml-2" />
                             </Link>

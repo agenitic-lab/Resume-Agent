@@ -124,28 +124,6 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
-// Auth endpoints
-export async function register(email, password) {
-    return apiRequest('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-    });
-}
-
-export async function login(email, password) {
-    const data = await apiRequest('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-    });
-
-    // Store token on successful login
-    if (data.access_token) {
-        setToken(data.access_token);
-    }
-
-    return data;
-}
-
 export async function googleAuth(credential) {
     const data = await apiRequest('/api/auth/google', {
         method: 'POST',
@@ -464,6 +442,16 @@ export async function analyzeResumeForATS(data) {
     return apiRequest('/api/resume/analyze', {
         method: 'POST',
         body: JSON.stringify(data),
+    });
+}
+
+export async function optimizeResumeBuilder(resumeData, selectedRecommendations) {
+    return apiRequest('/api/resume/optimize', {
+        method: 'POST',
+        body: JSON.stringify({
+            resume_data: resumeData,
+            selected_recommendations: selectedRecommendations,
+        }),
     });
 }
 
