@@ -431,6 +431,10 @@ export async function compileLatex(latexCode) {
     return response.blob();
 }
 
+export async function getUserResumes() {
+    return apiRequest('/api/resume/list');
+}
+
 export async function createResume(data) {
     return apiRequest('/api/resume/create', {
         method: 'POST',
