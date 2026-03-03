@@ -15,6 +15,30 @@ from typing import List
 
 router = APIRouter(prefix="/api/resume", tags=["Resume Builder"])
 
+
+@router.get("/list")
+def list_resumes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resumes = (
+        db.query(Resume)
+        .filter(Resume.user_id == current_user.id)
+        .order_by(Resume.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    return [
+        {
+            "id": str(r.id),
+            "field": r.field,
+            "name": (r.contact or {}).get("name", "Untitled Resume"),
+            "experience_level": r.experience_level,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in resumes
+    ]
+
 @router.post("/create")
 def create_resume(
     payload: ResumeCreate,
