@@ -184,7 +184,7 @@ export default function MissingSkills() {
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
         {/* Page header */}
         <div className="mb-8">
@@ -229,8 +229,8 @@ export default function MissingSkills() {
                     key={t}
                     onClick={() => setResumeInputType(t)}
                     className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${resumeInputType === t
-                        ? 'bg-brand text-white'
-                        : 'text-muted hover:text-primary'
+                      ? 'bg-brand text-white'
+                      : 'text-muted hover:text-primary'
                       }`}
                   >
                     {t === 'text' ? 'Paste Text' : 'Upload PDF'}
@@ -403,7 +403,7 @@ export default function MissingSkills() {
           )}
 
           {isAnalyzing && (
-              <p className="text-muted text-xs font-medium animate-pulse">
+            <p className="text-muted text-xs font-medium animate-pulse">
               Running {Math.min(jobDescriptions.filter(j => j.trim()).length, 10)} API calls…
             </p>
           )}

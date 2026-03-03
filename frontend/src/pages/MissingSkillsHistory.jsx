@@ -70,7 +70,7 @@ export default function MissingSkillsHistory() {
 
     return (
         <div className="min-h-screen bg-primary p-4 md:p-8">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-12">
                     <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">Missing Skills History</h1>
@@ -172,8 +172,8 @@ export default function MissingSkillsHistory() {
                                                     <button
                                                         onClick={() => handleToggleExpand(item.id)}
                                                         className={`p-4 rounded-2xl transition-all shadow-inner border active:scale-95 ${isExpanded
-                                                                ? 'bg-brand text-white border-brand-primary'
-                                                                : 'bg-secondary hover:bg-brand text-gray-500 hover:text-black border-gray-100 hover:border-brand-primary'
+                                                            ? 'bg-brand text-white border-brand-primary'
+                                                            : 'bg-secondary hover:bg-brand text-gray-500 hover:text-black border-gray-100 hover:border-brand-primary'
                                                             }`}
                                                         title={isExpanded ? "Collapse" : "Expand Details"}
                                                     >
