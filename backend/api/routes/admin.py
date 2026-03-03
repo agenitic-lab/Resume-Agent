@@ -216,17 +216,16 @@ def get_unified_activity_query(db: Session, user_id=None, is_global=False):
         queries.append(q_api_keys)
 
     # Global events
-    if is_global or not user_id:
-        q_new_users = db.query(
-            cast(User.id, String).label('entity_id'),
-            cast(User.id, String).label('user_id'),
-            literal_column("'new_user_registered'").label('type'),
-            literal_column("'completed'").label('status'),
-            User.created_at.label('created_at')
-        )
-        if user_id:
-            q_new_users = q_new_users.filter(cast(User.id, String) == str(user_id))
-        queries.append(q_new_users)
+    q_new_users = db.query(
+        cast(User.id, String).label('entity_id'),
+        cast(User.id, String).label('user_id'),
+        literal_column("'new_user_registered'").label('type'),
+        literal_column("'completed'").label('status'),
+        User.created_at.label('created_at')
+    )
+    if user_id:
+        q_new_users = q_new_users.filter(cast(User.id, String) == str(user_id))
+    queries.append(q_new_users)
 
     if not queries:
         return None
@@ -453,6 +452,7 @@ from fastapi import Body
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "templates")
 
 from pydantic import BaseModel
+from typing import List
 import json
 
 ADMIN_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "admin_templates.json")
@@ -473,6 +473,8 @@ def save_admin_templates(templates_dict):
 
 class AdminTemplateUpdate(BaseModel):
     name: str = None
+    description: str = None
+    tags: List[str] = None
     preamble: str
 
 @router.get("/templates")
@@ -510,11 +512,11 @@ def update_admin_template(
     templates[template_id] = {
         "id": template_id,
         "name": update_data.name or existing.get("name", template_id),
-        "description": existing.get("description", "Admin Custom Template"),
+        "description": update_data.description or existing.get("description", "Admin Custom Template"),
         "author": existing.get("author", "Admin"),
         "source": "System (Admin Built-in)",
         "preview_color": existing.get("preview_color", "#805AD5"), # brand color
-        "tags": existing.get("tags", ["admin-custom"]),
+        "tags": update_data.tags if update_data.tags is not None else existing.get("tags", ["admin-custom"]),
         "is_admin_custom": True,
         "preamble": update_data.preamble
     }
@@ -527,13 +529,27 @@ def delete_admin_template(
     template_id: str,
     current_admin: User = Depends(get_current_admin)
 ):
-    """Delete an admin custom template."""
-    templates = load_admin_templates()
-    if template_id not in templates:
-        raise HTTPException(status_code=404, detail="Admin Custom Template not found")
+    """Delete an admin custom template or built-in template."""
+    from services.latex_templates import get_combined_templates, load_deleted_templates, DELETED_TEMPLATES_FILE
+    import json
+    import os
+    
+    combined = get_combined_templates()
+    if template_id not in combined:
+        raise HTTPException(status_code=404, detail="Template not found")
         
-    del templates[template_id]
-    save_admin_templates(templates)
+    templates = load_admin_templates()
+    if template_id in templates:
+        del templates[template_id]
+        save_admin_templates(templates)
+    else:
+        deleted = load_deleted_templates()
+        if template_id not in deleted:
+            deleted.append(template_id)
+            os.makedirs(os.path.dirname(DELETED_TEMPLATES_FILE), exist_ok=True)
+            with open(DELETED_TEMPLATES_FILE, 'w', encoding='utf-8') as f:
+                json.dump(deleted, f)
+                
     return {"message": "Template deleted successfully"}
 
 

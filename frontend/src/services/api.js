@@ -606,10 +606,10 @@ export async function getAdminTemplateContent(templateId) {
     return apiRequest(`/api/admin/templates/${templateId}`);
 }
 
-export async function updateAdminTemplate(templateId, name, preamble) {
+export async function updateAdminTemplate(templateId, name, preamble, description, tags) {
     return apiRequest(`/api/admin/templates/${templateId}`, {
         method: 'PUT',
-        body: JSON.stringify({ name, preamble }),
+        body: JSON.stringify({ name, preamble, description, tags }),
     });
 }
 

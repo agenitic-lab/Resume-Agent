@@ -136,6 +136,8 @@ export default function AdminTemplates() {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState('');
     const [formName, setFormName] = useState('');
+    const [formDescription, setFormDescription] = useState('');
+    const [formTags, setFormTags] = useState('');
     const [formLatex, setFormLatex] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -161,6 +163,8 @@ export default function AdminTemplates() {
     const handleCreateNew = () => {
         setEditingId('');
         setFormName('');
+        setFormDescription('');
+        setFormTags('');
         setFormLatex('% Paste your LaTeX preamble here\n\\documentclass[a4paper,11pt]{article}\n\\usepackage[empty]{fullpage}\n% ... custom styles');
         setShowForm(true);
     };
@@ -171,6 +175,8 @@ export default function AdminTemplates() {
             const data = await getAdminTemplateContent(templateId);
             setEditingId(templateId);
             setFormName(data.name || templateId);
+            setFormDescription(data.description || '');
+            setFormTags((data.tags || []).join(', '));
             setFormLatex(data.content || '');
             setShowForm(true);
         } catch {
@@ -196,7 +202,8 @@ export default function AdminTemplates() {
 
         try {
             setIsSaving(true);
-            await updateAdminTemplate(targetId, formName, formLatex);
+            const tagsArray = formTags.split(',').map(t => t.trim()).filter(Boolean);
+            await updateAdminTemplate(targetId, formName, formLatex, formDescription, tagsArray);
             toast.success('Template saved successfully');
             setShowForm(false);
             fetchBuiltinTemplates();
@@ -244,6 +251,28 @@ export default function AdminTemplates() {
                             onChange={(e) => setFormName(e.target.value)}
                             className="w-full p-3 rounded-xl border border-gray-200 focus:ring-1 focus:ring-brand focus:border-brand outline-none"
                             placeholder="e.g. My Custom Corporate Style"
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sub Heading / Description</label>
+                        <input
+                            type="text"
+                            value={formDescription}
+                            onChange={(e) => setFormDescription(e.target.value)}
+                            className="w-full p-3 rounded-xl border border-gray-200 focus:ring-1 focus:ring-brand focus:border-brand outline-none"
+                            placeholder="e.g. Clean single-column resume with bold section headers."
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Template Tags (comma separated)</label>
+                        <input
+                            type="text"
+                            value={formTags}
+                            onChange={(e) => setFormTags(e.target.value)}
+                            className="w-full p-3 rounded-xl border border-gray-200 focus:ring-1 focus:ring-brand focus:border-brand outline-none"
+                            placeholder="e.g. modern, ats-friendly, classic"
                         />
                     </div>
 
@@ -374,18 +403,16 @@ export default function AdminTemplates() {
                                     >
                                         Edit LaTeX
                                     </Button>
-                                    {tmpl.is_admin_custom && (
-                                        <Button
-                                            onClick={() => handleDelete(tmpl.id)}
-                                            variant="outline"
-                                            className="py-4 rounded-xl font-semibold text-sm transition-all border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 px-3"
-                                            title="Delete Template"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </Button>
-                                    )}
+                                    <Button
+                                        onClick={() => handleDelete(tmpl.id)}
+                                        variant="outline"
+                                        className="py-4 rounded-xl font-semibold text-sm transition-all border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 px-3"
+                                        title="Delete Template"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </Button>
                                 </div>
                             </div>
                         );

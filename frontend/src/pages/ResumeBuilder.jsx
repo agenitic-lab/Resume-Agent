@@ -803,7 +803,7 @@ export default function ResumeBuilder() {
         }
     };
 
-    const runAIAnalyzer = async () => {
+    const runAIAnalyzer = useCallback(async () => {
         if (!hasApiKey) {
             toast.error("API Key required to perform ATS analysis.");
             return;
@@ -820,7 +820,7 @@ export default function ResumeBuilder() {
             toast.error("Failed to analyze resume");
             setAnalysisStatus("Analysis failed.");
         }
-    };
+    }, [hasApiKey, formData, setAnalysisStatus, setAnalysisResult]);
 
     const handleOptimizeWithAI = async () => {
         if (!selectedRecs || selectedRecs.length === 0) {
@@ -869,7 +869,7 @@ export default function ResumeBuilder() {
         if (currentStep === 10 && !analysisResult && !isOptimizing) {
             runAIAnalyzer();
         }
-    }, [currentStep, analysisResult, isOptimizing]);
+    }, [currentStep, analysisResult, isOptimizing, runAIAnalyzer]);
 
     const compileLatex = useCallback(async (code) => {
         setIsCompiling(true);
