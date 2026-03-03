@@ -222,7 +222,7 @@ export default function OptimizationResults() {
     if (loading) {
         return (
             <div className="min-h-screen bg-primary p-6 md:p-10">
-                <div className="max-w-5xl mx-auto">
+                <div className="max-w-7xl mx-auto">
                     {/* Back button */}
                     <Skeleton className="h-10 w-32 mb-8 rounded-2xl" />
 

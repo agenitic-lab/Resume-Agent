@@ -71,7 +71,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">Account Settings</h1>
           <p className="text-gray-500 text-sm">Manage your API configuration and account session</p>

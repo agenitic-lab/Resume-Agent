@@ -68,7 +68,7 @@ function PreviewModal({ templateId, templateName, onClose }) {
             cancelled = true;
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [templateId]);
 
     // Close on Escape key
@@ -296,7 +296,7 @@ export default function Templates() {
 
     return (
         <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-10">
                     <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">Resume Templates</h1>
@@ -422,7 +422,7 @@ export default function Templates() {
                                             className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-50 ${isActive
                                                 ? 'bg-brand/10 text-brand border border-brand-primary/20 cursor-default'
                                                 : 'bg-brand text-white hover:opacity-90 shadow-lg shadow-brand-primary/10'
-                                            }`}
+                                                }`}
                                         >
                                             {isActive ? 'Active' : 'Set as Default'}
                                         </button>
@@ -452,8 +452,8 @@ export default function Templates() {
                                                 key={idx}
                                                 className={`bg-secondary rounded-2xl p-5 border transition-all ${isActive ? 'border-brand-primary/30 ring-1 ring-brand/10' : 'border-gray-100'}`}
                                             >
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
-                                                <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                                                    <div className="flex items-center gap-3 min-w-0 flex-wrap">
                                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${isActive ? 'bg-brand text-white' : 'bg-gray-200 text-gray-500'}`}>
                                                             {idx + 1}
                                                         </div>

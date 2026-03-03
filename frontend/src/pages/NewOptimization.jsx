@@ -405,7 +405,7 @@ export default function NewOptimization() {
         <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
             {/* Compact prerequisites bar — shown only when something is missing */}
             {(hasApiKey === false || hasTemplate === false) && (
-                <div className="max-w-5xl mx-auto mb-6">
+                <div className="max-w-7xl mx-auto mb-6">
                     <div className="bg-surface border border-gray-200 rounded-2xl px-4 py-3 shadow-sm flex flex-wrap items-center gap-2">
                         {/* Label */}
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-1 shrink-0">
@@ -452,7 +452,7 @@ export default function NewOptimization() {
             )}
 
             {/* Step Indicator - Technical Version */}
-            <div className="max-w-5xl mx-auto mb-16 relative">
+            <div className="max-w-7xl mx-auto mb-16 relative">
                 <div className="flex items-center justify-between px-4">
                     {steps.map((step, index) => (
                         <React.Fragment key={step.number}>
@@ -494,7 +494,7 @@ export default function NewOptimization() {
             </div>
 
             {/* Main Content Container with Background Grid */}
-            <div className="max-w-5xl mx-auto relative min-h-[400px] md:min-h-[600px]">
+            <div className="max-w-7xl mx-auto relative min-h-[400px] md:min-h-[600px]">
                 {/* Background Decoration */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute inset-0 cyber-grid opacity-20" />
