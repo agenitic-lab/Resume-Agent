@@ -445,6 +445,16 @@ export async function analyzeResumeForATS(data) {
     });
 }
 
+export async function optimizeResumeBuilder(resumeData, selectedRecommendations) {
+    return apiRequest('/api/resume/optimize', {
+        method: 'POST',
+        body: JSON.stringify({
+            resume_data: resumeData,
+            selected_recommendations: selectedRecommendations,
+        }),
+    });
+}
+
 export async function getResumePreview(resumeId, templateName) {
     const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {

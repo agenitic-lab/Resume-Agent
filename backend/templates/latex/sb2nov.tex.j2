@@ -28,10 +28,12 @@
       {<< exp.title >>}{}
       {<< exp.company >>}{<< exp.start_date >> -- << exp.end_date or 'Present' >>}
       \vspace{-2.0mm}
-      <%% if exp.details|length > 0 %%>
+      <%% if exp.details %%>
       \resumeItemListStart
         <%% for detail in exp.details %%>
+        <%% if detail.strip() %%>
         \item {<< detail >>}
+        <%% endif %%>
         <%% endfor %%>
       \resumeItemListEnd
       <%% endif %%>
@@ -50,10 +52,19 @@
       {<< proj.tools >>}
       {}
       {}
-      <%% if proj.details|length > 0 %%>
+      <%% if proj.role %%>
+      \vspace{-1mm}
+      \begin{itemize}[leftmargin=0.05in, label={}]
+          \small{\item{\textit{<< proj.role >>}}}
+      \end{itemize}
+      \vspace{-2mm}
+      <%% endif %%>
+      <%% if proj.details %%>
       \resumeItemListStart
         <%% for detail in proj.details %%>
+        <%% if detail.strip() %%>
         \item {<< detail >>}
+        <%% endif %%>
         <%% endfor %%>
       \resumeItemListEnd
       <%% endif %%>
@@ -65,10 +76,9 @@
 
 <%% if custom_sections|length > 0 %%>
 <%% for sec in custom_sections %%>
-\cvsection{<< sec.type >>}
+\cvsection{<< sec.title or sec.type >>}
  \begin{itemize}[leftmargin=0.05in, label={}]
     \small{\item{
-        <%% if sec.title %%>\textbf{<< sec.title >>} \\ \vspace{2pt} <%% endif %%>
         <%% if sec.content %%><< sec.content >><%% endif %%>
     }}
  \end{itemize}
@@ -77,7 +87,7 @@
 <%% endif %%>
 
 <%% if skills|length > 0 %%>
-\cvsection{Technical Skills and Interests}
+\cvsection{Skills}
  \begin{itemize}[leftmargin=0.05in, label={}]
     \small{\item{
      \textbf{Skills}{: << skills | join(', ') >>}

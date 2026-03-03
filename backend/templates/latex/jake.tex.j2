@@ -36,10 +36,19 @@
     <%% for proj in projects %%>
        \resumeProjectHeading
           {\textbf{\large{\underline{<< proj.title >>}}} <%% if proj.tools %%>$|$ \large{\underline{<< proj.tools >>}}<%% endif %%>}{}
-          <%% if proj.details|length > 0 %%>
+          <%% if proj.role %%>
+          \vspace{-4pt}
+          \begin{itemize}[leftmargin=0.15in, label={}]
+              \small{\item{\textit{\normalsize{<< proj.role >>}}}}
+          \end{itemize}
+          \vspace{-7pt}
+          <%% endif %%>
+          <%% if proj.details %%>
           \resumeItemListStart
             <%% for detail in proj.details %%>
+            <%% if detail.strip() %%>
             \resumeItem{\normalsize{<< detail >>}}
+            <%% endif %%>
             <%% endfor %%>
           \resumeItemListEnd 
           <%% endif %%>
@@ -56,10 +65,12 @@
     \resumeSubheading
       {<< exp.company >>}{<< exp.start_date >> -- << exp.end_date or 'Present' >>} 
       {\underline{<< exp.title >>}}{}
-      <%% if exp.details|length > 0 %%>
+      <%% if exp.details %%>
       \resumeItemListStart
         <%% for detail in exp.details %%>
+        <%% if detail.strip() %%>
         \resumeItem{\normalsize{<< detail >>}}
+        <%% endif %%>
         <%% endfor %%>
       \resumeItemListEnd  
       <%% endif %%>
@@ -70,10 +81,9 @@
 
 <%% if custom_sections|length > 0 %%>
 <%% for sec in custom_sections %%>
-\section{\textls[100]{<< sec.type | upper >>}}
+\section{\textls[100]{<< (sec.title or sec.type) | upper >>}}
 \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
-        <%% if sec.title %%>\textbf{\normalsize{<< sec.title >>}} \\ \vspace{2pt} <%% endif %%>
         <%% if sec.content %%>\normalsize{<< sec.content >>}<%% endif %%>
     }}
 \end{itemize}
@@ -82,7 +92,7 @@
 <%% endif %%>
 
 <%% if skills|length > 0 %%>
-\section{TECHNICAL SKILLS}
+\section{SKILLS}
  \begin{itemize}[leftmargin=0.15in, label={}]
     \small{\item{
      \textbf{\normalsize{Skills:}}{ \normalsize{<< skills | join(', ') >>}} \\
