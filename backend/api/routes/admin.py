@@ -23,6 +23,9 @@ class UserRoleUpdate(BaseModel):
 class UserBlockUpdate(BaseModel):
     is_blocked: bool
 
+class UserTestUpdate(BaseModel):
+    is_test_user: bool
+
 @router.get("/users", response_model=PaginatedUserResponse)
 def get_all_users(
     page: int = 1,
@@ -60,7 +63,8 @@ def get_all_users(
             full_name=user.full_name,
             profile_picture=user.profile_picture,
             role=user.role,
-            is_blocked=getattr(user, 'is_blocked', False)
+            is_blocked=getattr(user, 'is_blocked', False),
+            is_test_user=getattr(user, 'is_test_user', False)
         ) for user in users
     ]
     
@@ -111,6 +115,23 @@ def update_user_block(
     
     status_msg = "blocked" if user.is_blocked else "unblocked"
     return {"message": f"User {status_msg} successfully", "is_blocked": user.is_blocked}
+
+@router.put("/users/{user_id}/test-user")
+def update_user_test_status(
+    user_id: str,
+    data: UserTestUpdate,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_test_user = data.is_test_user
+    db.commit()
+
+    status_msg = "enabled" if user.is_test_user else "disabled"
+    return {"message": f"Test user access {status_msg}", "is_test_user": user.is_test_user}
 
 @router.delete("/users/{user_id}")
 def delete_user(
@@ -551,6 +572,40 @@ def delete_admin_template(
                 json.dump(deleted, f)
                 
     return {"message": "Template deleted successfully"}
+
+
+# ── Global Default Template ──────────────────────────────────────────────────
+
+DEFAULT_TEMPLATE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "default_template.json")
+
+class DefaultTemplateUpdate(BaseModel):
+    template_id: str
+
+@router.get("/default-template")
+def get_default_template(
+    current_admin: User = Depends(get_current_admin)
+):
+    try:
+        with open(DEFAULT_TEMPLATE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"template_id": None}
+
+@router.put("/default-template")
+def set_default_template(
+    body: DefaultTemplateUpdate,
+    current_admin: User = Depends(get_current_admin)
+):
+    from services.latex_templates import get_combined_templates
+    combined = get_combined_templates()
+    if body.template_id not in combined:
+        raise HTTPException(status_code=404, detail="Template not found in available templates")
+
+    os.makedirs(os.path.dirname(DEFAULT_TEMPLATE_FILE), exist_ok=True)
+    with open(DEFAULT_TEMPLATE_FILE, "w", encoding="utf-8") as f:
+        json.dump({"template_id": body.template_id}, f, indent=2)
+
+    return {"message": "Default template updated", "template_id": body.template_id}
 
 
 # ── Maintenance Mode ──────────────────────────────────────────────────────────

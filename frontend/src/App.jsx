@@ -26,6 +26,7 @@ function AppContent() {
   const location = useLocation();
   const [maintenance, setMaintenance] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isTestUser, setIsTestUser] = useState(false);
   const [maintenanceChecked, setMaintenanceChecked] = useState(false);
 
   const checkMaintenance = async () => {
@@ -39,8 +40,10 @@ function AppContent() {
       ]);
       const active = status.status === 'fulfilled' ? status.value?.active : false;
       const role = user.status === 'fulfilled' ? user.value?.role : null;
+      const testUser = user.status === 'fulfilled' ? user.value?.is_test_user : false;
       setMaintenance(active);
       setIsAdmin(role === 'admin');
+      setIsTestUser(!!testUser);
     } catch {
       // silently fail — don't block the app
     } finally {
@@ -93,7 +96,7 @@ function AppContent() {
   // Show maintenance page for non-admins when maintenance is active
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute = ['/', '/login', '/register', '/signup'].includes(location.pathname);
-  if (maintenanceChecked && maintenance && !isAdmin && !isAdminRoute && !isAuthRoute) {
+  if (maintenanceChecked && maintenance && !isAdmin && !isTestUser && !isAdminRoute && !isAuthRoute) {
     return <Maintenance onRefresh={checkMaintenance} />;
   }
 

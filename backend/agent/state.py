@@ -38,6 +38,11 @@ class ResumeAgentState(TypedDict):
     template_id: Optional[str]
     custom_template_latex: Optional[str]
 
+    # LaTeX compilation validation
+    latex_compilation_status: Optional[str]
+    latex_compilation_error: Optional[str]
+    latex_retry_count: int
+
 
 def create_initial_state(
     user_id: str,
@@ -76,4 +81,7 @@ def create_initial_state(
         "created_at": datetime.utcnow().isoformat(),
         "template_id": template_id,
         "custom_template_latex": custom_template_latex,
+        "latex_compilation_status": None,
+        "latex_compilation_error": None,
+        "latex_retry_count": 0,
     }

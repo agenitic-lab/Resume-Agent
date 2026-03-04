@@ -36,15 +36,37 @@ except ImportError as e:
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
+import os as _os
+
+_DEFAULT_TEMPLATE_FILE = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
+    "data", "default_template.json"
+)
+
+def _get_global_default_template() -> str | None:
+    """Read admin-set global default template ID from data/default_template.json."""
+    try:
+        with open(_DEFAULT_TEMPLATE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("template_id")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
 def _resolve_template(user) -> tuple:
     """Resolve the user's template preference to (template_id, custom_latex).
     
     For custom templates (custom_0, custom_1, custom_2), looks up the latex
     from the user's custom_templates JSON array. For builtin templates,
-    returns (template_id, None).
+    returns (template_id, None). Falls back to admin-set global default.
     """
     template_id = getattr(user, 'default_template', None)
+
+    # Fall back to admin-set global default if user has no preference
     if not template_id:
+        global_default = _get_global_default_template()
+        if global_default:
+            return global_default, None
         return None, None
     
     if template_id.startswith("custom_"):
@@ -55,7 +77,6 @@ def _resolve_template(user) -> tuple:
                 return "custom", custom_templates[idx].get("latex", "")
         except (ValueError, IndexError):
             pass
-        # Fallback: try legacy single custom field
         legacy = getattr(user, 'custom_template_latex', None)
         if legacy:
             return "custom", legacy
@@ -394,8 +415,11 @@ def run_agent_workflow(
         # Generate run ID
         run_id = f"run-{uuid.uuid4()}"
         
-        # Get user's template preference
-        template_id, custom_latex = _resolve_template(current_user)
+        # Skip template when user provided raw LaTeX
+        if request.input_type == "latex":
+            template_id, custom_latex = None, None
+        else:
+            template_id, custom_latex = _resolve_template(current_user)
         
         print(f"Starting optimization run: {run_id} for user {current_user.id}")
         
@@ -449,7 +473,9 @@ def run_agent_workflow(
             resume_analysis=result.get("resume_analysis"),
             improvement_plan=result.get("improvement_plan"),
             decision_log=result.get("decision_log"),
-            score_history=result.get("score_history")
+            score_history=result.get("score_history"),
+            latex_compilation_status=result.get("latex_compilation_status"),
+            latex_compilation_error=result.get("latex_compilation_error"),
         )
         
     except Exception as e:
@@ -520,8 +546,11 @@ def run_agent_workflow_stream(
             detail="Stored API key is invalid. Please set your API key again in Settings.",
         )
 
-    # Get template preference
-    template_id, custom_latex = _resolve_template(current_user)
+    # Skip template when user provided raw LaTeX
+    if request.input_type == "latex":
+        template_id, custom_latex = None, None
+    else:
+        template_id, custom_latex = _resolve_template(current_user)
 
     run_id = f"run-{uuid.uuid4()}"
     event_queue = Queue()
@@ -632,6 +661,8 @@ def run_agent_workflow_stream(
                     "improvement_plan": result.get("improvement_plan"),
                     "decision_log": result.get("decision_log"),
                     "score_history": result.get("score_history"),
+                    "latex_compilation_status": result.get("latex_compilation_status"),
+                    "latex_compilation_error": result.get("latex_compilation_error"),
                 }
             }
             yield f"event: completed\ndata: {json.dumps(final_data, default=str)}\n\n"
@@ -713,7 +744,9 @@ def get_run(
         improvement_plan=improvement_plan,
         decision_log=result_json.get("decision_log"),
         score_history=result_json.get("score_history"),
-        cover_letter=result_json.get("cover_letter")
+        cover_letter=result_json.get("cover_letter"),
+        latex_compilation_status=result_json.get("latex_compilation_status"),
+        latex_compilation_error=result_json.get("latex_compilation_error"),
     )
 
 

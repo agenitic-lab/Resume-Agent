@@ -105,6 +105,13 @@ def google_auth(
             detail="Database error during authentication. Please try again."
         )
 
+    if user.is_blocked:
+        logger.warning(f"Blocked user attempted login: {user.email}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked. Please contact support."
+        )
+
     try:
         access_token, expires_in = create_access_token(
             user_id=str(user.id),

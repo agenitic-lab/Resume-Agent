@@ -251,7 +251,7 @@ export default function NewOptimization() {
                 } else if (event === 'run_completed') {
                     setLiveStatusLogs(prev => prev.map(item => ({ ...item, status: 'OK' })));
                 }
-            });
+            }, inputType);
             console.log('Optimization response:', {
                 final_status: data.final_status,
                 fit_decision: data.fit_decision,
@@ -339,36 +339,41 @@ export default function NewOptimization() {
                 const optimizedLatexCode = data.modified_resume;
                 setOptimizedLatex(optimizedLatexCode);
 
-                // Compile the optimized LaTeX
-                setIsCompiling(true);
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ latex_code: optimizedLatexCode }),
-                    });
+                // Skip compile if backend already validated it as a failure
+                if (data.latex_compilation_status === 'failed') {
+                    setToast({ message: 'Optimization succeeded but PDF compilation failed. You can edit the LaTeX and click "Refresh View" to try again.', type: 'warning' });
+                } else {
+                    // Compile the optimized LaTeX
+                    setIsCompiling(true);
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ latex_code: optimizedLatexCode }),
+                        });
 
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        setCompiledPdfUrl(url);
-                        setToast({ message: 'Optimization completed successfully!', type: 'success' });
-                    } else {
-                        let detail = 'LaTeX compilation failed';
-                        try {
-                            const errData = await response.json();
-                            detail = errData.detail || errData.message || detail;
-                        } catch { /* non-JSON response */ }
-                        console.error('Compile response error:', detail);
-                        throw new Error(detail);
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            setCompiledPdfUrl(url);
+                            setToast({ message: 'Optimization completed successfully!', type: 'success' });
+                        } else {
+                            let detail = 'LaTeX compilation failed';
+                            try {
+                                const errData = await response.json();
+                                detail = errData.detail || errData.message || detail;
+                            } catch { /* non-JSON response */ }
+                            console.error('Compile response error:', detail);
+                            throw new Error(detail);
+                        }
+                    } catch (compileError) {
+                        console.error('Compilation error:', compileError);
+                        setToast({ message: 'Optimization succeeded but PDF compilation failed. Check LaTeX syntax.', type: 'warning' });
+                    } finally {
+                        setIsCompiling(false);
                     }
-                } catch (compileError) {
-                    console.error('Compilation error:', compileError);
-                    setToast({ message: 'Optimization succeeded but PDF compilation failed. Check LaTeX syntax.', type: 'warning' });
-                } finally {
-                    setIsCompiling(false);
                 }
             } else {
                 throw new Error('No optimized resume returned from server');
@@ -873,40 +878,124 @@ export default function NewOptimization() {
                                     </div>
 
                                     {!optimizedLatex ? (
-                                        <div className="text-center py-24 flex flex-col items-center">
-                                            <div className="w-32 h-32 mb-12 relative">
-                                                <Motion.div
-                                                    animate={{ rotate: 360 }}
-                                                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                                    className="absolute inset-0 border-4 border-brand-primary border-t-transparent rounded-full"
-                                                />
-                                                <Motion.div
-                                                    animate={{ rotate: -360 }}
-                                                    transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                                                    className="absolute inset-4 border border-brand-primary/20 border-b-transparent rounded-full"
-                                                />
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <div className="w-2 h-2 bg-brand rounded-full animate-pulse" />
+                                        <div className="flex flex-col items-center py-8 md:py-12">
+                                            {/* Loading spinner */}
+                                            <div className="mb-8 md:mb-10">
+                                                <div className="w-20 h-20 relative">
+                                                    <Motion.div
+                                                        animate={{ rotate: 360 }}
+                                                        transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                                                        className="absolute inset-0 border-[3px] border-brand border-t-transparent rounded-full"
+                                                    />
+                                                    <Motion.div
+                                                        animate={{ rotate: -360 }}
+                                                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                                        className="absolute inset-2 border-2 border-brand/20 border-b-transparent rounded-full"
+                                                    />
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <div className="w-2 h-2 bg-brand rounded-full animate-pulse" />
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="space-y-6 font-mono max-w-md w-full">
-                                                <div className="text-sm font-black text-primary italic tracking-widest animate-pulse">OPTIMIZING_RESUME...</div>
-                                                <div className="grid grid-cols-1 gap-1 text-[8px] text-gray-500 uppercase tracking-[0.2em] text-left">
-                                                    {(liveStatusLogs.length > 0 ? liveStatusLogs : [
-                                                        { label: 'WAITING_FOR_SERVER', status: 'RUNNING' }
-                                                    ]).map((log, i) => (
+
+                                            {/* Step list */}
+                                            <div className="w-full max-w-lg space-y-3">
+                                                {(() => {
+                                                    const PIPELINE_STEPS = [
+                                                        { key: 'EXTRACTING_JOB_REQUIREMENTS', message: 'Extracting Job Requirements' },
+                                                        { key: 'ANALYZING_RESUME', message: 'Analyzing Resume' },
+                                                        { key: 'CHECKING_JOB_FIT', message: 'Checking Job Fit' },
+                                                        { key: 'SCORING_ORIGINAL_RESUME', message: 'Scoring Original Resume' },
+                                                        { key: 'PLANNING_IMPROVEMENTS', message: 'Planning Improvements' },
+                                                        { key: 'OPTIMIZING_RESUME', message: 'Optimizing Resume' },
+                                                        { key: 'RE-SCORING_RESUME', message: 'Re-scoring Resume' },
+                                                        { key: 'GENERATING_COVER_LETTER', message: 'Generating Cover Letter' },
+                                                    ];
+
+                                                    const logMap = {};
+                                                    liveStatusLogs.forEach(log => {
+                                                        logMap[log.label.toUpperCase().replace(/\s+/g, '_')] = log.status;
+                                                    });
+
+                                                    let activeFound = false;
+                                                    const steps = PIPELINE_STEPS.map(step => {
+                                                        const status = logMap[step.key];
+                                                        if (status === 'OK') return { ...step, state: 'completed' };
+                                                        if (status === 'RUNNING') { activeFound = true; return { ...step, state: 'active' }; }
+                                                        if (status === 'FAILED') return { ...step, state: 'failed' };
+                                                        if (!activeFound && liveStatusLogs.length > 0) return { ...step, state: 'pending' };
+                                                        return { ...step, state: 'pending' };
+                                                    });
+
+                                                    return steps.map((step, i) => (
                                                         <Motion.div
-                                                            key={`${log.label}-${i}`}
-                                                            initial={{ opacity: 0, x: -10 }}
-                                                            animate={{ opacity: 1, x: 0 }}
-                                                            transition={{ delay: 0.05 }}
-                                                            className="flex justify-between border-b border-white/5 py-1"
+                                                            key={step.key}
+                                                            initial={{ opacity: 0, y: 8 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: i * 0.05 }}
+                                                            className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all duration-300 ${step.state === 'active'
+                                                                ? 'bg-brand/5 border-l-4 border-brand shadow-sm'
+                                                                : step.state === 'failed'
+                                                                    ? 'bg-red-50 border-l-4 border-red-400'
+                                                                    : step.state === 'completed'
+                                                                        ? 'bg-transparent'
+                                                                        : 'bg-transparent opacity-50'
+                                                                }`}
                                                         >
-                                                            <span className="truncate mr-2">[{log.label}]</span>
-                                                            <span className={log.status === 'OK' ? 'text-brand' : log.status === 'RUNNING' ? 'text-yellow-500 animate-pulse' : 'text-gray-500'}>// {log.status}</span>
+                                                            {/* Icon */}
+                                                            <div className="flex-shrink-0">
+                                                                {step.state === 'completed' ? (
+                                                                    <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center">
+                                                                        <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                    </div>
+                                                                ) : step.state === 'active' ? (
+                                                                    <div className="w-7 h-7 relative">
+                                                                        <Motion.div
+                                                                            animate={{ rotate: 360 }}
+                                                                            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                                                            className="absolute inset-0 border-2 border-brand border-t-transparent rounded-full"
+                                                                        />
+                                                                    </div>
+                                                                ) : step.state === 'failed' ? (
+                                                                    <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
+                                                                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                                        </svg>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-7 h-7 rounded-full border-2 border-gray-200" />
+                                                                )}
+                                                            </div>
+
+                                                            {/* Text + progress bar */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className={`text-sm font-medium leading-snug ${step.state === 'active' ? 'text-primary' :
+                                                                    step.state === 'completed' ? 'text-secondary' :
+                                                                        step.state === 'failed' ? 'text-red-600' :
+                                                                            'text-gray-400'
+                                                                    }`}>
+                                                                    {step.message}
+                                                                </p>
+                                                                {(step.state === 'completed' || step.state === 'active') && (
+                                                                    <div className="mt-2 h-1 rounded-full bg-gray-100 overflow-hidden">
+                                                                        {step.state === 'completed' ? (
+                                                                            <div className="h-full bg-brand/30 rounded-full w-full" />
+                                                                        ) : (
+                                                                            <Motion.div
+                                                                                className="h-full bg-brand rounded-full"
+                                                                                initial={{ width: '10%' }}
+                                                                                animate={{ width: ['10%', '70%', '40%', '85%', '60%'] }}
+                                                                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                                                            />
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </Motion.div>
-                                                    ))}
-                                                </div>
+                                                    ));
+                                                })()}
                                             </div>
                                         </div>
                                     ) : (

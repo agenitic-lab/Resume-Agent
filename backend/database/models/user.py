@@ -13,6 +13,7 @@ class User(Base):
     password_hash = Column(String, nullable=True)  # Nullable for OAuth users
     role = Column(String, default="user", nullable=False)
     is_blocked = Column(Boolean, default=False, nullable=False)
+    is_test_user = Column(Boolean, default=False, nullable=False)
     
     # API key storage (encrypted)
     encrypted_api_key = Column(Text, nullable=True)

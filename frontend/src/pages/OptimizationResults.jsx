@@ -21,6 +21,7 @@ export default function OptimizationResults() {
     const [isCompiling, setIsCompiling] = useState(false);
     const [toast, setToast] = useState(null);
     const hasAutoCompiled = useRef(false);
+    const [latexCompilationStatus, setLatexCompilationStatus] = useState(null);
 
     const [warningDismissed, setWarningDismissed] = useState(false);
 
@@ -119,6 +120,7 @@ export default function OptimizationResults() {
                 if (data.modified_resume) {
                     setLatexCode(data.modified_resume);
                 }
+                setLatexCompilationStatus(data.latex_compilation_status || null);
             } catch (err) {
                 console.error("Failed to fetch run details:", err);
                 setError("Failed to load optimization results.");
@@ -162,13 +164,13 @@ export default function OptimizationResults() {
         }
     }, [compiledPdfUrl]);
 
-    // auto-compile when latex code is first loaded from the API
+    // auto-compile when latex code is first loaded, but skip if backend already failed
     useEffect(() => {
-        if (latexCode && !hasAutoCompiled.current) {
+        if (latexCode && !hasAutoCompiled.current && latexCompilationStatus !== 'failed') {
             hasAutoCompiled.current = true;
             compileLatex(latexCode);
         }
-    }, [latexCode, compileLatex]);
+    }, [latexCode, compileLatex, latexCompilationStatus]);
 
     const handleRecompile = () => compileLatex(latexCode);
 
@@ -593,6 +595,31 @@ export default function OptimizationResults() {
                             <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
                                 <h2 className="text-2xl font-black text-primary mb-2 italic tracking-tighter uppercase">Final Optimized Resume</h2>
                                 <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-8">Resume editor and visual preview</p>
+
+                                {latexCompilationStatus === 'failed' && (
+                                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 mb-6 flex items-start gap-4">
+                                        <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="text-amber-600 font-bold text-sm mb-1">PDF Compilation Failed</h4>
+                                            <p className="text-secondary text-sm leading-relaxed mb-3">
+                                                The generated LaTeX could not be compiled to PDF automatically. You can edit the code in the editor and click <strong>"Refresh View"</strong> to try recompiling, or report this issue.
+                                            </p>
+                                            <a
+                                                href={`mailto:support@resiko.app?subject=LaTeX compilation failure (Run ${id})&body=Run ID: ${id}%0APlease look into this compilation failure.`}
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 text-amber-700 rounded-xl text-xs font-semibold hover:bg-amber-500/30 transition-colors"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                                Report Issue
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* LaTeX Editor */}

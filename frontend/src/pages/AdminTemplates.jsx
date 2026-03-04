@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getTemplates, getTemplatePreviewUrl, getToken, updateAdminTemplate, deleteAdminTemplate, getAdminTemplateContent } from '../services/api';
+import { getTemplates, getTemplatePreviewUrl, getToken, updateAdminTemplate, deleteAdminTemplate, getAdminTemplateContent, getAdminDefaultTemplate, setAdminDefaultTemplate } from '../services/api';
 import toast from 'react-hot-toast';
 import { Skeleton } from '../components/ui/skeleton';
 import { Button } from "../components/ui/button";
@@ -131,6 +131,7 @@ function PreviewModal({ templateId, templateName, onClose }) {
 export default function AdminTemplates() {
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [globalDefault, setGlobalDefault] = useState(null);
 
     // Editor state
     const [showForm, setShowForm] = useState(false);
@@ -146,7 +147,15 @@ export default function AdminTemplates() {
 
     useEffect(() => {
         fetchBuiltinTemplates();
+        fetchDefaultTemplate();
     }, []);
+
+    const fetchDefaultTemplate = async () => {
+        try {
+            const data = await getAdminDefaultTemplate();
+            setGlobalDefault(data.template_id || null);
+        } catch { /* ignore */ }
+    };
 
     const fetchBuiltinTemplates = async () => {
         try {
@@ -157,6 +166,16 @@ export default function AdminTemplates() {
             toast.error('Failed to load system templates');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSetDefault = async (templateId) => {
+        try {
+            await setAdminDefaultTemplate(templateId);
+            setGlobalDefault(templateId);
+            toast.success('Default template updated');
+        } catch (err) {
+            toast.error(err.message || 'Failed to set default template');
         }
     };
 
@@ -381,7 +400,12 @@ export default function AdminTemplates() {
 
                                 {/* Info */}
                                 <div className="flex-1">
-                                    <h3 className="text-base font-bold text-primary mb-1">{tmpl.name}</h3>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-base font-bold text-primary">{tmpl.name}</h3>
+                                        {globalDefault === tmpl.id && (
+                                            <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-brand/10 text-brand">Default</span>
+                                        )}
+                                    </div>
                                     <p className="text-gray-500 text-xs leading-relaxed mb-3 line-clamp-2">{tmpl.description}</p>
 
                                     {/* Tags */}
@@ -403,6 +427,18 @@ export default function AdminTemplates() {
                                     >
                                         Edit LaTeX
                                     </Button>
+                                    {globalDefault !== tmpl.id && (
+                                        <Button
+                                            onClick={() => handleSetDefault(tmpl.id)}
+                                            variant="outline"
+                                            className="py-4 rounded-xl font-semibold text-sm transition-all border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3"
+                                            title="Set as Default"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </Button>
+                                    )}
                                     <Button
                                         onClick={() => handleDelete(tmpl.id)}
                                         variant="outline"
