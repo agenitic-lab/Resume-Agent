@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any, List
 class OptimizeRequest(BaseModel):
     job_description: str = Field(..., min_length=50)
     resume: str = Field(..., min_length=100)
+    input_type: Optional[str] = None  # "pdf" or "latex" — when "latex", skip template
 
 
 class OptimizeResponse(BaseModel):
@@ -41,6 +42,10 @@ class OptimizeResponse(BaseModel):
     decision_log: Optional[List[Dict[str, Any]]] = None
     score_history: Optional[List[float]] = None
     cover_letter: Optional[str] = None
+
+    # LaTeX compilation validation
+    latex_compilation_status: Optional[str] = None
+    latex_compilation_error: Optional[str] = None
 
 
 class RunStatusResponse(BaseModel):

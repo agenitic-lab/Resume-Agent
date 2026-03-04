@@ -188,5 +188,27 @@ def test_login_endpoint_removed():
     assert response.status_code == 404 or response.status_code == 405
 
 
+@patch("api.routes.auth.verify_google_token")
+def test_google_auth_blocked_user(mock_verify):
+    """Blocked user should get 403 at login, not a token."""
+    mock_verify.return_value = MOCK_GOOGLE_USER
+
+    # Create the user first
+    client.post("/api/auth/google", json={"credential": "fake-token"})
+
+    # Block the user directly in the DB
+    db = TestingSessionLocal()
+    user = db.query(User).filter(User.email == "test@gmail.com").first()
+    user.is_blocked = True
+    db.commit()
+    db.close()
+
+    # Attempt login again — should be rejected
+    response = client.post("/api/auth/google", json={"credential": "fake-token"})
+
+    assert response.status_code == 403
+    assert "blocked" in response.json()["detail"].lower()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

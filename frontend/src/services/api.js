@@ -289,20 +289,20 @@ export async function getRun(runId) {
     return apiRequest(`/api/agent/runs/${runId}`);
 }
 
-export async function optimizeResumeStream(jobDescription, resume, onEvent) {
+export async function optimizeResumeStream(jobDescription, resume, onEvent, inputType = null) {
     const token = getToken();
     let response;
     try {
+        const body = { job_description: jobDescription, resume };
+        if (inputType) body.input_type = inputType;
+
         response = await fetch(`${API_URL}/api/agent/run/stream`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({
-                job_description: jobDescription,
-                resume,
-            }),
+            body: JSON.stringify(body),
         });
     } catch {
         throw new Error('Cannot connect to backend. Ensure API server is running.');
@@ -633,10 +633,28 @@ export async function deleteAdminTemplate(templateId) {
     });
 }
 
+export async function getAdminDefaultTemplate() {
+    return apiRequest('/api/admin/default-template');
+}
+
+export async function setAdminDefaultTemplate(templateId) {
+    return apiRequest('/api/admin/default-template', {
+        method: 'PUT',
+        body: JSON.stringify({ template_id: templateId }),
+    });
+}
+
 export async function updateAdminUserBlock(userId, isBlocked) {
     return apiRequest(`/api/admin/users/${userId}/block`, {
         method: 'PUT',
         body: JSON.stringify({ is_blocked: isBlocked }),
+    });
+}
+
+export async function updateAdminUserTestStatus(userId, isTestUser) {
+    return apiRequest(`/api/admin/users/${userId}/test-user`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_test_user: isTestUser }),
     });
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminUsers, updateAdminUserRole, deleteAdminUser, updateAdminUserBlock, getAdminMetrics } from '../services/api';
+import { getAdminUsers, updateAdminUserRole, deleteAdminUser, updateAdminUserBlock, updateAdminUserTestStatus, getAdminMetrics } from '../services/api';
 import toast from 'react-hot-toast';
 import { Button } from "../components/ui/button";
 import { Skeleton } from '../components/ui/skeleton';
@@ -79,6 +79,16 @@ export default function AdminUsers() {
         }
     };
 
+    const handleTestUserToggle = async (userId, currentStatus) => {
+        try {
+            await updateAdminUserTestStatus(userId, !currentStatus);
+            toast.success(`Test user access ${!currentStatus ? 'enabled' : 'disabled'}`);
+            fetchUsers();
+        } catch {
+            toast.error('Failed to update test user status');
+        }
+    };
+
 
 
     const totalPages = Math.ceil(totalUsers / pageSize) || 1;
@@ -145,6 +155,7 @@ export default function AdminUsers() {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -157,6 +168,9 @@ export default function AdminUsers() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <Skeleton className="h-9 w-24 rounded-md" />
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <Skeleton className="h-5 w-20 rounded-md" />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
                                         <Skeleton className="h-8 w-16" />
@@ -186,6 +200,19 @@ export default function AdminUsers() {
                                             </select>
                                         )}
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex gap-1.5">
+                                            {user.is_blocked && (
+                                                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-50 text-red-600">Blocked</span>
+                                            )}
+                                            {user.is_test_user && (
+                                                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-50 text-cyan-600">Test User</span>
+                                            )}
+                                            {!user.is_blocked && !user.is_test_user && (
+                                                <span className="text-xs text-gray-400">Active</span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
                                         {!isLastAdmin && (
                                             <>
@@ -198,6 +225,17 @@ export default function AdminUsers() {
                                                         } px-3 py-1 h-auto`}
                                                 >
                                                     {user.is_blocked ? 'Unblock' : 'Block'}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleTestUserToggle(user.id, user.is_test_user)}
+                                                    variant="outline"
+                                                    className={`${user.is_test_user
+                                                        ? 'bg-cyan-50 border-cyan-100 text-cyan-600 hover:bg-cyan-100'
+                                                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                                                        } px-3 py-1 h-auto`}
+                                                    title={user.is_test_user ? 'Remove test user access' : 'Grant test user access (bypasses maintenance mode)'}
+                                                >
+                                                    {user.is_test_user ? 'Remove Test' : 'Set Test'}
                                                 </Button>
                                                 <Button
                                                     onClick={() => handleDelete(user.id)}
@@ -217,7 +255,7 @@ export default function AdminUsers() {
                         })}
                         {!loading && users.length === 0 && (
                             <tr>
-                                <td colSpan="3" className="px-6 py-4 text-center text-gray-500">
+                                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
                                     No users found.
                                 </td>
                             </tr>

@@ -73,6 +73,8 @@ def ensure_user_template_columns():
         statements.append("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'")
     if "is_blocked" not in existing:
         statements.append("ALTER TABLE users ADD COLUMN is_blocked BOOLEAN DEFAULT FALSE")
+    if "is_test_user" not in existing:
+        statements.append("ALTER TABLE users ADD COLUMN is_test_user BOOLEAN DEFAULT FALSE")
 
     if not statements:
         return
