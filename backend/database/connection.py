@@ -116,6 +116,7 @@ def ensure_runtime_schema():
     from database.models.run import Run
     from database.models.missing_skills_run import MissingSkillsRun
     from database.models.resume import Resume, ResumeTemplate
+    from database.models.support import SupportTicket
 
     # Ensure core tables exist (safe with checkfirst behavior).
     Base.metadata.create_all(bind=engine, tables=[
@@ -124,6 +125,7 @@ def ensure_runtime_schema():
         MissingSkillsRun.__table__,
         Resume.__table__,
         ResumeTemplate.__table__,
+        SupportTicket.__table__,
     ])
 
     # Ensure incremental user columns exist for BYOK.

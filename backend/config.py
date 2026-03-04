@@ -81,6 +81,13 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
+    # SMTP & Support
+    SMTP_HOST: Optional[str] = os.getenv("SMTP_HOST")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: Optional[str] = os.getenv("SMTP_USER")
+    SMTP_PASSWORD: Optional[str] = os.getenv("SMTP_PASSWORD")
+    SUPPORT_EMAIL: str = os.getenv("SUPPORT_EMAIL", "support@resiko.app")
+    
     @classmethod
     def get_allowed_origins_list(cls) -> list[str]:
         # Parse comma-separated ALLOWED_ORIGINS into a list
