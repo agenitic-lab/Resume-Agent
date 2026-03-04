@@ -30,7 +30,7 @@ export default function Auth() {
             toast.error('Your session has expired. Please sign in again.', { id: 'session-expired' });
             navigate(location.pathname, { replace: true });
         }
-    }, [location.search, navigate]);
+    }, [location.pathname, location.search, navigate]);
 
     const handleGoogleSuccess = async (credentialResponse) => {
         setLoading(true);

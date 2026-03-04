@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getAdminSupportTickets, updateAdminSupportTicketStatus } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -7,28 +7,28 @@ export default function AdminSupport() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, open, in_progress, closed
 
-    const fetchTickets = async () => {
+    const fetchTickets = useCallback(async () => {
         setLoading(true);
         try {
             const data = await getAdminSupportTickets(filter);
             setTickets(data);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load support tickets');
         } finally {
             setLoading(false);
         }
-    };
+    }, [filter]);
 
     useEffect(() => {
         fetchTickets();
-    }, [filter]);
+    }, [fetchTickets]);
 
     const updateStatus = async (id, newStatus) => {
         try {
             await updateAdminSupportTicketStatus(id, newStatus);
             toast.success(`Ticket marked as ${newStatus.replace('_', ' ')}`);
             fetchTickets();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update status');
         }
     };

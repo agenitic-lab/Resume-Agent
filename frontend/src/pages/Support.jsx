@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { createSupportTicket } from '../services/api';
 
@@ -44,7 +44,7 @@ export default function Support() {
                     </p>
                 </div>
 
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100"
@@ -126,7 +126,7 @@ export default function Support() {
                             </button>
                         </div>
                     </form>
-                </motion.div>
+                </Motion.div>
             </div>
         </div>
     );
