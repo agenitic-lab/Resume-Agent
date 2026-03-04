@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 export default function AdminSupport() {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all'); // all, open, in_progress, closed
+    const [filter, setFilter] = useState('all'); // all, unread, read
 
     const fetchTickets = useCallback(async () => {
         setLoading(true);
@@ -26,7 +26,7 @@ export default function AdminSupport() {
     const updateStatus = async (id, newStatus) => {
         try {
             await updateAdminSupportTicketStatus(id, newStatus);
-            toast.success(`Ticket marked as ${newStatus.replace('_', ' ')}`);
+            toast.success(`Ticket marked as ${newStatus}`);
             fetchTickets();
         } catch {
             toast.error('Failed to update status');
@@ -35,12 +35,10 @@ export default function AdminSupport() {
 
     const getStatusBadge = (status) => {
         switch (status) {
-            case 'open':
-                return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Open</span>;
-            case 'in_progress':
-                return <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">In Progress</span>;
-            case 'closed':
-                return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Closed</span>;
+            case 'unread':
+                return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Unread</span>;
+            case 'read':
+                return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">Read</span>;
             default:
                 return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{status}</span>;
         }
@@ -60,9 +58,8 @@ export default function AdminSupport() {
                         className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md"
                     >
                         <option value="all">All Tickets</option>
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="closed">Closed</option>
+                        <option value="unread">Unread</option>
+                        <option value="read">Read</option>
                     </select>
                     <button onClick={fetchTickets} className="p-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,15 +95,12 @@ export default function AdminSupport() {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex flex-col gap-2 min-w-[120px]">
-                                        {ticket.status !== 'open' && (
-                                            <button onClick={() => updateStatus(ticket.id, 'open')} className="text-xs px-3 py-1.5 border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 rounded-md font-medium text-center">Mark Open</button>
+                                    <div className="flex flex-col gap-2 min-w-30">
+                                        {ticket.status !== 'read' && (
+                                            <button onClick={() => updateStatus(ticket.id, 'read')} className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-md font-medium text-center">Mark Read</button>
                                         )}
-                                        {ticket.status !== 'in_progress' && (
-                                            <button onClick={() => updateStatus(ticket.id, 'in_progress')} className="text-xs px-3 py-1.5 border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md font-medium text-center">Mark In Progress</button>
-                                        )}
-                                        {ticket.status !== 'closed' && (
-                                            <button onClick={() => updateStatus(ticket.id, 'closed')} className="text-xs px-3 py-1.5 border border-green-200 text-green-700 bg-green-50 hover:bg-green-100 rounded-md font-medium text-center">Mark Closed</button>
+                                        {ticket.status !== 'unread' && (
+                                            <button onClick={() => updateStatus(ticket.id, 'unread')} className="text-xs px-3 py-1.5 border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md font-medium text-center">Mark Unread</button>
                                         )}
                                         <a href={`mailto:${ticket.email}?subject=Re: ${ticket.subject}`} className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-md font-medium text-center mt-2">
                                             Reply via Email

@@ -478,7 +478,7 @@ export default function NewOptimization() {
                             </div>
                             {index < steps.length - 1 && (
                                 <div className="flex-1 px-4 mt-6">
-                                    <div className="h-[1px] relative">
+                                    <div className="h-px relative">
                                         <div className="absolute inset-0 bg-border-subtle" />
                                         <Motion.div
                                             initial={{ width: "0%" }}
@@ -494,11 +494,11 @@ export default function NewOptimization() {
             </div>
 
             {/* Main Content Container with Background Grid */}
-            <div className="max-w-5xl mx-auto relative min-h-[400px] md:min-h-[600px]">
+            <div className="max-w-5xl mx-auto relative min-h-100 md:min-h-150">
                 {/* Background Decoration */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute inset-0 cyber-grid opacity-20" />
-                    <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-brand/5 blur-[120px] rounded-full" />
+                    <div className="absolute top-[20%] right-[10%] w-125 h-125 bg-brand/5 blur-[120px] rounded-full" />
                 </div>
 
                 {/* Main Container */}
@@ -540,9 +540,9 @@ export default function NewOptimization() {
                                             <button
                                                 key={opt.id}
                                                 onClick={() => setInputType(opt.id)}
-                                                className={`group relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
+                                                className={`group relative p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-4xl border transition-all duration-500 text-left overflow-hidden ${inputType === opt.id
                                                     ? 'border-brand-primary bg-brand/5 shadow-[0_0_40px_rgba(255,75,114,0.1)]'
-                                                    : 'border-gray-200 hover:border-text-secondary hover:bg-white/[0.02]'
+                                                    : 'border-gray-200 hover:border-text-secondary hover:bg-white/2'
                                                     }`}
                                             >
                                                 {/* Numeric Anchor */}
@@ -566,7 +566,7 @@ export default function NewOptimization() {
                                                 </div>
 
                                                 {/* Hover glint */}
-                                                <div className="absolute inset-0 bg-gradient-to-tr from-brand-primary/0 via-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                                                <div className="absolute inset-0 bg-linear-to-trrom-brand-primary/0 via-brand-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                                             </button>
                                         ))}
                                     </div>
@@ -614,9 +614,9 @@ export default function NewOptimization() {
                                                 onDrop={handleDrop}
                                                 onDragOver={handleDragOver}
                                                 onDragLeave={handleDragLeave}
-                                                className={`relative border border-dashed rounded-[2rem] p-8 md:p-16 text-center transition-all duration-500 overflow-hidden ${isDragging
+                                                className={`relative border border-dashed rounded-4xl p-8 md:p-16 text-center transition-all duration-500 overflow-hidden ${isDragging
                                                     ? 'border-brand-primary bg-brand/10 shadow-[inner_0_0_40px_rgba(255,75,114,0.1)]'
-                                                    : 'border-gray-200 hover:border-brand-primary/30 bg-white/[0.02]'
+                                                    : 'border-gray-200 hover:border-brand-primary/30 bg-white/2'
                                                     }`}
                                             >
                                                 <input
@@ -668,7 +668,7 @@ export default function NewOptimization() {
                                                             animate={{ opacity: 1 }}
                                                             className="space-y-8"
                                                         >
-                                                            <div className="w-24 h-24 mx-auto bg-brand/5 rounded-[2rem] flex items-center justify-center border border-brand-primary/20">
+                                                            <div className="w-24 h-24 mx-auto bg-brand/5 rounded-4xl flex items-center justify-center border border-brand-primary/20">
                                                                 <svg className="w-10 h-10 text-brand/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                                                 </svg>
@@ -702,7 +702,7 @@ export default function NewOptimization() {
                                                         <textarea
                                                             value={extractedText}
                                                             readOnly
-                                                            className="w-full h-48 p-6 md:p-8 bg-secondary border border-gray-200 rounded-[2rem] text-primary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all custom-scrollbar"
+                                                            className="w-full h-48 p-6 md:p-8 bg-secondary border border-gray-200 rounded-4xl text-primary font-mono text-xs resize-none focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all custom-scrollbar"
                                                         />
                                                         <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Read_Only</div>
                                                     </div>
@@ -723,7 +723,7 @@ export default function NewOptimization() {
                                                     value={resumeText}
                                                     onChange={(e) => setResumeText(e.target.value)}
                                                     placeholder="\\documentclass{article}\n\\begin{document}\nPaste high-fidelity source code here...\n\\end{document}"
-                                                    className="w-full h-[400px] p-6 md:p-10 bg-secondary border border-gray-200 rounded-[2.5rem] text-primary placeholder-gray-400 focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-sm resize-none custom-scrollbar"
+                                                    className="w-full h-100 p-6 md:p-10 bg-secondary border border-gray-200 rounded-[2.5rem] text-primary placeholder-gray-400 focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-sm resize-none custom-scrollbar"
                                                 />
                                                 <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Code_Editor</div>
                                             </div>
@@ -918,7 +918,7 @@ export default function NewOptimization() {
                                                     animate={{ opacity: 1, y: 0 }}
                                                     className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 flex items-start gap-4"
                                                 >
-                                                    <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                    <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center shrink-0">
                                                         <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                         </svg>
@@ -931,7 +931,7 @@ export default function NewOptimization() {
                                                     </div>
                                                     <button
                                                         onClick={() => setWarningDismissed(true)}
-                                                        className="text-gray-500 hover:text-primary transition-colors flex-shrink-0 mt-1"
+                                                        className="text-gray-500 hover:text-primary transition-colors shrink-0 mt-1"
                                                     >
                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -974,7 +974,7 @@ export default function NewOptimization() {
                                                         key={tab.id}
                                                         onClick={() => setActiveResultTab(tab.id)}
                                                         className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-semibold tracking-tight transition-all rounded-t-xl border border-b-0 whitespace-nowrap ${activeResultTab === tab.id
-                                                            ? 'bg-surface border-gray-200 text-primary -mb-[1px]'
+                                                            ? 'bg-surface border-gray-200 text-primary -mb-px'
                                                             : 'border-transparent text-gray-500 hover:text-primary hover:bg-white/5'
                                                         }`}
                                                     >
@@ -993,9 +993,9 @@ export default function NewOptimization() {
                                                     className="space-y-8"
                                                 >
                                                     {/* Split Pane Layout */}
-                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:h-[650px]">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:h-162.5">
                                                         {/* Left: LaTeX Editor */}
-                                                        <div className="flex flex-col space-y-4 h-[400px] lg:h-auto">
+                                                        <div className="flex flex-col space-y-4 h-100 lg:h-auto">
                                                             <div className="flex justify-between items-center px-1">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand" />
@@ -1019,14 +1019,14 @@ export default function NewOptimization() {
                                                                 <textarea
                                                                     value={optimizedLatex}
                                                                     onChange={(e) => setOptimizedLatex(e.target.value)}
-                                                                    className="w-full h-full p-6 md:p-8 bg-secondary border border-gray-200 rounded-[2rem] text-primary focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-xs resize-none custom-scrollbar"
+                                                                    className="w-full h-full p-6 md:p-8 bg-secondary border border-gray-200 rounded-4xl text-primary focus:outline-none focus:border-brand-primary/30 focus:ring-1 focus:ring-brand/20 transition-all font-mono text-xs resize-none custom-scrollbar"
                                                                 />
                                                                 <div className="absolute top-4 right-4 text-[8px] text-gray-500/30 font-mono uppercase">Editable</div>
                                                             </div>
                                                         </div>
 
                                                         {/* Right: PDF Preview */}
-                                                        <div className="flex flex-col space-y-4 h-[500px] lg:h-auto">
+                                                        <div className="flex flex-col space-y-4 h-125 lg:h-auto">
                                                             <div className="flex justify-between items-center px-1">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
@@ -1057,7 +1057,7 @@ export default function NewOptimization() {
                                                             </div>
 
                                                             {/* PDF Viewer Container */}
-                                                            <div className="flex-1 relative bg-white border border-gray-200 rounded-[2rem] overflow-hidden group">
+                                                            <div className="flex-1 relative bg-white border border-gray-200 rounded-4xl overflow-hidden group">
                                                                 {compiledPdfUrl ? (
                                                                     <PdfViewer
                                                                         url={compiledPdfUrl}
@@ -1083,7 +1083,7 @@ export default function NewOptimization() {
                                                                                 <svg className="w-16 h-16 mx-auto text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                                                 </svg>
-                                                                                <p className="text-mono text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed max-w-[200px] mx-auto opacity-40">Click "Refresh View" above to <br />preview your resume.</p>
+                                                                                <p className="text-mono text-[9px] font-black uppercase tracking-[0.3em] leading-relaxed max-w-50 mx-auto opacity-40">Click "Refresh View" above to <br />preview your resume.</p>
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -1116,7 +1116,7 @@ export default function NewOptimization() {
                                                                             {score}
                                                                         </div>
                                                                         {index < optimizationData.scoreProgression.length - 1 && (
-                                                                            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                                             </svg>
                                                                         )}
@@ -1195,7 +1195,7 @@ export default function NewOptimization() {
                                                                 <ul className="space-y-2">
                                                                     {optimizationData.resumeAnalysis.strongSections?.map((s) => (
                                                                         <li key={s} className="text-secondary text-sm font-medium flex items-center gap-3">
-                                                                            <div className="w-3 h-[2px] bg-brand/30" />
+                                                                            <div className="w-3 h-0.5 bg-brand/30" />
                                                                             {s}
                                                                         </li>
                                                                     ))}
@@ -1206,7 +1206,7 @@ export default function NewOptimization() {
                                                                 <ul className="space-y-2">
                                                                     {optimizationData.resumeAnalysis.weakSections?.map((s) => (
                                                                         <li key={s} className="text-secondary text-sm font-medium flex items-center gap-3">
-                                                                            <div className="w-3 h-[2px] bg-red-500/20" />
+                                                                            <div className="w-3 h-0.5 bg-red-500/20" />
                                                                             {s}
                                                                         </li>
                                                                     ))}
@@ -1224,7 +1224,7 @@ export default function NewOptimization() {
                                                                 {optimizationData.changes.map((change) => (
                                                                     <div key={change.id} className="bg-secondary rounded-2xl p-5 border border-gray-100 transition-all hover:bg-surface">
                                                                         <div className="flex items-start gap-4">
-                                                                            <div className="w-8 h-8 bg-brand/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                                            <div className="w-8 h-8 bg-brand/10 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
                                                                                 <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                                                 </svg>

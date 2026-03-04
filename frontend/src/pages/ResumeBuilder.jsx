@@ -1162,7 +1162,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.experience.map((exp, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-4xl p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
@@ -1269,7 +1269,7 @@ export default function ResumeBuilder() {
                     ))}
                     <button
                         onClick={addExperience}
-                        className="w-full py-6 border-2 border-dashed border-gray-200 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                        className="w-full py-6 border-2 border-dashed border-gray-200 rounded-4xl text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
                     >
                         <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add New Work Experience
                     </button>
@@ -1282,7 +1282,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.projects.map((proj, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-4xl p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
@@ -1387,7 +1387,7 @@ export default function ResumeBuilder() {
                     ))}
                     <button
                         onClick={addProject}
-                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-purple-500 hover:text-purple-500 hover:bg-purple-50/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-4xl text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-purple-500 hover:text-purple-500 hover:bg-purple-50/5 transition-all shadow-md flex items-center justify-center gap-3 group"
                     >
                         <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add New Project / Initiative
                     </button>
@@ -1400,7 +1400,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-8">
                     {formData.education.map((edu, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-4xl4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
@@ -1469,7 +1469,7 @@ export default function ResumeBuilder() {
                     ))}
                     <button
                         onClick={addEducation}
-                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-4xl text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
                     >
                         <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add Education Entry
                     </button>
@@ -1484,7 +1484,7 @@ export default function ResumeBuilder() {
                 return (
                     <div className="space-y-4">
                         {/* Added skills */}
-                        <div className="flex flex-wrap gap-2 min-h-[40px]">
+                        <div className="flex flex-wrap gap-2 min-h-10">
                             {formData.skills.map((skill, idx) => (
                                 <div key={idx} className="flex items-center gap-2 bg-brand/10 text-brand px-3 py-1 rounded-full text-sm font-bold border border-brand-primary/20">
                                     {skill}
@@ -1544,7 +1544,7 @@ export default function ResumeBuilder() {
                         )}
 
                         {formData.custom_sections && formData.custom_sections.map((sec, idx) => (
-                            <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                            <div key={idx} className="bg-surface border border-gray-100 rounded-4xl p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                                 <div className="flex justify-between items-start mb-6">
                                     <h3 className="text-xl font-black text-primary tracking-tight">
                                         {sec.type}
@@ -1645,7 +1645,7 @@ export default function ResumeBuilder() {
 
                     {optimizationComplete && (
                         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-8 overflow-hidden animate-fade-in">
-                            <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-8 text-center text-white relative overflow-hidden">
+                            <div className="bg-linear-to-r from-emerald-500 to-green-600 p-8 text-center text-white relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                                 <div className="relative z-10 space-y-4">
                                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-lg">
@@ -1691,7 +1691,7 @@ export default function ResumeBuilder() {
                                                 <div>
                                                     <strong className="text-green-700 text-xs uppercase mb-1 block">Summary:</strong>
                                                     <textarea
-                                                        className="w-full text-gray-800 font-medium bg-green-50 focus:bg-white border-2 border-transparent focus:border-green-300 focus:ring-4 focus:ring-green-100 p-3 rounded-lg outline-none transition-all resize-none min-h-[100px]"
+                                                        className="w-full text-gray-800 font-medium bg-green-50 focus:bg-white border-2 border-transparent focus:border-green-300 focus:ring-4 focus:ring-green-100 p-3 rounded-lg outline-none transition-all resize-none min-h-25"
                                                         value={pendingOptimizedData?.contact?.summary || ''}
                                                         onChange={(e) => setPendingOptimizedData(prev => ({
                                                             ...prev,
@@ -1702,7 +1702,7 @@ export default function ResumeBuilder() {
                                                 <div>
                                                     <strong className="text-green-700 text-xs uppercase mb-1 block">Skills ({pendingOptimizedData?.skills?.length || 0}):</strong>
                                                     <textarea
-                                                        className="w-full text-gray-800 font-medium bg-green-50 focus:bg-white border-2 border-transparent focus:border-green-300 focus:ring-4 focus:ring-green-100 p-3 rounded-lg outline-none transition-all resize-none min-h-[80px]"
+                                                        className="w-full text-gray-800 font-medium bg-green-50 focus:bg-white border-2 border-transparent focus:border-green-300 focus:ring-4 focus:ring-green-100 p-3 rounded-lg outline-none transition-all resize-none min-h-20"
                                                         value={pendingOptimizedData?.skills?.join(', ') || ''}
                                                         onChange={(e) => setPendingOptimizedData(prev => ({
                                                             ...prev,
@@ -1845,7 +1845,7 @@ export default function ResumeBuilder() {
                             <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
                             Choose Template
                         </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[600px] overflow-y-auto p-2 pb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-150 overflow-y-auto p-2 pb-6">
                             {(templates.length > 0 ? templates : [{ id: 'clean_modern', name: 'Classic Professional' }, { id: 'sb2nov', name: 'Modern Boxed' }, { id: 'jake', name: 'Bold Accent' }]).map(tmpl => {
                                 const isActive = selectedTemplate === tmpl.id;
                                 return (
@@ -1857,7 +1857,7 @@ export default function ResumeBuilder() {
                                                 setTimeout(() => handleSaveAndPreview(), 100);
                                             }
                                         }}
-                                        className={`bg-surface border rounded-[2rem] p-5 shadow-xl shadow-black/5 transition-all cursor-pointer hover:shadow-2xl hover:-translate-y-0.5 relative overflow-hidden ${isActive ? 'border-brand-primary/40 ring-2 ring-brand/20 bg-brand/5' : 'border-gray-200 hover:border-gray-300'}`}
+                                        className={`bg-surface border rounded-4xl p-5 shadow-xl shadow-black/5 transition-all cursor-pointer hover:shadow-2xl hover:-translate-y-0.5 relative overflow-hidden ${isActive ? 'border-brand-primary/40 ring-2 ring-brand/20 bg-brand/5' : 'border-gray-200 hover:border-gray-300'}`}
                                     >
                                         {isActive && <div className="absolute top-0 left-0 w-full h-1 bg-brand" />}
 
@@ -1928,7 +1928,7 @@ export default function ResumeBuilder() {
                                             <div className="flex justify-between items-center px-1">
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Resume Editor</label>
                                             </div>
-                                            <div className="relative aspect-[8.5/11] w-full bg-white border border-gray-200 xl:max-h-[850px] mx-auto rounded-xl shadow-sm overflow-hidden flex flex-col">
+                                            <div className="relative aspect-[8.5/11] w-full bg-white border border-gray-200 xl:max-h-212.5 mx-auto rounded-xl shadow-sm overflow-hidden flex flex-col">
                                                 <textarea
                                                     value={latexCode}
                                                     onChange={(e) => setLatexCode(e.target.value)}
@@ -1967,7 +1967,7 @@ export default function ResumeBuilder() {
                                                 </Button>
                                             </div>
 
-                                            <div className="relative aspect-[8.5/11] w-full bg-white border border-gray-200 xl:max-h-[850px] mx-auto rounded-xl shadow-sm overflow-hidden">
+                                            <div className="relative aspect-[8.5/11] w-full bg-white border border-gray-200 xl:max-h-212.5 mx-auto rounded-xl shadow-sm overflow-hidden">
                                                 {previewHtml ? (
                                                     <PdfViewer
                                                         url={previewHtml}
@@ -2016,7 +2016,7 @@ export default function ResumeBuilder() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="h-[600px] border border-gray-200 rounded-2xl overflow-hidden bg-secondary">
+                                <div className="h-150der border-gray-200 rounded-2xl overflow-hidden bg-secondary">
                                     {previewHtml && (
                                         previewHtml.startsWith('blob:')
                                             ? <iframe src={previewHtml} className="w-full h-full" title="Preview" />
@@ -2039,7 +2039,7 @@ export default function ResumeBuilder() {
             {hasApiKey === false && (
                 <div className="w-full px-6 pt-6">
                     <Card className="max-w-2xl mx-auto border-l-4 border-l-brand rounded-2xl p-6 shadow-xl shadow-black/5 flex items-start gap-5">
-                        <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center shrink-0">
                             <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
@@ -2068,7 +2068,7 @@ export default function ResumeBuilder() {
             {/* Progress Bar */}
             <div className="w-full h-1.5 bg-secondary">
                 <div
-                    className="h-full bg-gradient-to-r from-brand-primary to-brand-hover transition-all duration-500 ease-out"
+                    className="h-full bg-linear-to-r from-brand-primary to-brand-hover transition-all duration-500 ease-out"
                     style={{ width: `${((currentStep + 1) / steps.length) * 100}% ` }}
                 />
             </div>

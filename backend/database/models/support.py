@@ -13,7 +13,7 @@ class SupportTicket(Base):
     email = Column(String, nullable=False)
     subject = Column(String, nullable=False)
     message = Column(Text, nullable=False)
-    status = Column(String, default="open", nullable=False) # open, in_progress, closed
+    status = Column(String, default="unread", nullable=False) # unread, read
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

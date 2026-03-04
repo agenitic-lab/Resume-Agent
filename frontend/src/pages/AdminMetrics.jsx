@@ -50,11 +50,11 @@ export default function AdminMetrics() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <Skeleton className="h-6 w-64 mb-6" />
-                        <Skeleton className="h-[300px] w-full rounded-lg" />
+                        <Skeleton className="h-75 w-full rounded-lg" />
                     </div>
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <Skeleton className="h-6 w-56 mb-6" />
-                        <Skeleton className="h-[300px] w-full rounded-lg" />
+                        <Skeleton className="h-75 w-full rounded-lg" />
                     </div>
                 </div>
             </div>
@@ -118,7 +118,7 @@ export default function AdminMetrics() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-w-0">
                     <h3 className="text-lg font-semibold text-primary mb-6">Resume Generations (Last 7 Days)</h3>
-                    <div className="h-[300px] min-w-0">
+                    <div className="h-75 min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
@@ -141,7 +141,7 @@ export default function AdminMetrics() {
 
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-w-0">
                     <h3 className="text-lg font-semibold text-primary mb-6">Run Status Distribution</h3>
-                    <div className="h-[300px] min-w-0">
+                    <div className="h-75 min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
