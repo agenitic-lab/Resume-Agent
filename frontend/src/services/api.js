@@ -109,9 +109,16 @@ async function apiRequest(endpoint, options = {}) {
             }
 
             // Extract error message from backend response
-            const errorMessage = (typeof data === 'object' && data !== null)
-                ? (data.detail || data.message || 'Request failed')
-                : (typeof data === 'string' && data.trim() ? data : 'Request failed');
+            let errorMessage = 'Request failed';
+            if (typeof data === 'object' && data !== null) {
+                if (Array.isArray(data.detail)) {
+                    errorMessage = data.detail.map(err => err.msg).join(', ');
+                } else {
+                    errorMessage = data.detail || data.message || 'Request failed';
+                }
+            } else if (typeof data === 'string' && data.trim()) {
+                errorMessage = data;
+            }
             throw new Error(errorMessage);
         }
 
@@ -653,5 +660,24 @@ export async function setMaintenanceMode(active) {
     return apiRequest('/api/admin/maintenance', {
         method: 'PUT',
         body: JSON.stringify({ active }),
+    });
+}
+
+// Support Endpoints
+export async function createSupportTicket(data) {
+    return apiRequest('/api/support', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function getAdminSupportTickets(status = 'all') {
+    return apiRequest(`/api/admin/support?status=${status}`);
+}
+
+export async function updateAdminSupportTicketStatus(ticketId, status) {
+    return apiRequest(`/api/admin/support/${ticketId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
     });
 }

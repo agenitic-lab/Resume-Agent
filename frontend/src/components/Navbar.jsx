@@ -12,15 +12,20 @@ export default function Navbar() {
     { label: "Features", hash: "#features" },
     { label: "How It Works", hash: "#how-it-works" },
     { label: "FAQ", hash: "#faq" },
+    { label: "Support", path: "/support" },
   ];
 
-  const handleNavClick = (hash) => {
+  const handleNavClick = (link) => {
     setMobileOpen(false);
+    if (link.path) {
+      navigate(link.path);
+      return;
+    }
     if (location.pathname === "/") {
-      const el = document.querySelector(hash);
+      const el = document.querySelector(link.hash);
       if (el) el.scrollIntoView({ behavior: "smooth" });
     } else {
-      navigate("/" + hash);
+      navigate("/" + link.hash);
     }
   };
 
@@ -39,7 +44,7 @@ export default function Navbar() {
             {navLinks.map((link) => (
               <button
                 key={link.label}
-                onClick={() => handleNavClick(link.hash)}
+                onClick={() => handleNavClick(link)}
                 className="text-sm font-medium text-secondary hover:text-primary transition-colors duration-200 bg-transparent border-none cursor-pointer"
               >
                 {link.label}
@@ -85,7 +90,7 @@ export default function Navbar() {
                 {navLinks.map((link) => (
                   <button
                     key={link.label}
-                    onClick={() => handleNavClick(link.hash)}
+                    onClick={() => handleNavClick(link)}
                     className="text-base font-medium text-secondary hover:text-primary py-2 bg-transparent border-none cursor-pointer text-left"
                   >
                     {link.label}

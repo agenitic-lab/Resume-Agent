@@ -20,6 +20,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminActivity from "./pages/AdminActivity";
 import AdminTemplates from "./pages/AdminTemplates";
 import Maintenance from "./pages/Maintenance";
+import Support from "./pages/Support";
+import AdminSupport from "./pages/AdminSupport";
 import { getMaintenanceStatus, getCurrentUser, isAuthenticated } from "./services/api";
 
 function AppContent() {
@@ -123,6 +125,7 @@ function AppContent() {
         <Route path="/admin/users" element={<ProtectedRoute><DashboardLayout><AdminDashboard><AdminUsers /></AdminDashboard></DashboardLayout></ProtectedRoute>} />
         <Route path="/admin/activity" element={<ProtectedRoute><DashboardLayout><AdminDashboard><AdminActivity /></AdminDashboard></DashboardLayout></ProtectedRoute>} />
         <Route path="/admin/templates" element={<ProtectedRoute><DashboardLayout><AdminDashboard><AdminTemplates /></AdminDashboard></DashboardLayout></ProtectedRoute>} />
+        <Route path="/admin/support" element={<ProtectedRoute><DashboardLayout><AdminDashboard><AdminSupport /></AdminDashboard></DashboardLayout></ProtectedRoute>} />
 
         {/* Dashboard Routes with Sidebar */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute>} />
@@ -133,6 +136,7 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Settings /></DashboardLayout></ProtectedRoute>} />
         <Route path="/resume-builder" element={<ProtectedRoute><DashboardLayout><ResumeBuilder /></DashboardLayout></ProtectedRoute>} />
         <Route path="/missing-skills" element={<ProtectedRoute><DashboardLayout><MissingSkills /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/support" element={<Support />} />
         <Route path="/maintenance" element={<Maintenance />} />
 
         <Route path="*" element={<NotFound />} />
