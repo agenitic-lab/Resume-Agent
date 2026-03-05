@@ -41,6 +41,7 @@ function PreviewModal({ templateId, templateName, onClose }) {
                 const token = getToken();
                 const response = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    credentials: 'include',
                 });
                 if (!response.ok) throw new Error('Failed to load preview');
                 const blob = await response.blob();

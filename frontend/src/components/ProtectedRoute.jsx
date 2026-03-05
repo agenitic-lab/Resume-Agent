@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { isAuthenticated, getCurrentUser, getCachedCurrentUser, removeToken } from '../services/api';
+import { isAuthenticated, getCurrentUser, getCachedCurrentUser, removeToken, getToken, initAuth } from '../services/api';
 
 export default function ProtectedRoute({ children }) {
     const location = useLocation();
@@ -10,21 +10,23 @@ export default function ProtectedRoute({ children }) {
 
     useEffect(() => {
         if (!user && isAuthenticated()) {
-            getCurrentUser()
+            // If we have the session flag but no in-memory token, bootstrap first
+            const bootstrap = getToken() ? Promise.resolve() : initAuth();
+
+            bootstrap
+                .then(() => getCurrentUser())
                 .then(userData => {
                     setUser(userData);
                 })
                 .catch(_e => {
                     console.error('Failed to fetch user in ProtectedRoute', _e);
-                    // Clear stale token if validation fails
                     removeToken();
                 })
                 .finally(() => {
                     setLoading(false);
                 });
         } else if (user) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(false); // If user is already cached, no need to load
+            setLoading(false);
         }
     }, [user]);
 

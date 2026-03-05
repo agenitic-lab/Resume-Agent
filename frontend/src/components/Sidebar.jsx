@@ -23,7 +23,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
     }, []);
 
     const handleLogout = async () => {
-        logout();
+        await logout();
         toast.success('Logged out successfully');
         navigate('/login');
     };

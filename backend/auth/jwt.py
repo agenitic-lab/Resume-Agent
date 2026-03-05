@@ -1,59 +1,71 @@
 # JWT token creation and validation
-import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Tuple
 
 import jwt
 from config import settings
 
-# Configuration — use central settings (which calls load_dotenv() on import)
 JWT_SECRET = settings.JWT_SECRET_KEY
 JWT_ALGORITHM = settings.JWT_ALGORITHM
-JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES  # 30 min default
+REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS      # 7 days default
 
 if not JWT_SECRET:
     raise ValueError("JWT_SECRET_KEY is not set in environment variables")
 
 
 def create_access_token(user_id: str, email: str) -> Tuple[str, int]:
-    # generate JWT token with expiration
-    # returns (token_string, expires_in_seconds)
-    expires_at = datetime.utcnow() + timedelta(hours=JWT_EXPIRY_HOURS)
-    expires_in_seconds = JWT_EXPIRY_HOURS * 3600
+    """Create a short-lived access token (default 30 minutes)."""
+    expires_in_seconds = ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    expires_at = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    # Create payload
     payload = {
-        "sub": user_id,      # Subject (user ID) - standard JWT claim
-        "email": email,       # Custom claim
-        "iat": datetime.utcnow(),  # Issued at - standard JWT claim
-        "exp": expires_at,    # Expiration - standard JWT claim
+        "sub": user_id,
+        "email": email,
+        "type": "access",
+        "iat": datetime.utcnow(),
+        "exp": expires_at,
     }
 
-    # Encode token
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token, expires_in_seconds
 
+
+def create_refresh_token(user_id: str, email: str) -> Tuple[str, int]:
+    """Create a long-lived refresh token (default 7 days)."""
+    expires_in_seconds = REFRESH_TOKEN_EXPIRE_DAYS * 86400
+    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "type": "refresh",
+        "iat": datetime.utcnow(),
+        "exp": expires_at,
+    }
+
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token, expires_in_seconds
 
 
 def decode_access_token(token: str) -> Optional[Dict]:
-    # decode and validate JWT token
-    # returns payload dict if valid, None if expired/invalid
+    """Decode and validate an access token. Returns payload or None."""
     try:
-        payload = jwt.decode(
-            token,
-            JWT_SECRET,
-            algorithms=[JWT_ALGORITHM]
-        )
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        # Reject refresh tokens used as access tokens
+        if payload.get("type") == "refresh":
+            return None
         return payload
-
-    except jwt.ExpiredSignatureError:
-        # Token has expired
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, Exception):
         return None
 
-    except jwt.InvalidTokenError:
-        # Token is invalid (malformed, wrong signature, etc.)
-        return None
-    
-    except Exception:
-        # Catch any other unexpected errors
+
+def decode_refresh_token(token: str) -> Optional[Dict]:
+    """Decode and validate a refresh token. Returns payload or None."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "refresh":
+            return None
+        return payload
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, Exception):
         return None

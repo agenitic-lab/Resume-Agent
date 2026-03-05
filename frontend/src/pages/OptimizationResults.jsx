@@ -6,7 +6,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
 import VisualResumeEditor from '../components/VisualResumeEditor';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
 
 export default function OptimizationResults() {
     const navigate = useNavigate();
@@ -139,6 +139,7 @@ export default function OptimizationResults() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ latex_code: code }),
+                credentials: 'include',
             });
 
             if (!response.ok) {
@@ -185,6 +186,7 @@ export default function OptimizationResults() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ latex_code: latexCode }),
+                    credentials: 'include',
                 });
                 if (!response.ok) {
                     let detail = 'Compilation failed';

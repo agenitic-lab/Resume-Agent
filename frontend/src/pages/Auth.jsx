@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
-import { googleAuth, isAuthenticated, getCachedCurrentUser, removeToken } from '../services/api';
+import { googleAuth, isAuthenticated, getCachedCurrentUser, removeToken, initAuth } from '../services/api';
 
 export default function Auth() {
     const [loading, setLoading] = useState(false);
@@ -13,13 +13,19 @@ export default function Auth() {
     const location = useLocation();
 
     useEffect(() => {
+        // Clean up legacy localStorage token if present
+        localStorage.removeItem('token');
+
         if (isAuthenticated()) {
             const cached = getCachedCurrentUser();
             if (cached) {
                 const dest = cached.role === 'admin' ? '/admin/dashboard' : '/dashboard';
                 navigate(dest, { replace: true });
             } else {
-                removeToken();
+                // Try to bootstrap session from refresh cookie
+                initAuth().then(ok => {
+                    if (!ok) removeToken();
+                });
             }
         }
     }, [navigate]);

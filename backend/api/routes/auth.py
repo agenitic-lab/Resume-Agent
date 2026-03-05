@@ -1,19 +1,54 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+import uuid
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import Optional
 
 from database.connection import get_db
 from database.models.user import User
 from schemas.auth import LoginResponse, UserResponse, ErrorResponse
 from schemas.google import GoogleLoginRequest
-from auth.jwt import create_access_token
+from auth.jwt import (
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+)
 from auth.google_oauth import verify_google_token
 from auth.dependencies import get_current_user
+from config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+REFRESH_COOKIE_NAME = "refresh_token"
+
+
+def _set_refresh_cookie(response: Response, token: str, max_age: int):
+    """Set the refresh token as an httpOnly cookie."""
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=token,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+        max_age=max_age,
+        path="/api/auth",  # cookie only sent to auth endpoints
+        domain=settings.COOKIE_DOMAIN,
+    )
+
+
+def _clear_refresh_cookie(response: Response):
+    """Delete the refresh cookie."""
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+        path="/api/auth",
+        domain=settings.COOKIE_DOMAIN,
+    )
 
 
 @router.post(
@@ -35,6 +70,7 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 )
 def google_auth(
     data: GoogleLoginRequest,
+    response: Response,
     db: Session = Depends(get_db)
 ) -> LoginResponse:
     logger.info("Google OAuth authentication attempt")
@@ -113,7 +149,11 @@ def google_auth(
         )
 
     try:
-        access_token, expires_in = create_access_token(
+        access_token, access_expires_in = create_access_token(
+            user_id=str(user.id),
+            email=user.email
+        )
+        refresh_token, refresh_expires_in = create_refresh_token(
             user_id=str(user.id),
             email=user.email
         )
@@ -126,10 +166,13 @@ def google_auth(
             detail="Failed to generate access token"
         )
 
+    # Set refresh token as httpOnly cookie
+    _set_refresh_cookie(response, refresh_token, refresh_expires_in)
+
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in=expires_in,
+        expires_in=access_expires_in,
         user=UserResponse(
             id=str(user.id),
             email=user.email,
@@ -137,6 +180,100 @@ def google_auth(
             role=user.role
         )
     )
+
+
+@router.post(
+    "/refresh",
+    response_model=LoginResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Refresh access token",
+    description="Exchange a valid refresh token (httpOnly cookie) for new access + refresh tokens.",
+    responses={
+        200: {"description": "New tokens issued", "model": LoginResponse},
+        401: {"description": "Invalid or expired refresh token", "model": ErrorResponse}
+    }
+)
+def refresh_tokens(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    refresh_token: Optional[str] = Cookie(None, alias=REFRESH_COOKIE_NAME),
+):
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token provided"
+        )
+
+    payload = decode_refresh_token(refresh_token)
+    if not payload:
+        _clear_refresh_cookie(response)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    user_id = payload.get("sub")
+    if not user_id:
+        _clear_refresh_cookie(response)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token payload"
+        )
+
+    try:
+        user = db.query(User).filter(User.id == uuid.UUID(user_id)).first()
+    except (ValueError, Exception):
+        _clear_refresh_cookie(response)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user in refresh token"
+        )
+
+    if not user:
+        _clear_refresh_cookie(response)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    if getattr(user, 'is_blocked', False):
+        _clear_refresh_cookie(response)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been blocked."
+        )
+
+    # Rotate tokens: issue new access + refresh pair
+    new_access, access_exp = create_access_token(str(user.id), user.email)
+    new_refresh, refresh_exp = create_refresh_token(str(user.id), user.email)
+
+    _set_refresh_cookie(response, new_refresh, refresh_exp)
+
+    logger.info(f"Token refreshed for user: {user.id}")
+
+    return LoginResponse(
+        access_token=new_access,
+        token_type="bearer",
+        expires_in=access_exp,
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            created_at=user.created_at,
+            role=user.role
+        )
+    )
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Logout and clear refresh token",
+    description="Clears the httpOnly refresh token cookie, ending the session.",
+)
+def logout(response: Response):
+    _clear_refresh_cookie(response)
+    return None
 
 
 @router.get(

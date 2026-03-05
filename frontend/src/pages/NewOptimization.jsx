@@ -6,7 +6,7 @@ import PdfViewer from '../components/PdfViewer';
 import VisualResumeEditor from '../components/VisualResumeEditor';
 import { optimizeResumeStream, getApiKeyStatus, getTemplatePreference } from '../services/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
 
 export default function NewOptimization() {
     const navigate = useNavigate();
@@ -101,6 +101,7 @@ export default function NewOptimization() {
             const response = await fetch(`${API_BASE_URL}/api/pdf/extract`, {
                 method: 'POST',
                 body: formData,
+                credentials: 'include',
             });
 
             if (!response.ok) {
@@ -146,6 +147,7 @@ export default function NewOptimization() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ latex_code: optimizedLatex }),
+                credentials: 'include',
             });
 
             if (!response.ok) {
@@ -354,6 +356,7 @@ export default function NewOptimization() {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({ latex_code: optimizedLatexCode }),
+                            credentials: 'include',
                         });
 
                         if (response.ok) {

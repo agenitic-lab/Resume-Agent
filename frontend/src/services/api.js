@@ -36,24 +36,88 @@ function clearSessionCaches() {
     clearRunsCache();
 }
 
-// Token management
+// ---------------------------------------------------------------------------
+// Token management — access token lives in memory only (not localStorage).
+// A lightweight "logged_in" flag in localStorage tells the UI that a session
+// likely exists so ProtectedRoute doesn't flash the login page on reload.
+// ---------------------------------------------------------------------------
+let _accessToken = null;
+
 export function setToken(token) {
-    localStorage.setItem('token', token);
+    _accessToken = token;
+    if (token) {
+        localStorage.setItem('logged_in', '1');
+    }
 }
 
 export function getToken() {
-    return localStorage.getItem('token');
+    return _accessToken;
 }
 
 export function removeToken() {
-    localStorage.removeItem('token');
+    _accessToken = null;
+    localStorage.removeItem('logged_in');
 }
 
 export function isAuthenticated() {
-    return !!getToken();
+    // True if we hold an access token in memory, OR the session flag indicates
+    // a refresh cookie likely exists (will be confirmed via /api/auth/refresh).
+    return !!_accessToken || localStorage.getItem('logged_in') === '1';
 }
 
-// Guard against multiple concurrent auth redirects (e.g. pending API calls after logout)
+// ---------------------------------------------------------------------------
+// Refresh logic — single-flight so concurrent 401s don't fire many refreshes.
+// ---------------------------------------------------------------------------
+let _refreshPromise = null;
+
+async function refreshAccessToken() {
+    if (_refreshPromise) return _refreshPromise;
+
+    _refreshPromise = (async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include', // send the httpOnly refresh cookie
+            });
+
+            if (!res.ok) {
+                // Refresh failed — session is truly expired.
+                removeToken();
+                clearSessionCaches();
+                return null;
+            }
+
+            const data = await res.json();
+            if (data.access_token) {
+                setToken(data.access_token);
+                return data.access_token;
+            }
+            return null;
+        } catch {
+            return null;
+        } finally {
+            _refreshPromise = null;
+        }
+    })();
+
+    return _refreshPromise;
+}
+
+/**
+ * Bootstrap the session on app startup.
+ * If a refresh cookie exists the backend will issue a fresh access token.
+ * Returns true on success, false otherwise.
+ */
+export async function initAuth() {
+    if (_accessToken) return true; // already have a token in memory
+
+    if (localStorage.getItem('logged_in') !== '1') return false;
+
+    const token = await refreshAccessToken();
+    return !!token;
+}
+
+// Guard against multiple concurrent auth redirects
 let _isRedirecting = false;
 
 // Generic API request helper
@@ -73,10 +137,23 @@ async function apiRequest(endpoint, options = {}) {
     const config = {
         ...options,
         headers,
+        credentials: 'include', // always send cookies (needed for proxy same-origin)
     };
 
     try {
-        const response = await fetch(url, config);
+        let response = await fetch(url, config);
+
+        // -- Handle 401: try refresh before giving up -------------------------
+        const isAuthEndpoint = endpoint.startsWith('/api/auth/');
+        if (response.status === 401 && !isAuthEndpoint) {
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                // Retry the original request with the new token
+                headers['Authorization'] = `Bearer ${refreshed}`;
+                response = await fetch(url, { ...config, headers });
+            }
+        }
+
         let data = null;
         if (response.status !== 204) {
             const contentType = response.headers.get('content-type') || '';
@@ -88,27 +165,18 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         if (!response.ok) {
-            // Handle unauthorized/forbidden globally (e.g., expired token)
-            // Skip global redirect for auth endpoints — let caller handle those errors
-            const isAuthEndpoint = endpoint.startsWith('/api/auth/');
             if ((response.status === 401 || response.status === 403) && !isAuthEndpoint) {
-                const hadToken = !!getToken();
-                if (!_isRedirecting && hadToken) {
-                    // Only treat as "session expired" when there was an active token.
-                    // If there was no token, the caller just made an unauthenticated request —
-                    // redirecting would cause an infinite loop on public routes.
+                const hadSession = isAuthenticated();
+                if (!_isRedirecting && hadSession) {
                     _isRedirecting = true;
                     removeToken();
                     clearSessionCaches();
                     window.location.href = '/login?expired=true';
-                    // Return a never-resolving promise so .then() chains don't fire
                     return new Promise(() => { });
                 }
-                // No active token — throw so callers can handle it gracefully
                 throw new Error('Unauthorized');
             }
 
-            // Extract error message from backend response
             const errorMessage = (typeof data === 'object' && data !== null)
                 ? (data.detail || data.message || 'Request failed')
                 : (typeof data === 'string' && data.trim() ? data : 'Request failed');
@@ -130,7 +198,7 @@ export async function googleAuth(credential) {
         body: JSON.stringify({ credential }),
     });
 
-    // Store token on successful authentication
+    // Store access token in memory
     if (data.access_token) {
         setToken(data.access_token);
     }
@@ -157,12 +225,20 @@ export async function deleteRun(runId) {
     const result = await apiRequest(`/api/agent/runs/${runId}`, {
         method: 'DELETE',
     });
-    // Clear runs cache after deletion
     clearRunsCache();
     return result;
 }
 
 export async function logout() {
+    // Tell the backend to clear the httpOnly refresh cookie
+    try {
+        await fetch(`${API_URL}/api/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+    } catch {
+        // Best-effort; clear local state regardless
+    }
     removeToken();
     clearSessionCaches();
 }
@@ -290,6 +366,11 @@ export async function getRun(runId) {
 }
 
 export async function optimizeResumeStream(jobDescription, resume, onEvent, inputType = null) {
+    // Ensure we have a valid access token (refresh if needed)
+    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
+        await refreshAccessToken();
+    }
+
     const token = getToken();
     let response;
     try {
@@ -302,10 +383,34 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            credentials: 'include',
             body: JSON.stringify(body),
         });
     } catch {
         throw new Error('Cannot connect to backend. Ensure API server is running.');
+    }
+
+    // Handle 401 — try refresh and retry once
+    if (response.status === 401) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+            const retryBody = { job_description: jobDescription, resume };
+            if (inputType) retryBody.input_type = inputType;
+
+            try {
+                response = await fetch(`${API_URL}/api/agent/run/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${refreshed}`,
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(retryBody),
+                });
+            } catch {
+                throw new Error('Cannot connect to backend. Ensure API server is running.');
+            }
+        }
     }
 
     if (!response.ok) {
@@ -402,6 +507,11 @@ export async function clearRunHistory() {
 }
 
 export async function compileLatex(latexCode) {
+    // Ensure we have a valid access token
+    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
+        await refreshAccessToken();
+    }
+
     const token = getToken();
     let response;
     try {
@@ -411,10 +521,31 @@ export async function compileLatex(latexCode) {
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            credentials: 'include',
             body: JSON.stringify({ latex_code: latexCode }),
         });
     } catch {
         throw new Error('Cannot connect to backend compile service. Restart backend and try again.');
+    }
+
+    // Handle 401 — try refresh and retry once
+    if (response.status === 401) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+            try {
+                response = await fetch(`${API_URL}/api/latex/compile`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${refreshed}`,
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ latex_code: latexCode }),
+                });
+            } catch {
+                throw new Error('Cannot connect to backend compile service. Restart backend and try again.');
+            }
+        }
     }
 
     if (!response.ok) {
@@ -460,11 +591,17 @@ export async function optimizeResumeBuilder(resumeData, selectedRecommendations)
 }
 
 export async function getResumePreview(resumeId, templateName) {
+    // Ensure we have a valid access token
+    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
+        await refreshAccessToken();
+    }
+
     const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
         headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -475,11 +612,17 @@ export async function getResumePreview(resumeId, templateName) {
 }
 
 export async function downloadResume(resumeId, templateName) {
+    // Ensure we have a valid access token
+    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
+        await refreshAccessToken();
+    }
+
     const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
         headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        credentials: 'include',
     });
 
     if (!response.ok) {

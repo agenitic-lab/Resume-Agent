@@ -23,7 +23,12 @@ class Settings:
     )
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-    
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+
+    # Cookie settings
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+    COOKIE_DOMAIN: Optional[str] = os.getenv("COOKIE_DOMAIN")  # e.g. ".example.com" for prod
+
     ENCRYPTION_KEY: Optional[str] = os.getenv("ENCRYPTION_KEY")
     if not ENCRYPTION_KEY:
         import logging
