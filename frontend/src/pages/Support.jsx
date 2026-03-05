@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+=======
+import React, { useState } from 'react';
+>>>>>>> origin/main
 import toast from 'react-hot-toast';
 import { createSupportTicket, getCurrentUser } from '../services/api';
 import { Skeleton } from '../components/ui/skeleton';

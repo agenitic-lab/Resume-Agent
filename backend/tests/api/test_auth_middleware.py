@@ -136,7 +136,7 @@ def test_protected_endpoint_without_token():
     """Test accessing protected endpoint without authentication token."""
     response = client.get("/api/user/me")
     
-    assert response.status_code == 403  # FastAPI HTTPBearer returns 403
+    assert response.status_code == 401  # Returns 401 for missing auth
     data = response.json()
     assert "detail" in data
 
@@ -145,7 +145,7 @@ def test_profile_endpoint_without_token():
     """Test accessing profile endpoint without token."""
     response = client.get("/api/user/profile")
     
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 # Test: Protected Endpoint with Invalid Token
@@ -170,7 +170,7 @@ def test_protected_endpoint_with_malformed_header():
         headers={"Authorization": "NotBearer token"}
     )
     
-    assert response.status_code == 403
+    assert response.status_code == 401  # Returns 401 for invalid auth format
 
 
 # Test: Token for Non-Existent User
