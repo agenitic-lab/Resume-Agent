@@ -3,11 +3,12 @@ Authentication Dependencies
 
 FastAPI dependencies for protecting routes with JWT authentication.
 Provides secure token validation and user retrieval.
+Supports both HttpOnly cookies (preferred) and Bearer token headers.
 """
 import logging
 import uuid
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -18,10 +19,11 @@ from auth.jwt import decode_access_token
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Bearer token security scheme
+# Bearer token security scheme (for backward compatibility)
 security = HTTPBearer(
     scheme_name="Bearer",
-    description="JWT Bearer token authentication"
+    description="JWT Bearer token authentication",
+    auto_error=False  # Don't auto error - we'll check cookies first
 )
 
 
@@ -44,15 +46,16 @@ class AuthenticationError(HTTPException):
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> User:
     """
     Verify JWT token and return authenticated user.
     
-    This dependency validates the JWT token from the Authorization header,
-    verifies the token signature and expiration, and retrieves the user
-    from the database.
+    This dependency validates the JWT token from either:
+    1. HttpOnly cookie (preferred - more secure)
+    2. Authorization header (fallback for API clients)
     
     Usage:
         ```python
@@ -62,6 +65,7 @@ def get_current_user(
         ```
     
     Args:
+        request: FastAPI request to access cookies
         credentials: HTTP Bearer token credentials from request header
         db: Database session dependency
         
@@ -70,14 +74,19 @@ def get_current_user(
         
     Raises:
         AuthenticationError: If token is invalid, expired, or user not found
-        
-    Security:
-        - Validates JWT signature using secret key
-        - Checks token expiration timestamp
-        - Verifies user still exists in database
-        - Logs all authentication attempts for security auditing
     """
-    token = credentials.credentials
+    # Try to get token from cookie first (more secure)
+    token = request.cookies.get("access_token")
+    
+    # Fall back to Authorization header if no cookie
+    if not token and credentials:
+        token = credentials.credentials
+    
+    if not token:
+        logger.warning("Authentication failed: No token provided")
+        raise AuthenticationError(
+            detail="Authentication required"
+        )
     
     # Log authentication attempt (without exposing token)
     logger.debug("Authentication attempt with JWT token")
@@ -138,6 +147,7 @@ def get_current_user(
 
 
 def get_current_user_optional(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(
         HTTPBearer(auto_error=False)
     ),
@@ -146,7 +156,7 @@ def get_current_user_optional(
     """
     Optional authentication dependency.
     
-    Returns the authenticated user if valid token is provided,
+    Returns the authenticated user if valid token is provided (cookie or header),
     otherwise returns None without raising an error.
     
     Useful for endpoints that have different behavior for
@@ -162,20 +172,32 @@ def get_current_user_optional(
         ```
     
     Args:
+        request: FastAPI request to access cookies
         credentials: Optional HTTP Bearer token credentials
         db: Database session dependency
         
     Returns:
         User object if authenticated, None otherwise
     """
-    if not credentials:
+    # Check for token in cookie or header
+    token = request.cookies.get("access_token")
+    if not token and credentials:
+        token = credentials.credentials
+    
+    if not token:
         return None
     
     try:
-        return get_current_user(credentials, db)
+        # Create a mock credentials object if we got token from cookie
+        class MockCredentials:
+            def __init__(self, token):
+                self.credentials = token
+        
+        return get_current_user(request, MockCredentials(token) if not credentials else credentials, db)
     except (AuthenticationError, HTTPException):
         # Silently fail for optional authentication
         return None
+
 
 def get_current_admin(
     current_user: User = Depends(get_current_user)

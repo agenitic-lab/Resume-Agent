@@ -1,7 +1,7 @@
 # schemas for auth endpoints
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class UserResponse(BaseModel):
@@ -125,6 +125,40 @@ class LoginResponse(BaseModel):
                     "id": "123e4567-e89b-12d3-a456-426614174000",
                     "email": "john.doe@example.com",
                     "created_at": "2024-01-15T10:30:00Z"
+                }
+            }
+        }
+    )
+
+
+class AuthResponse(BaseModel):
+    """Secure authentication response - tokens are set in HttpOnly cookies, not in response body."""
+    
+    success: bool = Field(
+        ...,
+        description="Whether authentication was successful",
+        examples=[True]
+    )
+    message: str = Field(
+        ...,
+        description="Status message",
+        examples=["Authentication successful"]
+    )
+    user: UserResponse = Field(
+        ...,
+        description="Authenticated user information"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Authentication successful",
+                "user": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "email": "john.doe@example.com",
+                    "created_at": "2024-01-15T10:30:00Z",
+                    "role": "user"
                 }
             }
         }

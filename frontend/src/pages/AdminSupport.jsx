@@ -12,7 +12,7 @@ export default function AdminSupport() {
         try {
             const data = await getAdminSupportTickets(filter);
             setTickets(data);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load support tickets');
         } finally {
             setLoading(false);
@@ -21,6 +21,7 @@ export default function AdminSupport() {
 
     useEffect(() => {
         fetchTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const updateStatus = async (id, newStatus) => {
@@ -28,7 +29,7 @@ export default function AdminSupport() {
             await updateAdminSupportTicketStatus(id, newStatus);
             toast.success(`Ticket marked as ${newStatus.replace('_', ' ')}`);
             fetchTickets();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update status');
         }
     };

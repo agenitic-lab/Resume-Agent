@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getTemplates, getTemplatePreviewUrl, getToken, updateAdminTemplate, deleteAdminTemplate, getAdminTemplateContent, getAdminDefaultTemplate, setAdminDefaultTemplate } from '../services/api';
+import { getTemplates, getTemplatePreviewUrl, updateAdminTemplate, deleteAdminTemplate, getAdminTemplateContent, getAdminDefaultTemplate, setAdminDefaultTemplate } from '../services/api';
 import toast from 'react-hot-toast';
 import { Skeleton } from '../components/ui/skeleton';
 import { Button } from "../components/ui/button";
@@ -38,9 +38,8 @@ function PreviewModal({ templateId, templateName, onClose }) {
             setLoadError(false);
             try {
                 const url = getTemplatePreviewUrl(templateId);
-                const token = getToken();
                 const response = await fetch(url, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    credentials: 'include', // Send cookies
                 });
                 if (!response.ok) throw new Error('Failed to load preview');
                 const blob = await response.blob();
