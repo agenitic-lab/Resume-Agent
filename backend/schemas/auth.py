@@ -36,16 +36,6 @@ class UserResponse(BaseModel):
         description="User's role (admin or user)",
         examples=["user", "admin"]
     )
-    is_blocked: bool = Field(
-        default=False,
-        description="Whether the user is blocked from accessing the system",
-        examples=[False, True]
-    )
-    is_test_user: bool = Field(
-        default=False,
-        description="Whether the user can access the site during maintenance mode",
-        examples=[False, True]
-    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -56,9 +46,7 @@ class UserResponse(BaseModel):
                 "created_at": "2024-01-15T10:30:00Z",
                 "full_name": "John Doe",
                 "profile_picture": "https://lh3.googleusercontent.com/a/ACg8oc...",
-                "role": "user",
-                "is_blocked": False,
-                "is_test_user": False
+                "role": "user"
             }
         }
     )

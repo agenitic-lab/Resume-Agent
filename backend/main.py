@@ -48,6 +48,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from auth.dependencies import AuthenticationError
+
 # ---------------------------------------------------------------------------
 # Global exception handler — ensures unhandled errors produce a proper JSON
 # response *inside* the middleware chain so CORSMiddleware can still inject
@@ -61,6 +63,27 @@ async def _unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"},
+    )
+
+
+@app.exception_handler(AuthenticationError)
+async def auth_exception_handler(request: Request, exc: AuthenticationError):
+    # Suppress FastAPI's default HTTP log for the silent auth check endpoint
+    if request.url.path == "/api/auth/check":
+        # By not re-raising the HTTPException, Starlette handles it natively 
+        # as a standard response, avoiding the error trace in console logs
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=exc.headers
+        )
+    
+    # For all other routes, return standard JSON response
+    # It will still be logged by FastAPI's access logger, but without a messy traceback
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=exc.headers
     )
 
 
