@@ -121,7 +121,7 @@ def validate_settings():
         errors.append("ENCRYPTION_KEY must be set for encrypting user API keys")
     
     if errors and not settings.DEBUG:
-        raise ValueError(f"Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
+        raise ValueError("Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
     
     return True
 

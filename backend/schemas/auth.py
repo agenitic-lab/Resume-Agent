@@ -1,7 +1,7 @@
 # schemas for auth endpoints
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class UserResponse(BaseModel):

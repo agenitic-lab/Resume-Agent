@@ -198,6 +198,7 @@ def get_current_user_optional(
         # Silently fail for optional authentication
         return None
 
+
 def get_current_admin(
     current_user: User = Depends(get_current_user)
 ) -> User:

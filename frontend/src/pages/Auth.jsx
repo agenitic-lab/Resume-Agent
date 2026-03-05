@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
-import { googleAuth, isAuthenticated, getCachedCurrentUser, logout, initializeAuth } from '../services/api';
+import { googleAuth, initializeAuth } from '../services/api';
 
 export default function Auth() {
     const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function Auth() {
                     const dest = user.role === 'admin' ? '/admin/dashboard' : '/dashboard';
                     navigate(dest, { replace: true });
                 }
-            } catch (e) {
+            } catch {
                 // Not authenticated - stay on login page
             } finally {
                 setCheckingAuth(false);
@@ -37,7 +37,7 @@ export default function Auth() {
             toast.error('Your session has expired. Please sign in again.', { id: 'session-expired' });
             navigate(location.pathname, { replace: true });
         }
-    }, [location.search, navigate]);
+    }, [location.search, location.pathname, navigate]);
 
     const handleGoogleSuccess = async (credentialResponse) => {
         setLoading(true);

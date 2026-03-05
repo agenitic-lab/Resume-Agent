@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { isAuthenticated, getCurrentUser, getCachedCurrentUser, logout, initializeAuth } from '../services/api';
+import { getCachedCurrentUser, logout, initializeAuth } from '../services/api';
 
 export default function ProtectedRoute({ children }) {
     const location = useLocation();

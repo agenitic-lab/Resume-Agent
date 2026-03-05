@@ -244,7 +244,7 @@ export async function initializeAuth() {
             setEntry(apiCache.currentUser, user, CACHE_TTL_MS.currentUser);
             return user;
         }
-    } catch (error) {
+    } catch {
         // Not authenticated or session expired
         setAuthenticated(false);
     }
