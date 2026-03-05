@@ -231,6 +231,36 @@ def get_current_user_profile(
     )
 
 
+@router.get(
+    "/check",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Check current user silently",
+    description="Same as /me pattern but suppresses backend logs when unauthenticated.",
+    responses={
+        200: {
+            "description": "User profile",
+            "model": UserResponse
+        },
+        401: {
+            "description": "Not authenticated",
+            "model": ErrorResponse
+        }
+    }
+)
+def check_current_user_profile(
+    current_user: User = Depends(get_current_user)
+) -> UserResponse:
+    return UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        created_at=current_user.created_at,
+        full_name=current_user.full_name,
+        profile_picture=current_user.profile_picture,
+        role=current_user.role
+    )
+
+
 @router.post(
     "/refresh",
     response_model=AuthResponse,

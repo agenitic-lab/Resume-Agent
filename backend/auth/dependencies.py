@@ -52,28 +52,6 @@ def get_current_user(
 ) -> User:
     """
     Verify JWT token and return authenticated user.
-    
-    This dependency validates the JWT token from either:
-    1. HttpOnly cookie (preferred - more secure)
-    2. Authorization header (fallback for API clients)
-    
-    Usage:
-        ```python
-        @router.get("/protected")
-        def protected_route(current_user: User = Depends(get_current_user)):
-            return {"user_id": str(current_user.id)}
-        ```
-    
-    Args:
-        request: FastAPI request to access cookies
-        credentials: HTTP Bearer token credentials from request header
-        db: Database session dependency
-        
-    Returns:
-        User: Authenticated user object from database
-        
-    Raises:
-        AuthenticationError: If token is invalid, expired, or user not found
     """
     # Try to get token from cookie first (more secure)
     token = request.cookies.get("access_token")
@@ -82,8 +60,13 @@ def get_current_user(
     if not token and credentials:
         token = credentials.credentials
     
+    # Check if this route should suppress missing token warnings
+    # By convention we can use a custom request header or identify the specific route
+    suppress_log = request.url.path == "/api/auth/check"
+    
     if not token:
-        logger.warning("Authentication failed: No token provided")
+        if not suppress_log:
+            logger.warning(f"Authentication failed: No token provided for {request.url.path}")
         raise AuthenticationError(
             detail="Authentication required"
         )

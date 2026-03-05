@@ -61,7 +61,7 @@ async function tryRefreshToken() {
     if (_isRefreshing && _refreshPromise) {
         return _refreshPromise;
     }
-    
+
     _isRefreshing = true;
     _refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -79,7 +79,7 @@ async function tryRefreshToken() {
             _isRefreshing = false;
             _refreshPromise = null;
         });
-    
+
     return _refreshPromise;
 }
 
@@ -114,7 +114,7 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
             // Handle unauthorized/forbidden globally (e.g., expired token)
             // Skip global redirect for auth endpoints — let caller handle those errors
             const isAuthEndpoint = endpoint.startsWith('/api/auth/');
-            
+
             // If 401 and not an auth endpoint and we haven't retried, try refreshing
             if (response.status === 401 && !isAuthEndpoint && !_retried && _isAuthenticated) {
                 const refreshed = await tryRefreshToken();
@@ -123,7 +123,7 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
                     return apiRequest(endpoint, options, true);
                 }
             }
-            
+
             if ((response.status === 401 || response.status === 403) && !isAuthEndpoint) {
                 const wasAuthenticated = _isAuthenticated;
                 if (!_isRedirecting && wasAuthenticated) {
@@ -238,7 +238,7 @@ export async function refreshToken() {
 // Initialize authentication state by checking if we have a valid session
 export async function initializeAuth() {
     try {
-        const user = await apiRequest('/api/auth/me');
+        const user = await apiRequest('/api/auth/check');
         if (user && user.id) {
             setAuthenticated(true);
             setEntry(apiCache.currentUser, user, CACHE_TTL_MS.currentUser);
