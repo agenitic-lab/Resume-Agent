@@ -23,8 +23,6 @@ export default function ProtectedRoute({ children }) {
                 .finally(() => {
                     setLoading(false);
                 });
-        } else {
-            setLoading(false);
         }
     }, [user]);
 
