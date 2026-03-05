@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-=======
-import React, { useState } from 'react';
->>>>>>> origin/main
+import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { createSupportTicket, getCurrentUser } from '../services/api';
 import { Skeleton } from '../components/ui/skeleton';
@@ -48,7 +44,7 @@ export default function Support() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const result = await createSupportTicket(formData);
+            await createSupportTicket(formData);
             // Show success message regardless of email status - the important thing is the ticket was saved
             toast.success('Your ticket has been submitted successfully! Our team will review and respond to you as soon as possible.');
             setFormData(prev => ({ ...prev, subject: '', message: '' }));
@@ -69,7 +65,7 @@ export default function Support() {
                     </p>
                 </div>
 
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 mb-8 overflow-hidden relative"
@@ -171,7 +167,7 @@ export default function Support() {
                         </button>
                     </div>
                 </form>
-                </motion.div>
+                </Motion.div>
 
                 {/* Additional Help Section */}
                 <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
