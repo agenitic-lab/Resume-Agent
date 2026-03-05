@@ -27,7 +27,14 @@ export default function Dashboard() {
           console.error("Failed to fetch user:", e);
         }
 
-        const runs = await getUserRuns(5); // Get last 5 runs
+        const allRuns = await getUserRuns(10); // Fetch more to account for filtered failures
+
+        // Only show completed runs with a valid after-score
+        const runs = allRuns.filter(r =>
+          r.status !== 'rejected_poor_fit' &&
+          r.status !== 'failed' &&
+          r.ats_score_after > 0
+        );
 
         if (runs.length > 0) {
           // Calculate stats
@@ -45,7 +52,7 @@ export default function Dashboard() {
             : 0;
 
           setStats({
-            totalRuns: runs.length, // Only shows loaded count, ideally fetch total count
+            totalRuns: runs.length,
             avgImprovement: avgImp,
             bestScore: Math.round(maxScore),
             lastRunDate: runs[0].created_at ? new Date(runs[0].created_at).toLocaleDateString() : 'Unknown'

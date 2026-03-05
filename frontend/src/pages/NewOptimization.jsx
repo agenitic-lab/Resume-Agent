@@ -30,6 +30,7 @@ export default function NewOptimization() {
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [liveStatusLogs, setLiveStatusLogs] = useState([]);
+    const [errorDialog, setErrorDialog] = useState(null); // { title, message, type: 'poor_fit' | 'error' }
 
     // check API key + template on mount
     useEffect(() => {
@@ -261,9 +262,10 @@ export default function NewOptimization() {
             // Check if optimization was rejected due to poor fit
             if (data.final_status === 'rejected_poor_fit' || data.fit_decision === 'poor_fit') {
                 const reason = data.fit_reason || 'Your profile does not match the job requirements sufficiently.';
-                setToast({
-                    message: `Optimization skipped: ${reason}`,
-                    type: 'warning'
+                setErrorDialog({
+                    title: 'Poor Fit — Optimization Skipped',
+                    message: reason,
+                    type: 'poor_fit'
                 });
                 setCurrentStep(3);
                 return;
@@ -384,13 +386,18 @@ export default function NewOptimization() {
 
             // Check if it's an API key issue
             if (errorMsg.includes('API key') || errorMsg.includes('Settings')) {
-                setToast({
+                setErrorDialog({
+                    title: 'API Key Required',
                     message: 'Please add your Groq API key in Settings before running optimization.',
                     type: 'error'
                 });
                 setHasApiKey(false); // Update state to show warning banner
             } else {
-                setToast({ message: `Optimization failed: ${errorMsg}`, type: 'error' });
+                setErrorDialog({
+                    title: 'Optimization Failed',
+                    message: errorMsg,
+                    type: 'error'
+                });
             }
 
             // Go back to step 3 so user can retry without re-entering everything
@@ -1382,6 +1389,44 @@ export default function NewOptimization() {
                     </div>
                 </div>
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+                {/* Error / Poor Fit Dialog */}
+                {errorDialog && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+                        <div className="bg-surface border border-gray-200 rounded-[2rem] p-8 shadow-2xl shadow-black/20 max-w-md w-full">
+                            <div className="flex items-start gap-4 mb-6">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${errorDialog.type === 'poor_fit' ? 'bg-amber-500/10' : 'bg-red-500/10'}`}>
+                                    {errorDialog.type === 'poor_fit' ? (
+                                        <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-primary font-bold text-base mb-2">{errorDialog.title}</h3>
+                                    <p className="text-secondary text-sm leading-relaxed">{errorDialog.message}</p>
+                                </div>
+                            </div>
+                            {errorDialog.type === 'poor_fit' && (
+                                <div className="mb-6 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
+                                    <p className="text-amber-600 text-xs font-semibold leading-relaxed">
+                                        Try updating your resume to include more relevant skills and keywords that match the job requirements before retrying.
+                                    </p>
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setErrorDialog(null)}
+                                className="w-full py-3 bg-brand text-white rounded-2xl font-semibold text-sm tracking-wide hover:bg-brand-hover transition-all active:scale-95"
+                            >
+                                Understood
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
