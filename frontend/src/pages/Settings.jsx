@@ -201,7 +201,7 @@ export default function Settings() {
 
       <ConfirmDialog
         isOpen={showLogoutDialog}
-        onClose={() => setShowLogoutDialog(false)}
+        onCancel={() => setShowLogoutDialog(false)}
         onConfirm={confirmSignOut}
         title="Sign Out"
         message="Are you sure you want to sign out?"

@@ -65,7 +65,8 @@ function AppContent() {
     location.pathname.startsWith('/templates') ||
     location.pathname.startsWith('/settings') ||
     location.pathname.startsWith('/resume-builder') ||
-    location.pathname.startsWith('/missing-skills');
+    location.pathname.startsWith('/missing-skills') ||
+    location.pathname.startsWith('/support');
 
   const showNavbar = !isDashboardRoute;
 
@@ -139,7 +140,7 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Settings /></DashboardLayout></ProtectedRoute>} />
         <Route path="/resume-builder" element={<ProtectedRoute><DashboardLayout><ResumeBuilder /></DashboardLayout></ProtectedRoute>} />
         <Route path="/missing-skills" element={<ProtectedRoute><DashboardLayout><MissingSkills /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/support" element={<Support />} />
+        <Route path="/support" element={<ProtectedRoute><DashboardLayout><Support /></DashboardLayout></ProtectedRoute>} />
         <Route path="/maintenance" element={<Maintenance />} />
 
         <Route path="*" element={<NotFound />} />

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { getCurrentUser, logout } from '../services/api';
 import ConfirmDialog from './ConfirmDialog';
-import { logout, getCurrentUser } from '../services/api';
 
 export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } }) {
     const location = useLocation();
     const navigate = useNavigate();
-    const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [user, setUser] = useState(null);
+    const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -22,7 +22,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
         fetchUser();
     }, []);
 
-    const handleLogout = async () => {
+    const handleLogout = () => {
         logout();
         toast.success('Logged out successfully');
         navigate('/login');
@@ -92,6 +92,15 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                 </svg>
             ),
             path: '/settings'
+        },
+        {
+            name: 'Support',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            path: '/support'
         }
     ];
 
@@ -197,7 +206,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
 
                 {/* User Profile */}
                 <div className="p-4 border-t border-gray-200/50">
-                    <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg mb-3">
+                    <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
                         <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-black font-black flex-shrink-0 shadow-lg shadow-brand-primary/10">
                             {user?.profile_picture ? (
                                 <img src={user.profile_picture} alt="Profile" className="w-full h-full rounded-full object-cover" />
@@ -213,30 +222,27 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                                 {user?.email || 'Loading...'}
                             </p>
                         </div>
+                        <button
+                            onClick={() => setShowLogoutDialog(true)}
+                            className=" text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
+                            title="Logout"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
                     </div>
-
-                    {/* Sign Out */}
-                    <button
-                        onClick={() => setShowLogoutDialog(true)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span className="text-sm font-medium">Sign Out</span>
-                    </button>
                 </div>
             </div>
 
             <ConfirmDialog
                 isOpen={showLogoutDialog}
+                onCancel={() => setShowLogoutDialog(false)}
+                onConfirm={handleLogout}
                 title="Sign Out"
                 message="Are you sure you want to sign out?"
                 confirmText="Sign Out"
-                cancelText="Cancel"
                 variant="danger"
-                onConfirm={handleLogout}
-                onCancel={() => setShowLogoutDialog(false)}
             />
         </>
     );
