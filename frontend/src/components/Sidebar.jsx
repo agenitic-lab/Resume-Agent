@@ -207,7 +207,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                 {/* User Profile */}
                 <div className="p-4 border-t border-gray-200/50">
                     <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
-                        <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-black font-black flex-shrink-0 shadow-lg shadow-brand-primary/10">
+                        <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-black font-black shrink-0 shadow-lg shadow-brand-primary/10">
                             {user?.profile_picture ? (
                                 <img src={user.profile_picture} alt="Profile" className="w-full h-full rounded-full object-cover" />
                             ) : (
@@ -224,7 +224,7 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                         </div>
                         <button
                             onClick={() => setShowLogoutDialog(true)}
-                            className=" text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
+                            className=" text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"
                             title="Logout"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

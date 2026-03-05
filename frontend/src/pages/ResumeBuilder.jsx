@@ -1163,7 +1163,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.experience.map((exp, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-4xl p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
@@ -1270,7 +1270,7 @@ export default function ResumeBuilder() {
                     ))}
                     <button
                         onClick={addExperience}
-                        className="w-full py-6 border-2 border-dashed border-gray-200 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                        className="w-full py-6 border-2 border-dashed border-gray-200 rounded-4xl text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
                     >
                         <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add New Work Experience
                     </button>
@@ -1283,7 +1283,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-10">
                     {formData.projects.map((proj, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-4xl p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
@@ -1388,7 +1388,7 @@ export default function ResumeBuilder() {
                     ))}
                     <button
                         onClick={addProject}
-                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-purple-500 hover:text-purple-500 hover:bg-purple-50/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-4xl text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-purple-500 hover:text-purple-500 hover:bg-purple-50/5 transition-all shadow-md flex items-center justify-center gap-3 group"
                     >
                         <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add New Project / Initiative
                     </button>
@@ -1401,7 +1401,7 @@ export default function ResumeBuilder() {
             render: () => (
                 <div className="space-y-8">
                     {formData.education.map((edu, idx) => (
-                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                        <div key={idx} className="bg-surface border border-gray-100 rounded-2xl sm:rounded-4xl p-4 sm:p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-4 sm:mb-8">
                                 <div>
@@ -1470,7 +1470,7 @@ export default function ResumeBuilder() {
                     ))}
                     <button
                         onClick={addEducation}
-                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-[2rem] text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
+                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-4xl text-slate-500 font-black uppercase tracking-[0.2em] text-sm hover:border-brand hover:text-brand hover:bg-brand/5 transition-all shadow-md flex items-center justify-center gap-3 group"
                     >
                         <span className="text-2xl group-hover:scale-125 transition-transform">+</span> Add Education Entry
                     </button>
@@ -1485,7 +1485,7 @@ export default function ResumeBuilder() {
                 return (
                     <div className="space-y-4">
                         {/* Added skills */}
-                        <div className="flex flex-wrap gap-2 min-h-[40px]">
+                        <div className="flex flex-wrap gap-2 min-h-10">
                             {formData.skills.map((skill, idx) => (
                                 <div key={idx} className="flex items-center gap-2 bg-brand/10 text-brand px-3 py-1 rounded-full text-sm font-bold border border-brand-primary/20">
                                     {skill}
@@ -1545,7 +1545,7 @@ export default function ResumeBuilder() {
                         )}
 
                         {formData.custom_sections && formData.custom_sections.map((sec, idx) => (
-                            <div key={idx} className="bg-surface border border-gray-100 rounded-[2rem] p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
+                            <div key={idx} className="bg-surface border border-gray-100 rounded-4xl p-8 shadow-2xl shadow-black/5 relative transition-all hover:shadow-black/10">
                                 <div className="flex justify-between items-start mb-6">
                                     <h3 className="text-xl font-black text-primary tracking-tight">
                                         {sec.type}

@@ -108,7 +108,7 @@ function AppContent() {
       {/* Admin maintenance indicator — fixed so it sits on top */}
       {maintenance && isAdmin && (
         <>
-          <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-white text-center text-xs font-semibold py-1.5 flex items-center justify-center gap-2">
+          <div className="fixed top-0 left-0 right-0 z-9999 bg-amber-500 text-white text-center text-xs font-semibold py-1.5 flex items-center justify-center gap-2">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse inline-block" />
             Maintenance Mode is ACTIVE — users are seeing the maintenance page
           </div>
