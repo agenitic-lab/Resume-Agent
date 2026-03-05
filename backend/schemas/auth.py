@@ -1,7 +1,7 @@
 # schemas for auth endpoints
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class UserResponse(BaseModel):
@@ -36,16 +36,6 @@ class UserResponse(BaseModel):
         description="User's role (admin or user)",
         examples=["user", "admin"]
     )
-    is_blocked: bool = Field(
-        default=False,
-        description="Whether the user is blocked from accessing the system",
-        examples=[False, True]
-    )
-    is_test_user: bool = Field(
-        default=False,
-        description="Whether the user can access the site during maintenance mode",
-        examples=[False, True]
-    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -56,9 +46,7 @@ class UserResponse(BaseModel):
                 "created_at": "2024-01-15T10:30:00Z",
                 "full_name": "John Doe",
                 "profile_picture": "https://lh3.googleusercontent.com/a/ACg8oc...",
-                "role": "user",
-                "is_blocked": False,
-                "is_test_user": False
+                "role": "user"
             }
         }
     )
@@ -125,6 +113,40 @@ class LoginResponse(BaseModel):
                     "id": "123e4567-e89b-12d3-a456-426614174000",
                     "email": "john.doe@example.com",
                     "created_at": "2024-01-15T10:30:00Z"
+                }
+            }
+        }
+    )
+
+
+class AuthResponse(BaseModel):
+    """Secure authentication response - tokens are set in HttpOnly cookies, not in response body."""
+    
+    success: bool = Field(
+        ...,
+        description="Whether authentication was successful",
+        examples=[True]
+    )
+    message: str = Field(
+        ...,
+        description="Status message",
+        examples=["Authentication successful"]
+    )
+    user: UserResponse = Field(
+        ...,
+        description="Authenticated user information"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Authentication successful",
+                "user": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "email": "john.doe@example.com",
+                    "created_at": "2024-01-15T10:30:00Z",
+                    "role": "user"
                 }
             }
         }

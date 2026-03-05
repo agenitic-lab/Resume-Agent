@@ -9,41 +9,42 @@ load_dotenv(override=True)
 
 class Settings:
     # Load all settings from .env file
-    
+
     # Database
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
         "postgresql://user:password@localhost:5432/resume_agent"
     )
-    
+
     # Auth & Security
     JWT_SECRET_KEY: str = os.getenv(
         "JWT_SECRET_KEY",
         "your-secret-key-here-change-in-production"
     )
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
-    # Cookie settings
-    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "false").lower() == "true"
-    COOKIE_DOMAIN: Optional[str] = os.getenv("COOKIE_DOMAIN")  # e.g. ".example.com" for prod
+    # Cookie settings for secure token storage
+    COOKIE_DOMAIN: str = os.getenv("COOKIE_DOMAIN", "")  # e.g., ".resiko.app" for subdomains
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "true").lower() == "true"  # HTTPS only in production
+    COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")  # "lax", "strict", or "none"
 
     ENCRYPTION_KEY: Optional[str] = os.getenv("ENCRYPTION_KEY")
     if not ENCRYPTION_KEY:
         import logging
         logging.getLogger(__name__).warning("ENCRYPTION_KEY not found in environment")
-    
+
     # Google OAuth (optional)
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
-    
+
     # CORS
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "")
     ALLOWED_ORIGIN_REGEX: str = os.getenv(
         "ALLOWED_ORIGIN_REGEX",
         r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$"
     )
-    
+
     # Model names
     JOB_REQUIREMENTS_MODEL: str = os.getenv(
         "JOB_REQUIREMENTS_MODEL",
@@ -61,17 +62,17 @@ class Settings:
         "MODIFICATION_MODEL",
         "llama-3.3-70b-versatile"
     )
-    
+
     DEFAULT_TEMPERATURE: float = float(os.getenv("DEFAULT_TEMPERATURE", "0.2"))
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "4000"))
-    
+
     # Agent tuning
     MAX_ITERATIONS: int = int(os.getenv("MAX_ITERATIONS", "3"))
     TARGET_SCORE: float = float(os.getenv("TARGET_SCORE", "75.0"))
     MIN_ITERATION_GAIN: float = float(os.getenv("MIN_ITERATION_GAIN", "1.0"))
     FIT_THRESHOLD_POOR: float = float(os.getenv("FIT_THRESHOLD_POOR", "0.15"))
     FIT_THRESHOLD_PARTIAL: float = float(os.getenv("FIT_THRESHOLD_PARTIAL", "0.40"))
-    
+
     # External services
     LATEX_COMPILE_URL: str = os.getenv(
         "LATEX_COMPILE_URL",
@@ -79,13 +80,20 @@ class Settings:
     )
     # LaTeX timeout reduced to 15s for better UX (external service is slow)
     LATEX_TIMEOUT: int = int(os.getenv("LATEX_TIMEOUT", "15"))
-    
+
     # App info
     APP_NAME: str = "Resiko"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    
+
+    # SMTP & Support
+    SMTP_HOST: Optional[str] = os.getenv("SMTP_HOST")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: Optional[str] = os.getenv("SMTP_USER")
+    SMTP_PASSWORD: Optional[str] = os.getenv("SMTP_PASSWORD")
+    SUPPORT_EMAIL: str = os.getenv("SUPPORT_EMAIL", "support@resiko.app")
+
     @classmethod
     def get_allowed_origins_list(cls) -> list[str]:
         # Parse comma-separated ALLOWED_ORIGINS into a list
@@ -102,19 +110,19 @@ settings = Settings()
 # check settings are valid on startup
 def validate_settings():
     errors = []
-    
+
     if not settings.JWT_SECRET_KEY or settings.JWT_SECRET_KEY == "your-secret-key-here-change-in-production":
         errors.append("JWT_SECRET_KEY must be set to a secure value in production")
-    
+
     if not settings.DATABASE_URL:
         errors.append("DATABASE_URL must be set")
-    
+
     if not settings.ENCRYPTION_KEY:
         errors.append("ENCRYPTION_KEY must be set for encrypting user API keys")
-    
+
     if errors and not settings.DEBUG:
-        raise ValueError(f"Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
-    
+        raise ValueError("Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
+
     return True
 
 
@@ -132,6 +140,6 @@ if __name__ == "__main__":
     print("\nValidating settings...")
     try:
         validate_settings()
-        print("✓ Configuration valid")
+        print("Configuration valid")
     except ValueError as e:
-        print(f"✗ Configuration errors:\n{e}")
+        print(f"Configuration errors:\n{e}")

@@ -36,92 +36,55 @@ function clearSessionCaches() {
     clearRunsCache();
 }
 
-// ---------------------------------------------------------------------------
-// Token management — access token lives in memory only (not localStorage).
-// A lightweight "logged_in" flag in localStorage tells the UI that a session
-// likely exists so ProtectedRoute doesn't flash the login page on reload.
-// ---------------------------------------------------------------------------
-let _accessToken = null;
+// Authentication state management (tokens are stored in HttpOnly cookies by the server)
+let _isAuthenticated = false;
 
-export function setToken(token) {
-    _accessToken = token;
-    if (token) {
-        localStorage.setItem('logged_in', '1');
+export function setAuthenticated(isAuth) {
+    _isAuthenticated = isAuth;
+    if (!isAuth) {
+        clearSessionCaches();
     }
 }
 
-export function getToken() {
-    return _accessToken;
-}
-
-export function removeToken() {
-    _accessToken = null;
-    localStorage.removeItem('logged_in');
-}
-
 export function isAuthenticated() {
-    // True if we hold an access token in memory, OR the session flag indicates
-    // a refresh cookie likely exists (will be confirmed via /api/auth/refresh).
-    return !!_accessToken || localStorage.getItem('logged_in') === '1';
-}
-
-// ---------------------------------------------------------------------------
-// Refresh logic — single-flight so concurrent 401s don't fire many refreshes.
-// ---------------------------------------------------------------------------
-let _refreshPromise = null;
-
-async function refreshAccessToken() {
-    if (_refreshPromise) return _refreshPromise;
-
-    _refreshPromise = (async () => {
-        try {
-            const res = await fetch(`${API_URL}/api/auth/refresh`, {
-                method: 'POST',
-                credentials: 'include', // send the httpOnly refresh cookie
-            });
-
-            if (!res.ok) {
-                // Refresh failed — session is truly expired.
-                removeToken();
-                clearSessionCaches();
-                return null;
-            }
-
-            const data = await res.json();
-            if (data.access_token) {
-                setToken(data.access_token);
-                return data.access_token;
-            }
-            return null;
-        } catch {
-            return null;
-        } finally {
-            _refreshPromise = null;
-        }
-    })();
-
-    return _refreshPromise;
-}
-
-/**
- * Bootstrap the session on app startup.
- * If a refresh cookie exists the backend will issue a fresh access token.
- * Returns true on success, false otherwise.
- */
-export async function initAuth() {
-    if (_accessToken) return true; // already have a token in memory
-
-    if (localStorage.getItem('logged_in') !== '1') return false;
-
-    const token = await refreshAccessToken();
-    return !!token;
+    return _isAuthenticated;
 }
 
 // Guard against multiple concurrent auth redirects
 let _isRedirecting = false;
+// Track if we're currently refreshing to prevent multiple refresh calls
+let _isRefreshing = false;
+let _refreshPromise = null;
 
-// Generic API request helper
-async function apiRequest(endpoint, options = {}) {
+// Try to refresh the access token
+async function tryRefreshToken() {
+    if (_isRefreshing && _refreshPromise) {
+        return _refreshPromise;
+    }
+
+    _isRefreshing = true;
+    _refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+    })
+        .then(response => {
+            if (response.ok) {
+                _isAuthenticated = true;
+                return true;
+            }
+            return false;
+        })
+        .catch(() => false)
+        .finally(() => {
+            _isRefreshing = false;
+            _refreshPromise = null;
+        });
+
+    return _refreshPromise;
+}
+
+// Generic API request helper with automatic token refresh
+async function apiRequest(endpoint, options = {}, _retried = false) {
     const url = `${API_URL}${endpoint}`;
 
     const headers = {
@@ -129,30 +92,14 @@ async function apiRequest(endpoint, options = {}) {
         ...options.headers,
     };
 
-    const token = getToken();
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const config = {
         ...options,
         headers,
-        credentials: 'include', // always send cookies (needed for proxy same-origin)
+        credentials: 'include',
     };
 
     try {
         let response = await fetch(url, config);
-
-        // -- Handle 401: try refresh before giving up -------------------------
-        const isAuthEndpoint = endpoint.startsWith('/api/auth/');
-        if (response.status === 401 && !isAuthEndpoint) {
-            const refreshed = await refreshAccessToken();
-            if (refreshed) {
-                // Retry the original request with the new token
-                headers['Authorization'] = `Bearer ${refreshed}`;
-                response = await fetch(url, { ...config, headers });
-            }
-        }
 
         let data = null;
         if (response.status !== 204) {
@@ -165,21 +112,43 @@ async function apiRequest(endpoint, options = {}) {
         }
 
         if (!response.ok) {
+            // Handle unauthorized/forbidden globally (e.g., expired token)
+            // Skip global redirect for auth endpoints — let caller handle those errors
+            const isAuthEndpoint = endpoint.startsWith('/api/auth/');
+
+            // If 401 and not an auth endpoint and we haven't retried, try refreshing
+            if (response.status === 401 && !isAuthEndpoint && !_retried && _isAuthenticated) {
+                const refreshed = await tryRefreshToken();
+                if (refreshed) {
+                    // Retry the original request
+                    return apiRequest(endpoint, options, true);
+                }
+            }
+
             if ((response.status === 401 || response.status === 403) && !isAuthEndpoint) {
-                const hadSession = isAuthenticated();
-                if (!_isRedirecting && hadSession) {
+                const wasAuthenticated = _isAuthenticated;
+                if (!_isRedirecting && wasAuthenticated) {
+                    // Only treat as "session expired" when there was an active session.
                     _isRedirecting = true;
-                    removeToken();
-                    clearSessionCaches();
+                    setAuthenticated(false);
                     window.location.href = '/login?expired=true';
                     return new Promise(() => { });
                 }
+                // No active session — throw so callers can handle it gracefully
                 throw new Error('Unauthorized');
             }
 
-            const errorMessage = (typeof data === 'object' && data !== null)
-                ? (data.detail || data.message || 'Request failed')
-                : (typeof data === 'string' && data.trim() ? data : 'Request failed');
+            // Extract error message from backend response
+            let errorMessage = 'Request failed';
+            if (typeof data === 'object' && data !== null) {
+                if (Array.isArray(data.detail)) {
+                    errorMessage = data.detail.map(err => err.msg).join(', ');
+                } else {
+                    errorMessage = data.detail || data.message || 'Request failed';
+                }
+            } else if (typeof data === 'string' && data.trim()) {
+                errorMessage = data;
+            }
             throw new Error(errorMessage);
         }
 
@@ -198,9 +167,13 @@ export async function googleAuth(credential) {
         body: JSON.stringify({ credential }),
     });
 
-    // Store access token in memory
-    if (data.access_token) {
-        setToken(data.access_token);
+    // Mark as authenticated on successful login (tokens are in HttpOnly cookies)
+    if (data.success) {
+        setAuthenticated(true);
+        // Cache user data
+        if (data.user) {
+            setEntry(apiCache.currentUser, data.user, CACHE_TTL_MS.currentUser);
+        }
     }
 
     return data;
@@ -230,17 +203,51 @@ export async function deleteRun(runId) {
 }
 
 export async function logout() {
-    // Tell the backend to clear the httpOnly refresh cookie
     try {
-        await fetch(`${API_URL}/api/auth/logout`, {
+        // Call server to clear HttpOnly cookies
+        await apiRequest('/api/auth/logout', {
             method: 'POST',
-            credentials: 'include',
         });
-    } catch {
-        // Best-effort; clear local state regardless
+    } catch (error) {
+        // Continue with local cleanup even if server call fails
+        console.warn('Logout API call failed:', error);
     }
-    removeToken();
-    clearSessionCaches();
+    setAuthenticated(false);
+}
+
+export async function refreshToken() {
+    try {
+        const data = await apiRequest('/api/auth/refresh', {
+            method: 'POST',
+        });
+        if (data.success) {
+            setAuthenticated(true);
+            if (data.user) {
+                setEntry(apiCache.currentUser, data.user, CACHE_TTL_MS.currentUser);
+            }
+        }
+        return data;
+    } catch (error) {
+        // Refresh failed - user needs to re-login
+        setAuthenticated(false);
+        throw error;
+    }
+}
+
+// Initialize authentication state by checking if we have a valid session
+export async function initializeAuth() {
+    try {
+        const user = await apiRequest('/api/auth/check');
+        if (user && user.id) {
+            setAuthenticated(true);
+            setEntry(apiCache.currentUser, user, CACHE_TTL_MS.currentUser);
+            return user;
+        }
+    } catch {
+        // Not authenticated or session expired
+        setAuthenticated(false);
+    }
+    return null;
 }
 
 export async function getCurrentUser(options = {}) {
@@ -366,12 +373,6 @@ export async function getRun(runId) {
 }
 
 export async function optimizeResumeStream(jobDescription, resume, onEvent, inputType = null) {
-    // Ensure we have a valid access token (refresh if needed)
-    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
-        await refreshAccessToken();
-    }
-
-    const token = getToken();
     let response;
     try {
         const body = { job_description: jobDescription, resume };
@@ -381,7 +382,6 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             credentials: 'include',
             body: JSON.stringify(body),
@@ -392,7 +392,7 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
 
     // Handle 401 — try refresh and retry once
     if (response.status === 401) {
-        const refreshed = await refreshAccessToken();
+        const refreshed = await tryRefreshToken();
         if (refreshed) {
             const retryBody = { job_description: jobDescription, resume };
             if (inputType) retryBody.input_type = inputType;
@@ -402,7 +402,6 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${refreshed}`,
                     },
                     credentials: 'include',
                     body: JSON.stringify(retryBody),
@@ -507,19 +506,12 @@ export async function clearRunHistory() {
 }
 
 export async function compileLatex(latexCode) {
-    // Ensure we have a valid access token
-    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
-        await refreshAccessToken();
-    }
-
-    const token = getToken();
     let response;
     try {
         response = await fetch(`${API_URL}/api/latex/compile`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             credentials: 'include',
             body: JSON.stringify({ latex_code: latexCode }),
@@ -530,14 +522,13 @@ export async function compileLatex(latexCode) {
 
     // Handle 401 — try refresh and retry once
     if (response.status === 401) {
-        const refreshed = await refreshAccessToken();
+        const refreshed = await tryRefreshToken();
         if (refreshed) {
             try {
                 response = await fetch(`${API_URL}/api/latex/compile`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${refreshed}`,
                     },
                     credentials: 'include',
                     body: JSON.stringify({ latex_code: latexCode }),
@@ -591,16 +582,7 @@ export async function optimizeResumeBuilder(resumeData, selectedRecommendations)
 }
 
 export async function getResumePreview(resumeId, templateName) {
-    // Ensure we have a valid access token
-    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
-        await refreshAccessToken();
-    }
-
-    const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         credentials: 'include',
     });
 
@@ -612,16 +594,7 @@ export async function getResumePreview(resumeId, templateName) {
 }
 
 export async function downloadResume(resumeId, templateName) {
-    // Ensure we have a valid access token
-    if (!_accessToken && localStorage.getItem('logged_in') === '1') {
-        await refreshAccessToken();
-    }
-
-    const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         credentials: 'include',
     });
 
@@ -818,5 +791,24 @@ export async function setMaintenanceMode(active) {
     return apiRequest('/api/admin/maintenance', {
         method: 'PUT',
         body: JSON.stringify({ active }),
+    });
+}
+
+// Support Endpoints
+export async function createSupportTicket(data) {
+    return apiRequest('/api/support', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+export async function getAdminSupportTickets(status = 'all') {
+    return apiRequest(`/api/admin/support?status=${status}`);
+}
+
+export async function updateAdminSupportTicketStatus(ticketId, status) {
+    return apiRequest(`/api/admin/support/${ticketId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
     });
 }

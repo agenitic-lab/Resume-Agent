@@ -9,6 +9,8 @@ from database.models.user import User
 from database.models.run import Run
 from database.models.resume import Resume
 from database.models import MissingSkillsRun
+from database.models.support import SupportTicket
+from schemas.support import SupportTicketResponse, SupportTicketUpdate
 from auth.dependencies import get_current_admin
 from schemas.auth import UserResponse, PaginatedUserResponse
 from sqlalchemy import or_, func, literal_column, cast, String, union_all, desc
@@ -644,3 +646,41 @@ def set_maintenance_mode(
     _save_maintenance({"active": body.active})
     state = "enabled" if body.active else "disabled"
     return {"message": f"Maintenance mode {state}", "active": body.active}
+
+
+# ── Support Tickets ──────────────────────────────────────────────────────────
+
+@router.get("/support", response_model=List[SupportTicketResponse])
+def get_all_support_tickets(
+    status: str = None,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """List all support tickets with optional status filter."""
+    query = db.query(SupportTicket).order_by(desc(SupportTicket.created_at))
+    if status and status != 'all':
+        query = query.filter(SupportTicket.status == status)
+    return query.all()
+
+@router.patch("/support/{ticket_id}", response_model=SupportTicketResponse)
+def update_support_ticket_status(
+    ticket_id: str,
+    update_data: SupportTicketUpdate,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Update support ticket status."""
+    import uuid
+    try:
+        parsed_uuid = uuid.UUID(ticket_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid ticket ID format")
+        
+    ticket = db.query(SupportTicket).filter(SupportTicket.id == parsed_uuid).first()
+    if not ticket:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
+        
+    ticket.status = update_data.status
+    db.commit()
+    db.refresh(ticket)
+    return ticket

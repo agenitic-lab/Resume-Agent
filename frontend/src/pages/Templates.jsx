@@ -9,7 +9,6 @@ import {
     addCustomTemplate,
     updateCustomTemplate,
     deleteCustomTemplate,
-    getToken,
 } from '../services/api';
 import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
@@ -48,9 +47,7 @@ function PreviewModal({ templateId, templateName, onClose }) {
             setLoadError(false);
             try {
                 const url = getTemplatePreviewUrl(templateId);
-                const token = getToken();
                 const response = await fetch(url, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
                     credentials: 'include',
                 });
                 if (!response.ok) throw new Error('Failed to load preview');

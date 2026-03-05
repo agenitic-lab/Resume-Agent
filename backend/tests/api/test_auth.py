@@ -57,16 +57,23 @@ def setup_database():
 
 @patch("api.routes.auth.verify_google_token")
 def test_google_auth_new_user(mock_verify):
-    """New Google user should get an account created and a JWT returned."""
+    """New Google user should get an account created and tokens set in cookies."""
     mock_verify.return_value = MOCK_GOOGLE_USER
 
     response = client.post("/api/auth/google", json={"credential": "fake-token"})
 
     assert response.status_code == 200
     data = response.json()
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
+    # Tokens are now in HttpOnly cookies, not in response body
+    assert data["success"] is True
+    assert data["message"] == "Authentication successful"
     assert data["user"]["email"] == "test@gmail.com"
+    
+    # Verify cookies are set (check raw headers for set-cookie)
+    raw_cookies = [v for k, v in response.headers.multi_items() if k.lower() == "set-cookie"]
+    cookie_names = [c.split("=")[0] for c in raw_cookies]
+    assert "access_token" in cookie_names
+    assert "refresh_token" in cookie_names
 
     db = TestingSessionLocal()
     user = db.query(User).filter(User.email == "test@gmail.com").first()
