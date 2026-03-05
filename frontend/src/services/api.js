@@ -806,6 +806,30 @@ export async function getAdminSupportTickets(status = 'all') {
     return apiRequest(`/api/admin/support?status=${status}`);
 }
 
+export async function getAdminUnreadSupportCount() {
+    return apiRequest(`/api/admin/support/unread/count`);
+}
+
+export async function markAdminSupportTicketRead(ticketId, isRead) {
+    return apiRequest(`/api/admin/support/${ticketId}/read`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_read: isRead }),
+    });
+}
+
+export async function deleteAdminSupportTicket(ticketId) {
+    return apiRequest(`/api/admin/support/${ticketId}`, {
+        method: 'DELETE',
+    });
+}
+
+export async function replyAdminSupportTicket(ticketId, replyMessage) {
+    return apiRequest(`/api/admin/support/${ticketId}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({ reply_message: replyMessage }),
+    });
+}
+
 export async function updateAdminSupportTicketStatus(ticketId, status) {
     return apiRequest(`/api/admin/support/${ticketId}`, {
         method: 'PATCH',
