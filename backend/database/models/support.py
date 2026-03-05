@@ -22,7 +22,7 @@ class SupportTicket(Base):
     
     # Indexes for better query performance
     __table_args__ = (
-        Index('idx_support_created_at', 'created_at', postgresql_using='DESC'),
+        Index('idx_support_created_at', created_at.desc()),
         Index('idx_support_status', 'status'),
-        Index('idx_support_status_created', 'status', 'created_at', postgresql_using='DESC'),
+        Index('idx_support_status_created', 'status', created_at.desc()),
     )
