@@ -350,27 +350,58 @@ TEMPLATES = {
 
 import json
 import os
+import logging
+
+_logger = logging.getLogger(__name__)
 
 ADMIN_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "admin_templates.json")
 DELETED_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "deleted_templates.json")
 
-def load_admin_templates():
-    if not os.path.exists(ADMIN_TEMPLATES_FILE):
-        return {}
+
+def _get_setting(key: str, default=None):
+    """Read a value from the system_settings table, falling back to *default*."""
     try:
-        with open(ADMIN_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        from database.connection import SessionLocal
+        from database.models.system_setting import SystemSetting
+        db = SessionLocal()
+        try:
+            row = db.query(SystemSetting).filter(SystemSetting.key == key).first()
+            return row.value if row else default
+        finally:
+            db.close()
     except Exception:
-        return {}
+        # Table may not exist yet on the very first startup; fall back silently.
+        return default
+
+
+def load_admin_templates():
+    """Load admin custom templates from the database."""
+    result = _get_setting("admin_templates")
+    if result is not None:
+        return result
+    # Fallback: read legacy JSON file (first migration only)
+    if os.path.exists(ADMIN_TEMPLATES_FILE):
+        try:
+            with open(ADMIN_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
 
 def load_deleted_templates():
-    if not os.path.exists(DELETED_TEMPLATES_FILE):
-        return []
-    try:
-        with open(DELETED_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return []
+    """Load deleted template IDs from the database."""
+    result = _get_setting("deleted_templates")
+    if result is not None:
+        return result
+    # Fallback: read legacy JSON file (first migration only)
+    if os.path.exists(DELETED_TEMPLATES_FILE):
+        try:
+            with open(DELETED_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
 
 def get_combined_templates():
     combined = dict(TEMPLATES)

@@ -38,18 +38,21 @@ router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 import os as _os
 
-_DEFAULT_TEMPLATE_FILE = _os.path.join(
-    _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
-    "data", "default_template.json"
-)
 
 def _get_global_default_template() -> str | None:
-    """Read admin-set global default template ID from data/default_template.json."""
+    """Read admin-set global default template ID from the database."""
     try:
-        with open(_DEFAULT_TEMPLATE_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return data.get("template_id")
-    except (FileNotFoundError, json.JSONDecodeError):
+        from database.connection import SessionLocal
+        from database.models.system_setting import SystemSetting
+        db = SessionLocal()
+        try:
+            row = db.query(SystemSetting).filter(SystemSetting.key == "default_template").first()
+            if row and row.value:
+                return row.value.get("template_id")
+            return None
+        finally:
+            db.close()
+    except Exception:
         return None
 
 

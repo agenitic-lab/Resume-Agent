@@ -63,10 +63,10 @@ async function tryRefreshToken() {
     }
 
     _isRefreshing = true;
-    _refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
+    _refreshPromise = fetchWithTimeout(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
-    })
+    }, 15000)
         .then(response => {
             if (response.ok) {
                 _isAuthenticated = true;
@@ -81,6 +81,14 @@ async function tryRefreshToken() {
         });
 
     return _refreshPromise;
+}
+
+// Fetch with timeout to prevent indefinite hangs
+function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
 }
 
 // Generic API request helper with automatic token refresh
@@ -99,7 +107,7 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
     };
 
     try {
-        let response = await fetch(url, config);
+        let response = await fetchWithTimeout(url, config);
 
         let data = null;
         if (response.status !== 204) {
@@ -117,7 +125,8 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
             const isAuthEndpoint = endpoint.startsWith('/api/auth/');
 
             // If 401 and not an auth endpoint and we haven't retried, try refreshing
-            if (response.status === 401 && !isAuthEndpoint && !_retried && _isAuthenticated) {
+            // Note: also attempt when !_isAuthenticated (e.g. initializeAuth on page load)
+            if (response.status === 401 && !isAuthEndpoint && !_retried) {
                 const refreshed = await tryRefreshToken();
                 if (refreshed) {
                     // Retry the original request
@@ -154,6 +163,9 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
 
         return data;
     } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out. Please try again.');
+        }
         if (error.message) {
             throw error;
         }
@@ -378,16 +390,16 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
         const body = { job_description: jobDescription, resume };
         if (inputType) body.input_type = inputType;
 
-        response = await fetch(`${API_URL}/api/agent/run/stream`, {
+        response = await fetchWithTimeout(`${API_URL}/api/agent/run/stream`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             credentials: 'include',
             body: JSON.stringify(body),
-        });
-    } catch {
-        throw new Error('Cannot connect to backend. Ensure API server is running.');
+        }, 60000);
+    } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'Request timed out. Please try again.' : 'Cannot connect to backend. Ensure API server is running.');
     }
 
     // Handle 401 — try refresh and retry once
@@ -398,16 +410,16 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
             if (inputType) retryBody.input_type = inputType;
 
             try {
-                response = await fetch(`${API_URL}/api/agent/run/stream`, {
+                response = await fetchWithTimeout(`${API_URL}/api/agent/run/stream`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     credentials: 'include',
                     body: JSON.stringify(retryBody),
-                });
-            } catch {
-                throw new Error('Cannot connect to backend. Ensure API server is running.');
+                }, 60000);
+            } catch (e) {
+                throw new Error(e.name === 'AbortError' ? 'Request timed out. Please try again.' : 'Cannot connect to backend. Ensure API server is running.');
             }
         }
     }
@@ -508,16 +520,16 @@ export async function clearRunHistory() {
 export async function compileLatex(latexCode) {
     let response;
     try {
-        response = await fetch(`${API_URL}/api/latex/compile`, {
+        response = await fetchWithTimeout(`${API_URL}/api/latex/compile`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             credentials: 'include',
             body: JSON.stringify({ latex_code: latexCode }),
-        });
-    } catch {
-        throw new Error('Cannot connect to backend compile service. Restart backend and try again.');
+        }, 60000);
+    } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'Compilation timed out. Please try again.' : 'Cannot connect to backend compile service. Restart backend and try again.');
     }
 
     // Handle 401 — try refresh and retry once
@@ -525,16 +537,16 @@ export async function compileLatex(latexCode) {
         const refreshed = await tryRefreshToken();
         if (refreshed) {
             try {
-                response = await fetch(`${API_URL}/api/latex/compile`, {
+                response = await fetchWithTimeout(`${API_URL}/api/latex/compile`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     credentials: 'include',
                     body: JSON.stringify({ latex_code: latexCode }),
-                });
-            } catch {
-                throw new Error('Cannot connect to backend compile service. Restart backend and try again.');
+                }, 60000);
+            } catch (e) {
+                throw new Error(e.name === 'AbortError' ? 'Compilation timed out. Please try again.' : 'Cannot connect to backend compile service. Restart backend and try again.');
             }
         }
     }
@@ -582,9 +594,19 @@ export async function optimizeResumeBuilder(resumeData, selectedRecommendations)
 }
 
 export async function getResumePreview(resumeId, templateName) {
-    const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
+    let response = await fetchWithTimeout(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
         credentials: 'include',
     });
+
+    // Handle 401 — try refresh and retry once
+    if (response.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+            response = await fetchWithTimeout(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
+                credentials: 'include',
+            });
+        }
+    }
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -594,9 +616,19 @@ export async function getResumePreview(resumeId, templateName) {
 }
 
 export async function downloadResume(resumeId, templateName) {
-    const response = await fetch(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
+    let response = await fetchWithTimeout(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
         credentials: 'include',
     });
+
+    // Handle 401 — try refresh and retry once
+    if (response.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+            response = await fetchWithTimeout(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
+                credentials: 'include',
+            });
+        }
+    }
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

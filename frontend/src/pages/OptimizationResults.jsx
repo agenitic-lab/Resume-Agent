@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getRunDetails } from '../services/api';
+import { getRunDetails, compileLatex as compileLatexApi } from '../services/api';
 import Toast from '../components/Toast';
 import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
 import VisualResumeEditor from '../components/VisualResumeEditor';
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
 
 export default function OptimizationResults() {
     const navigate = useNavigate();
@@ -135,23 +133,7 @@ export default function OptimizationResults() {
     const compileLatex = useCallback(async (code) => {
         setIsCompiling(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ latex_code: code }),
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                let detail = 'LaTeX compilation failed';
-                try {
-                    const errData = await response.json();
-                    detail = errData.detail || errData.message || detail;
-                } catch { /* non-JSON response */ }
-                throw new Error(detail);
-            }
-
-            const blob = await response.blob();
+            const blob = await compileLatexApi(code);
 
             if (compiledPdfUrl) {
                 window.URL.revokeObjectURL(compiledPdfUrl);
@@ -182,21 +164,7 @@ export default function OptimizationResults() {
         if (!url) {
             setIsCompiling(true);
             try {
-                const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ latex_code: latexCode }),
-                    credentials: 'include',
-                });
-                if (!response.ok) {
-                    let detail = 'Compilation failed';
-                    try {
-                        const errData = await response.json();
-                        detail = errData.detail || errData.message || detail;
-                    } catch { /* non-JSON response */ }
-                    throw new Error(detail);
-                }
-                const blob = await response.blob();
+                const blob = await compileLatexApi(latexCode);
                 url = window.URL.createObjectURL(blob);
                 setCompiledPdfUrl(url);
             } catch (err) {
@@ -556,7 +524,7 @@ export default function OptimizationResults() {
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.weakSections?.map((section) => (
                                             <li key={section} className="text-secondary text-sm font-medium flex items-center gap-4">
-                                                <div className="w-4 h-0.5g-red-500/20" />
+                                                <div className="w-4 h-0.5 bg-red-500/20" />
                                                 {section}
                                             </li>
                                         ))}
@@ -574,7 +542,7 @@ export default function OptimizationResults() {
                                 {resultsData.changes.map((change) => (
                                     <div key={change.id} className="bg-secondary rounded-3xl p-6 md:p-8 border border-gray-100 group transition-all hover:bg-surface hover:shadow-xl hover:shadow-black/10">
                                         <div className="flex items-start gap-4 md:gap-6">
-                                            <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center shrink-0p-hover:scale-110 transition-transform mt-0.5">
+                                            <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform mt-0.5">
                                                 <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                 </svg>
@@ -592,6 +560,56 @@ export default function OptimizationResults() {
                             </div>
                         </div>
 
+                        {/* Keywords & Changes Summary */}
+                        {resultsData.resumeAnalysis.skillsMissing?.length > 0 && (
+                            <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
+                                <h2 className="text-xl font-semibold text-primary mb-1 tracking-tight">Changes Summary</h2>
+                                <p className="text-gray-500 text-sm mb-8">Quick overview of what was modified in your resume</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 text-center">
+                                        <div className="text-3xl font-bold text-emerald-600 mb-1">+{resultsData.improvement}</div>
+                                        <div className="text-emerald-600 text-xs font-semibold">Score Improvement</div>
+                                    </div>
+                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-center">
+                                        <div className="text-3xl font-bold text-blue-600 mb-1">{resultsData.resumeAnalysis.skillsMissing.length}</div>
+                                        <div className="text-blue-600 text-xs font-semibold">Keywords Targeted</div>
+                                    </div>
+                                    <div className="bg-purple-50 border border-purple-100 rounded-2xl p-5 text-center">
+                                        <div className="text-3xl font-bold text-purple-600 mb-1">{resultsData.iterations}</div>
+                                        <div className="text-purple-600 text-xs font-semibold">Optimization Rounds</div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4">Keywords Added to Resume</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {resultsData.resumeAnalysis.skillsMissing.map((keyword) => (
+                                            <span key={keyword} className="px-4 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold flex items-center gap-1.5">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                {keyword}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {resultsData.jobRequirements.keywords?.length > 0 && (
+                                    <div className="mt-6 pt-6 border-t border-gray-100">
+                                        <h3 className="text-primary font-black text-[10px] uppercase tracking-widest mb-4">Target Keywords from Job Description</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {resultsData.jobRequirements.keywords.map((keyword) => (
+                                                <span key={keyword} className="px-4 py-1.5 bg-brand/5 text-brand border border-brand/15 rounded-full text-xs font-semibold">
+                                                    {keyword}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Optimized Resume - LaTeX Editor + PDF Preview */}
                         {latexCode && (
                             <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5">
@@ -608,7 +626,7 @@ export default function OptimizationResults() {
                                         <div className="flex-1">
                                             <h4 className="text-amber-600 font-bold text-sm mb-1">PDF Compilation Failed</h4>
                                             <p className="text-secondary text-sm leading-relaxed mb-3">
-                                                The generated LaTeX could not be compiled to PDF automatically. You can edit the code in the editor and click <strong>"Refresh View"</strong> to try recompiling, or report this issue.
+                                                The generated LaTeX could not be compiled to PDF automatically. You can edit the code in the editor and click <strong>"Update Preview"</strong> to try recompiling, or report this issue.
                                             </p>
                                             <a
                                                 href={`mailto:support@resiko.app?subject=LaTeX compilation failure (Run ${id})&body=Run ID: ${id}%0APlease look into this compilation failure.`}
@@ -624,8 +642,8 @@ export default function OptimizationResults() {
                                 )}
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    {/* LaTeX Editor */}
-                                    <div className="lg:h-200">
+                                    {/* LaTeX Visual Editor */}
+                                    <div className="h-[calc(100vh-12rem)] min-h-[500px] max-h-[900px]">
                                         <VisualResumeEditor
                                             latexCode={latexCode}
                                             onChange={setLatexCode}
@@ -634,12 +652,13 @@ export default function OptimizationResults() {
                                         />
                                     </div>
 
+                                    {/* PDF Preview */}
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Visual Preview</label>
                                         </div>
 
-                                        <div className="relative h-125 md:h-200 bg-white border border-gray-200 rounded-xl shadow-sm">
+                                        <div className="relative h-[calc(100vh-15rem)] min-h-[450px] max-h-[850px] bg-white border border-gray-200 rounded-xl shadow-sm">
                                             {compiledPdfUrl ? (
                                                 <PdfViewer
                                                     url={compiledPdfUrl}
@@ -662,17 +681,13 @@ export default function OptimizationResults() {
                                                                 <Skeleton className="h-4 w-full" />
                                                                 <Skeleton className="h-4 w-3/4" />
                                                             </div>
-                                                            <div className="pt-2 space-y-2">
-                                                                <Skeleton className="h-4 w-full" />
-                                                                <Skeleton className="h-4 w-5/6" />
-                                                            </div>
                                                         </div>
                                                     ) : (
                                                         <div className="text-center px-8">
-                                                            <svg className="w-16 h-16 mx-auto mb-6 text-border-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <svg className="w-16 h-16 mx-auto mb-6 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                             </svg>
-                                                            <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Preview not ready. <br />Click "Refresh View" above.</p>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">Preview not ready. <br />Click "Update Preview" to compile.</p>
                                                         </div>
                                                     )}
                                                 </div>

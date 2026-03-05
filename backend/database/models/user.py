@@ -11,8 +11,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=True)  # Nullable for OAuth users
-    role = Column(String, default="user", nullable=False)
-    is_blocked = Column(Boolean, default=False, nullable=False)
+    role = Column(String, default="user", server_default="user", nullable=False)
+    is_blocked = Column(Boolean, default=False, server_default="false", nullable=False)
     is_test_user = Column(Boolean, default=False, nullable=False)
     
     # API key storage (encrypted)

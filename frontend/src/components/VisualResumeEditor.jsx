@@ -1,8 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 
-// Parses LaTeX content into structured sections that users can edit visually.
-// Handles all three template variants (clean_modern, jake, sb2nov) since they
-// share the same \section{} / \resumeSubheading / \resumeItem patterns.
+// ─── LaTeX structure helpers ────────────────────────────────────────────────
 
 function splitPreambleAndBody(latex) {
     const beginIdx = latex.indexOf('\\begin{document}');
@@ -17,44 +15,94 @@ function splitPreambleAndBody(latex) {
 
 function extractSections(body) {
     const sections = [];
-    // split on \section or \cvsection
     const sectionRegex = /\\(?:section|cvsection)\{([^}]*)\}/g;
     const matches = [...body.matchAll(sectionRegex)];
 
-    // everything before the first section is the header block
     const headerEnd = matches.length > 0 ? matches[0].index : body.length;
     sections.push({ type: 'header', raw: body.substring(0, headerEnd) });
 
     for (let i = 0; i < matches.length; i++) {
         const start = matches[i].index;
         const end = i + 1 < matches.length ? matches[i + 1].index : body.length;
-        const sectionTitle = matches[i][1].replace(/\\textls\[.*?\]\{(.*?)\}/g, '$1').replace(/[{}]/g, '').trim();
+        const sectionTitle = matches[i][1]
+            .replace(/\\textls\[.*?\]\{(.*?)\}/g, '$1')
+            .replace(/[{}]/g, '')
+            .trim();
         const raw = body.substring(start, end);
         sections.push({ type: 'section', title: sectionTitle, raw });
     }
     return sections;
 }
 
-// --- Header parsing ---
+// ─── Universal text extraction (strips LaTeX, always returns content) ────────
+
+function stripLatex(text) {
+    let t = text;
+    // Remove comments
+    t = t.replace(/%[^\n]*/g, '');
+    // Remove common environments
+    t = t.replace(/\\begin\{[^}]*\}|\\end\{[^}]*\}/g, '');
+    // Remove spacing/layout
+    t = t.replace(/\\(?:vspace|hspace|vfill|hfill|medskip|smallskip|bigskip|newpage|clearpage)\b\{?[^}]*\}?/g, '');
+    // Unwrap formatting macros (keep inner text)
+    const unwrap = [
+        'textbf', 'textit', 'emph', 'underline', 'normalsize', 'small',
+        'large', 'Large', 'LARGE', 'huge', 'Huge', 'scshape', 'mdseries',
+        'bfseries', 'itshape', 'textrm', 'textsf', 'texttt', 'textsc',
+    ];
+    for (const cmd of unwrap) {
+        const re = new RegExp(`\\\\${cmd}\\{([^}]*)\\}`, 'g');
+        t = t.replace(re, '$1');
+    }
+    // href → keep display text
+    t = t.replace(/\\href\{[^}]*\}\{([^}]*)\}/g, '$1');
+    // fa icons → remove
+    t = t.replace(/\\fa[A-Za-z]+\*?\s*/g, '');
+    // resume macros → remove command, keep content from braces
+    t = t.replace(/\\(?:resumeSubheading|resumeItem|resumeProjectHeading|resumeProject|resumeSubHeadingListStart|resumeSubHeadingListEnd|resumeItemListStart|resumeItemListEnd)\s*/g, '');
+    // Remaining commands without braces
+    t = t.replace(/\\[a-zA-Z@]+\s*/g, '');
+    // Remove stray braces
+    t = t.replace(/[{}]/g, '');
+    // Clean special chars
+    t = t.replace(/[$~|]/g, ' ');
+    t = t.replace(/\\\\/g, '\n');
+    // Collapse whitespace
+    t = t.replace(/[ \t]+/g, ' ');
+    t = t.replace(/\n\s*\n+/g, '\n');
+    return t.trim();
+}
+
+// ─── Structured parsers ─────────────────────────────────────────────────────
+
 function parseHeader(raw) {
     const fields = {};
-    // name: {\Huge \scshape NAME} or {\Large NAME} or \textbf{\Large NAME}
-    const nameMatch = raw.match(/\\(?:Huge|Large)\s*(?:\\scshape\s*)?([^}\\]+)/);
+    const nameMatch = raw.match(/\\(?:Huge|Large|LARGE)\s*(?:\\scshape\s*)?(?:\\mdseries\s*)?(?:\\bfseries\s*)?([^}\\]+)/);
     if (nameMatch) fields.name = nameMatch[1].trim();
 
     const phoneMatch = raw.match(/\\faPhone[*]?\s*(?:\\?\s*)([+\d\s().-]+)/);
     if (phoneMatch) fields.phone = phoneMatch[1].trim();
 
-    const emailMatch = raw.match(/\\faEnvelope[*]?\s*(?:\\?\s*)(?:\\underline\{)?([^}\\]+)/);
+    const emailMatch = raw.match(/\\faEnvelope[*]?\s*(?:\\?\s*)(?:\\underline\{)?([^}\\,\s]+@[^}\\,\s]+)/);
     if (emailMatch) fields.email = emailMatch[1].trim();
+    if (!emailMatch) {
+        const emailAlt = raw.match(/\\href\{mailto:([^}]*)\}/);
+        if (emailAlt) fields.email = emailAlt[1].trim();
+    }
 
     const locationMatch = raw.match(/\\small\s+([A-Z][^\\]+?)\s*\\\\/);
-    if (!locationMatch) {
+    if (locationMatch) {
+        fields.location = locationMatch[1].trim();
+    } else {
         const locAlt = raw.match(/\{([A-Za-z][A-Za-z ,]+(?:,\s*[A-Z]{2,}))\}/);
         if (locAlt) fields.location = locAlt[1].trim();
-    } else {
-        fields.location = locationMatch[1].trim();
     }
+
+    const linkedinMatch = raw.match(/\\href\{(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([^}]*)\}/);
+    if (linkedinMatch) fields.linkedin = linkedinMatch[1].trim();
+
+    const githubMatch = raw.match(/\\href\{(?:https?:\/\/)?(?:www\.)?github\.com\/([^}]*)\}/);
+    if (githubMatch) fields.github = githubMatch[1].trim();
 
     return fields;
 }
@@ -62,82 +110,50 @@ function parseHeader(raw) {
 function applyHeaderChanges(raw, field, value) {
     let updated = raw;
     switch (field) {
-        case 'name': {
+        case 'name':
             updated = updated.replace(
-                /(\\(?:Huge|Large)\s*(?:\\scshape\s*)?)[^}\\]+/,
+                /(\\(?:Huge|Large|LARGE)\s*(?:\\scshape\s*)?(?:\\mdseries\s*)?(?:\\bfseries\s*)?)[^}\\]+/,
                 `$1${value}`
             );
             break;
-        }
-        case 'phone': {
-            updated = updated.replace(
-                /(\\faPhone[*]?\s*(?:\\?\s*))([+\d\s().-]+)/,
-                `$1${value}`
-            );
-            // also fix the tel: href
-            updated = updated.replace(
-                /(\\href\{tel:)[^}]*/,
-                `$1${value}`
-            );
+        case 'phone':
+            updated = updated.replace(/(\\faPhone[*]?\s*(?:\\?\s*))([+\d\s().-]+)/, `$1${value}`);
+            updated = updated.replace(/(\\href\{tel:)[^}]*/, `$1${value}`);
             break;
-        }
-        case 'email': {
+        case 'email':
             updated = updated.replace(
-                /(\\faEnvelope[*]?\s*(?:\\?\s*)(?:\\underline\{)?)[^}\\]+/,
+                /(\\faEnvelope[*]?\s*(?:\\?\s*)(?:\\underline\{)?)[^}\\,\s]+@[^}\\,\s]+/,
                 `$1${value}`
             );
-            updated = updated.replace(
-                /(\\href\{mailto:)[^}]*/,
-                `$1${value}`
-            );
+            updated = updated.replace(/(\\href\{mailto:)[^}]*/, `$1${value}`);
+            break;
+        case 'location': {
+            const locRegex = /\\small\s+([A-Z][^\\]+?)\s*\\\\/;
+            if (locRegex.test(updated)) {
+                updated = updated.replace(locRegex, `\\small ${value} \\\\`);
+            }
             break;
         }
     }
     return updated;
 }
 
-// --- Summary parsing ---
-function parseSummary(raw) {
-    // matches the text content within the summary section
-    const match = raw.match(/\\section\{[^}]*\}[\s\S]*?\\small\{([\s\S]*?)\}/);
-    if (match) return match[1].trim();
-    // fallback: text between section header and vspace
-    const fallback = raw.match(/\\section\{[^}]*\}\s*([\s\S]*?)(?:\\vspace|$)/);
-    if (fallback) return fallback[1].replace(/\\small\{?|\}$/g, '').trim();
-    return '';
-}
-
-function applySummaryChange(raw, value) {
-    // replace the summary text content
-    let updated = raw.replace(
-        /(\\section\{[^}]*\}[\s\S]*?\\small\{)([\s\S]*?)(\})/,
-        `$1${value}$3`
-    );
-    if (updated === raw) {
-        // fallback for templates without \small{}
-        updated = raw.replace(
-            /(\\section\{[^}]*\}\s*)([\s\S]*?)(\\vspace)/,
-            `$1${value}\n$3`
-        );
-    }
-    return updated;
-}
-
-// --- Bullet points parsing ---
 function parseBullets(raw) {
     const bullets = [];
-    // \resumeItem{...} or \resumeItem{\normalsize{...}}
-    const itemRegex = /\\resumeItem\{(?:\\normalsize\{)?([\s\S]*?)(?:\}\}|\})\s*(?=\\resumeItem|\\resumeItemListEnd|$)/g;
+    // \resumeItem{...} with optional \normalsize{}
+    const itemRegex = /\\resumeItem\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
     let match;
     while ((match = itemRegex.exec(raw)) !== null) {
-        bullets.push(match[1].trim());
+        let text = match[1].trim();
+        text = text.replace(/^\\normalsize\{([\s\S]*)\}$/, '$1').trim();
+        if (text) bullets.push(text);
     }
     if (bullets.length === 0) {
-        // sb2nov uses \item {...}
-        const altRegex = /\\item\s*\{([\s\S]*?)\}\s*(?=\\item|\\resumeItemListEnd|$)/g;
+        // sb2nov and other \item patterns
+        const altRegex = /\\item\s*\{?((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})+)\}?\s*/g;
         while ((match = altRegex.exec(raw)) !== null) {
             const text = match[1].trim();
-            if (text && !text.startsWith('\\textbf') && !text.startsWith('\\textit')) {
+            if (text && !text.startsWith('\\textbf') && !text.startsWith('\\resumeSub') && text.length > 3) {
                 bullets.push(text);
             }
         }
@@ -145,10 +161,9 @@ function parseBullets(raw) {
     return bullets;
 }
 
-// --- Experience parsing ---
 function parseExperience(raw) {
     const entries = [];
-    const subheadingRegex = /\\resumeSubheading\s*\{([^}]*)\}\{([^}]*)\}\s*\{([^}]*)\}\{([^}]*)\}/g;
+    const subheadingRegex = /\\resumeSubheading\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g;
     let match;
     while ((match = subheadingRegex.exec(raw)) !== null) {
         const afterMatch = raw.substring(match.index + match[0].length);
@@ -156,52 +171,44 @@ function parseExperience(raw) {
         const block = nextSubheading > -1 ? afterMatch.substring(0, nextSubheading) : afterMatch;
         const bullets = parseBullets(block);
 
-        // different templates put title/company in different arg positions
         const arg1 = match[1].replace(/\\underline\{(.*?)\}/g, '$1').trim();
         const arg2 = match[2].trim();
         const arg3 = match[3].replace(/\\underline\{(.*?)\}/g, '$1').trim();
+        const arg4 = match[4].trim();
 
-        // if arg2 has a date pattern, arg1 is probably the title/company
-        const datePattern = /\d{4}|present/i;
-        let title, company, dates;
+        const datePattern = /\d{4}|present|current/i;
+        let title, company, dates, extra;
         if (datePattern.test(arg2)) {
-            title = arg1;
-            dates = arg2;
-            company = arg3;
+            title = arg1; dates = arg2; company = arg3; extra = arg4;
+        } else if (datePattern.test(arg4)) {
+            title = arg3 || arg1; company = arg1; dates = arg4; extra = arg2;
         } else {
-            title = arg3 || arg1;
-            company = arg1;
-            dates = arg2;
+            title = arg1; company = arg3; dates = arg2; extra = arg4;
         }
-
-        entries.push({ title, company, dates, bullets });
+        entries.push({ title, company, dates, extra, bullets });
     }
     return entries;
 }
 
-// --- Projects parsing ---
 function parseProjects(raw) {
     const entries = [];
-    const projRegex = /\\resumeProjectHeading\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}\{[^}]*\}/g;
+    const projRegex = /\\resumeProjectHeading\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g;
     let match;
     while ((match = projRegex.exec(raw)) !== null) {
         let titleBlock = match[1];
         const titleMatch = titleBlock.match(/\\textbf\{(?:\\large\{)?(?:\\underline\{)?([\s\S]*?)(?:\}\}|\})\}?/);
-        const toolsMatch = titleBlock.match(/\\emph\{([\s\S]*?)\}|\\large\{\\underline\{([\s\S]*?)\}\}/);
-        const title = titleMatch ? titleMatch[1].trim() : titleBlock.trim();
-        const tools = toolsMatch ? (toolsMatch[1] || toolsMatch[2] || '').trim() : '';
+        const toolsMatch = titleBlock.match(/\\emph\{([\s\S]*?)\}/);
+        const title = titleMatch ? titleMatch[1].trim() : stripLatex(titleBlock).trim();
+        const tools = toolsMatch ? toolsMatch[1].trim() : '';
 
         const afterMatch = raw.substring(match.index + match[0].length);
         const nextProj = afterMatch.search(/\\resumeProjectHeading|\\resumeSubHeadingListEnd/);
         const block = nextProj > -1 ? afterMatch.substring(0, nextProj) : afterMatch;
         const bullets = parseBullets(block);
-
         entries.push({ title, tools, bullets });
     }
-
-    // sb2nov uses \resumeProject
     if (entries.length === 0) {
-        const altRegex = /\\resumeProject\s*\{([^}]*)\}\s*\{([^}]*)\}/g;
+        const altRegex = /\\resumeProject\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g;
         while ((match = altRegex.exec(raw)) !== null) {
             const title = match[1].trim();
             const tools = match[2].trim();
@@ -215,10 +222,9 @@ function parseProjects(raw) {
     return entries;
 }
 
-// --- Education parsing ---
 function parseEducation(raw) {
     const entries = [];
-    const subheadingRegex = /\\resumeSubheading\s*\{([^}]*)\}\{([^}]*)\}\s*\{([^}]*)\}\{([^}]*)\}/g;
+    const subheadingRegex = /\\resumeSubheading\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g;
     let match;
     while ((match = subheadingRegex.exec(raw)) !== null) {
         const school = match[1].trim();
@@ -229,44 +235,56 @@ function parseEducation(raw) {
     return entries;
 }
 
-// --- Skills parsing ---
 function parseSkills(raw) {
-    // look for the comma-separated list after the skills label
-    const match = raw.match(/\\textbf\{(?:\\normalsize\{)?Skills:?\}?\}?\{?:?\s*([\s\S]*?)(?:\}?\s*\\\\|\}?\s*$)/);
-    if (match) return match[1].replace(/\\normalsize\{|\}/g, '').trim();
-    // fallback: everything between \item{ and }
-    const fallback = raw.match(/\\item\{[\s\S]*?\\textbf\{[^}]*\}\{:\s*([\s\S]*?)\}/);
-    if (fallback) return fallback[1].trim();
+    // Try multiple patterns for skill extraction
+    const patterns = [
+        /\\textbf\{(?:\\normalsize\{)?(?:Technical\s*)?Skills:?\}?\}?\{?:?\s*([\s\S]*?)(?:\}?\s*\\\\|\}?\s*$)/,
+        /\\item\{[\s\S]*?\\textbf\{[^}]*\}\{?:?\s*([\s\S]*?)\}/,
+        /Skills[:\s]*([\s\S]*?)(?:\\\\|$)/i,
+    ];
+    for (const pattern of patterns) {
+        const match = raw.match(pattern);
+        if (match) {
+            return match[1].replace(/\\normalsize\{|\}/g, '').trim();
+        }
+    }
     return '';
 }
 
-// Reconstructs a section's LaTeX after a bullet point edit
+function parseSummary(raw) {
+    const match = raw.match(/\\section\{[^}]*\}[\s\S]*?\\small\{([\s\S]*?)\}/);
+    if (match) return match[1].trim();
+    const fallback = raw.match(/\\section\{[^}]*\}\s*([\s\S]*?)(?:\\vspace|$)/);
+    if (fallback) return fallback[1].replace(/\\small\{?|\}$/g, '').trim();
+    return '';
+}
+
+// ─── Reconstruct helpers ────────────────────────────────────────────────────
+
 function replaceBullet(sectionRaw, bulletIndex, newValue) {
     let count = 0;
-    // try \resumeItem first
     let updated = sectionRaw.replace(
-        /\\resumeItem\{(?:\\normalsize\{)?([\s\S]*?)(?:\}\}|\})\s*/g,
+        /\\resumeItem\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g,
         (fullMatch) => {
             if (count === bulletIndex) {
                 count++;
                 if (fullMatch.includes('\\normalsize')) {
-                    return `\\resumeItem{\\normalsize{${newValue}}}\n        `;
+                    return `\\resumeItem{\\normalsize{${newValue}}}`;
                 }
-                return `\\resumeItem{${newValue}}\n        `;
+                return `\\resumeItem{${newValue}}`;
             }
             count++;
             return fullMatch;
         }
     );
     if (count === 0) {
-        // sb2nov \item pattern
         count = 0;
         updated = sectionRaw.replace(
-            /\\item\s*\{([\s\S]*?)\}\s*(?=\\item|\\resumeItemListEnd)/g,
+            /\\item\s*\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g,
             (fullMatch) => {
                 if (count === bulletIndex) {
                     count++;
-                    return `\\item {${newValue}}\n        `;
+                    return `\\item {${newValue}}`;
                 }
                 count++;
                 return fullMatch;
@@ -276,16 +294,15 @@ function replaceBullet(sectionRaw, bulletIndex, newValue) {
     return updated;
 }
 
-// Reconstructs a section's LaTeX after a subheading field edit
 function replaceSubheadingField(sectionRaw, entryIndex, field, newValue) {
     let count = 0;
     return sectionRaw.replace(
-        /\\resumeSubheading\s*\{([^}]*)\}\{([^}]*)\}\s*\{([^}]*)\}\{([^}]*)\}/g,
+        /\\resumeSubheading\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\{((?:[^{}]|\{[^{}]*\})*)\}/g,
         (fullMatch, a1, a2, a3, a4) => {
             if (count === entryIndex) {
                 count++;
                 const args = [a1, a2, a3, a4];
-                const datePattern = /\d{4}|present/i;
+                const datePattern = /\d{4}|present|current/i;
                 const isDateInArg2 = datePattern.test(a2);
 
                 switch (field) {
@@ -299,7 +316,7 @@ function replaceSubheadingField(sectionRaw, entryIndex, field, newValue) {
                         break;
                     case 'dates':
                         if (isDateInArg2) args[1] = newValue;
-                        else args[1] = newValue;
+                        else args[3] = newValue;
                         break;
                     case 'school': args[0] = newValue; break;
                     case 'degree': args[2] = newValue; break;
@@ -314,7 +331,7 @@ function replaceSubheadingField(sectionRaw, entryIndex, field, newValue) {
 
 function replaceSkills(sectionRaw, newValue) {
     let updated = sectionRaw.replace(
-        /(\\textbf\{(?:\\normalsize\{)?Skills:?\}?\}?\{?:?\s*)([\s\S]*?)((?:\}?\s*\\\\|\}?\s*$))/,
+        /(\\textbf\{(?:\\normalsize\{)?(?:Technical\s*)?Skills:?\}?\}?\{?:?\s*)([\s\S]*?)((?:\}?\s*\\\\|\}?\s*$))/,
         (_, prefix, _old, suffix) => {
             if (prefix.includes('\\normalsize')) return `${prefix}\\normalsize{${newValue}}${suffix}`;
             return `${prefix}${newValue}${suffix}`;
@@ -329,56 +346,143 @@ function replaceSkills(sectionRaw, newValue) {
     return updated;
 }
 
-// --- Section identification ---
+function applySummaryChange(raw, value) {
+    let updated = raw.replace(
+        /(\\section\{[^}]*\}[\s\S]*?\\small\{)([\s\S]*?)(\})/,
+        `$1${value}$3`
+    );
+    if (updated === raw) {
+        updated = raw.replace(
+            /(\\section\{[^}]*\}\s*)([\s\S]*?)(\\vspace)/,
+            `$1${value}\n$3`
+        );
+    }
+    return updated;
+}
+
 function identifySectionType(title) {
     const t = title.toUpperCase().replace(/\\TEXTLS.*?\{(.*?)\}/gi, '$1');
-    if (/SUMMAR/i.test(t)) return 'summary';
+    if (/SUMMAR|OBJECTIVE|PROFILE/i.test(t)) return 'summary';
     if (/EDUCAT/i.test(t)) return 'education';
-    if (/EXPERI/i.test(t)) return 'experience';
+    if (/EXPERI|EMPLOY|WORK\s*HIST/i.test(t)) return 'experience';
     if (/PROJECT/i.test(t)) return 'projects';
-    if (/SKILL/i.test(t)) return 'skills';
+    if (/SKILL|TECH|COMPETENC/i.test(t)) return 'skills';
+    if (/CERTIF|AWARD|HONOR|ACHIEV/i.test(t)) return 'certifications';
     return 'custom';
 }
 
-// --- Collapsible section wrapper ---
-function SectionCard({ title, icon, children, defaultOpen = true }) {
+// ─── UI Components ──────────────────────────────────────────────────────────
+
+const SECTION_ICONS = {
+    header: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+    ),
+    summary: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+    ),
+    experience: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+    ),
+    education: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 7l-9-5 9-5 9 5-9 5z" />
+        </svg>
+    ),
+    projects: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+    ),
+    skills: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+    ),
+    certifications: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+    ),
+    custom: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+    ),
+};
+
+function SectionCard({ title, type, children, defaultOpen = true }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
         <div className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm">
             <button
                 onClick={() => setOpen(!open)}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50/80 transition-colors"
             >
-                <div className="flex items-center gap-3">
-                    <span className="text-lg">{icon}</span>
-                    <span className="text-sm font-bold text-gray-800 uppercase tracking-wider">{title}</span>
+                <div className="flex items-center gap-2.5">
+                    <span className="text-brand-primary">{SECTION_ICONS[type] || SECTION_ICONS.custom}</span>
+                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">{title}</span>
                 </div>
                 <svg
-                    className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                    className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            {open && <div className="px-6 pb-6 space-y-4">{children}</div>}
+            {open && <div className="px-5 pb-5 space-y-3">{children}</div>}
         </div>
     );
 }
 
-function FieldInput({ label, value, onChange, multiline = false, placeholder }) {
-    const cls = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand-primary/40 outline-none transition-all";
+function FieldInput({ label, value, onChange, multiline = false, placeholder, rows = 3 }) {
+    const baseCls = "w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/40 outline-none transition-all placeholder:text-gray-400";
     return (
-        <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</label>
+        <div className="space-y-1">
+            {label && <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{label}</label>}
             {multiline ? (
                 <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-                    className={`${cls} h-28 resize-none`} />
+                    rows={rows} className={`${baseCls} resize-none`} />
             ) : (
-                <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={cls} />
+                <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={baseCls} />
             )}
         </div>
     );
 }
+
+function FallbackContent({ raw, sectionIndex, updateSection }) {
+    const textContent = useMemo(() => stripLatex(raw), [raw]);
+    if (!textContent) return <p className="text-xs text-gray-400 italic">No editable content detected in this section.</p>;
+    return (
+        <FieldInput
+            label="Content"
+            value={textContent}
+            multiline
+            rows={4}
+            placeholder="Section content"
+            onChange={v => {
+                // Smart replace: find old text in raw LaTeX and replace
+                const oldText = textContent;
+                const lines = oldText.split('\n');
+                const newLines = v.split('\n');
+                let updated = raw;
+                for (let i = 0; i < Math.min(lines.length, newLines.length); i++) {
+                    if (lines[i] !== newLines[i] && lines[i].trim()) {
+                        updated = updated.replace(lines[i].trim(), newLines[i].trim());
+                    }
+                }
+                updateSection(sectionIndex, updated);
+            }}
+        />
+    );
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function VisualResumeEditor({ latexCode, onChange, onRecompile, isCompiling }) {
     const { preamble, body, suffix } = useMemo(() => splitPreambleAndBody(latexCode), [latexCode]);
@@ -395,54 +499,54 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
     };
 
     return (
-        <div className="space-y-4 h-full flex flex-col">
-            <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-brand" />
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Visual Editor</label>
+        <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between px-1 mb-3 shrink-0">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Visual Editor</span>
                 </div>
                 <button
                     onClick={handleCopy}
-                    className="text-brand hover:text-brand-hover text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-brand-primary/20 px-3 py-1 rounded-lg bg-brand/5"
+                    className="text-brand-primary hover:text-brand-hover text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors border border-brand-primary/20 px-2.5 py-1 rounded-lg bg-brand-primary/5 hover:bg-brand-primary/10"
                 >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                     Copy LaTeX
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+            {/* Scrollable section list */}
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-0">
                 {sections.map((section, idx) => {
                     if (section.type === 'header') {
                         const fields = parseHeader(section.raw);
+                        const hasFields = Object.keys(fields).length > 0;
                         return (
-                            <SectionCard key={idx} title="Contact Info" icon="👤">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {fields.name !== undefined && (
-                                        <FieldInput label="Full Name" value={fields.name}
-                                            onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'name', v))} />
-                                    )}
-                                    {fields.phone !== undefined && (
-                                        <FieldInput label="Phone" value={fields.phone}
-                                            onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'phone', v))} />
-                                    )}
-                                    {fields.email !== undefined && (
-                                        <FieldInput label="Email" value={fields.email}
-                                            onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'email', v))} />
-                                    )}
-                                    {fields.location !== undefined && (
-                                        <FieldInput label="Location" value={fields.location}
-                                            onChange={v => {
-                                                let updated = section.raw;
-                                                const locRegex = /\\small\s+([A-Z][^\\]+?)\s*\\\\/;
-                                                if (locRegex.test(updated)) {
-                                                    updated = updated.replace(locRegex, `\\small ${v} \\\\`);
-                                                }
-                                                updateSection(idx, updated);
-                                            }} />
-                                    )}
-                                </div>
+                            <SectionCard key={idx} title="Contact Info" type="header">
+                                {hasFields ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {fields.name !== undefined && (
+                                            <FieldInput label="Full Name" value={fields.name}
+                                                onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'name', v))} />
+                                        )}
+                                        {fields.phone !== undefined && (
+                                            <FieldInput label="Phone" value={fields.phone}
+                                                onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'phone', v))} />
+                                        )}
+                                        {fields.email !== undefined && (
+                                            <FieldInput label="Email" value={fields.email}
+                                                onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'email', v))} />
+                                        )}
+                                        {fields.location !== undefined && (
+                                            <FieldInput label="Location" value={fields.location}
+                                                onChange={v => updateSection(idx, applyHeaderChanges(section.raw, 'location', v))} />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
+                                )}
                             </SectionCard>
                         );
                     }
@@ -452,9 +556,13 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                     if (sType === 'summary') {
                         const summaryText = parseSummary(section.raw);
                         return (
-                            <SectionCard key={idx} title="Summary" icon="📝">
-                                <FieldInput label="Professional Summary" value={summaryText} multiline
-                                    onChange={v => updateSection(idx, applySummaryChange(section.raw, v))} />
+                            <SectionCard key={idx} title={section.title || "Summary"} type="summary">
+                                {summaryText ? (
+                                    <FieldInput label="Professional Summary" value={summaryText} multiline rows={4}
+                                        onChange={v => updateSection(idx, applySummaryChange(section.raw, v))} />
+                                ) : (
+                                    <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
+                                )}
                             </SectionCard>
                         );
                     }
@@ -462,10 +570,10 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                     if (sType === 'experience') {
                         const entries = parseExperience(section.raw);
                         return (
-                            <SectionCard key={idx} title="Experience" icon="💼">
-                                {entries.map((entry, ei) => (
-                                    <div key={ei} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50/50">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <SectionCard key={idx} title={section.title || "Experience"} type="experience">
+                                {entries.length > 0 ? entries.map((entry, ei) => (
+                                    <div key={ei} className="border border-gray-100 rounded-xl p-3.5 space-y-2.5 bg-gray-50/50">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                             <FieldInput label="Job Title" value={entry.title}
                                                 onChange={v => updateSection(idx, replaceSubheadingField(section.raw, ei, 'title', v))} />
                                             <FieldInput label="Company" value={entry.company}
@@ -474,18 +582,24 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                                         <FieldInput label="Dates" value={entry.dates}
                                             onChange={v => updateSection(idx, replaceSubheadingField(section.raw, ei, 'dates', v))} />
                                         {entry.bullets.length > 0 && (
-                                            <div className="space-y-2">
+                                            <div className="space-y-1.5">
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Bullet Points</label>
                                                 {entry.bullets.map((b, bi) => (
                                                     <textarea key={bi} value={b}
-                                                        onChange={e => updateSection(idx, replaceBullet(section.raw, bi + entries.slice(0, ei).reduce((sum, e2) => sum + e2.bullets.length, 0), e.target.value))}
-                                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand-primary/40 outline-none transition-all resize-none h-16"
+                                                        onChange={e => {
+                                                            const globalBi = bi + entries.slice(0, ei).reduce((sum, e2) => sum + e2.bullets.length, 0);
+                                                            updateSection(idx, replaceBullet(section.raw, globalBi, e.target.value));
+                                                        }}
+                                                        rows={2}
+                                                        className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/40 outline-none transition-all resize-none"
                                                     />
                                                 ))}
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                )) : (
+                                    <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
+                                )}
                             </SectionCard>
                         );
                     }
@@ -493,9 +607,9 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                     if (sType === 'education') {
                         const entries = parseEducation(section.raw);
                         return (
-                            <SectionCard key={idx} title="Education" icon="🎓">
-                                {entries.map((entry, ei) => (
-                                    <div key={ei} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <SectionCard key={idx} title={section.title || "Education"} type="education">
+                                {entries.length > 0 ? entries.map((entry, ei) => (
+                                    <div key={ei} className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                         <FieldInput label="School" value={entry.school}
                                             onChange={v => updateSection(idx, replaceSubheadingField(section.raw, ei, 'school', v))} />
                                         <FieldInput label="Degree" value={entry.degree}
@@ -503,7 +617,9 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                                         <FieldInput label="Dates" value={entry.dates}
                                             onChange={v => updateSection(idx, replaceSubheadingField(section.raw, ei, 'dates', v))} />
                                     </div>
-                                ))}
+                                )) : (
+                                    <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
+                                )}
                             </SectionCard>
                         );
                     }
@@ -511,13 +627,12 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                     if (sType === 'projects') {
                         const entries = parseProjects(section.raw);
                         return (
-                            <SectionCard key={idx} title="Projects" icon="🚀">
-                                {entries.map((entry, pi) => (
-                                    <div key={pi} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50/50">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <SectionCard key={idx} title={section.title || "Projects"} type="projects">
+                                {entries.length > 0 ? entries.map((entry, pi) => (
+                                    <div key={pi} className="border border-gray-100 rounded-xl p-3.5 space-y-2.5 bg-gray-50/50">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                             <FieldInput label="Project Name" value={entry.title}
                                                 onChange={v => {
-                                                    // patching project title in \resumeProjectHeading or \resumeProject
                                                     let updated = section.raw;
                                                     let count = 0;
                                                     updated = updated.replace(
@@ -546,7 +661,7 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                                                 }} />
                                         </div>
                                         {entry.bullets.length > 0 && (
-                                            <div className="space-y-2">
+                                            <div className="space-y-1.5">
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Bullet Points</label>
                                                 {entry.bullets.map((b, bi) => (
                                                     <textarea key={bi} value={b}
@@ -554,13 +669,16 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                                                             const globalBi = bi + entries.slice(0, pi).reduce((sum, e2) => sum + e2.bullets.length, 0);
                                                             updateSection(idx, replaceBullet(section.raw, globalBi, e.target.value));
                                                         }}
-                                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 font-medium focus:ring-2 focus:ring-brand/20 focus:border-brand-primary/40 outline-none transition-all resize-none h-16"
+                                                        rows={2}
+                                                        className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/40 outline-none transition-all resize-none"
                                                     />
                                                 ))}
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                )) : (
+                                    <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
+                                )}
                             </SectionCard>
                         );
                     }
@@ -568,37 +686,34 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                     if (sType === 'skills') {
                         const skillsText = parseSkills(section.raw);
                         return (
-                            <SectionCard key={idx} title="Skills" icon="⚡">
-                                <FieldInput label="Skills (comma-separated)" value={skillsText}
-                                    onChange={v => updateSection(idx, replaceSkills(section.raw, v))} />
+                            <SectionCard key={idx} title={section.title || "Skills"} type="skills">
+                                {skillsText ? (
+                                    <FieldInput label="Skills (comma-separated)" value={skillsText}
+                                        onChange={v => updateSection(idx, replaceSkills(section.raw, v))} />
+                                ) : (
+                                    <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
+                                )}
                             </SectionCard>
                         );
                     }
 
-                    // custom sections: show raw content as editable text
-                    const customContent = section.raw.match(/\\item\{[\s\S]*?\{([\s\S]*?)\}\s*\}\}/);
+                    // Custom / certifications / awards  — always show content via fallback
                     return (
-                        <SectionCard key={idx} title={section.title} icon="📄" defaultOpen={false}>
-                            <FieldInput label="Content" value={customContent ? customContent[1].trim() : ''} multiline
-                                onChange={v => {
-                                    let updated = section.raw;
-                                    if (customContent) {
-                                        updated = updated.replace(customContent[1], v);
-                                    }
-                                    updateSection(idx, updated);
-                                }} />
+                        <SectionCard key={idx} title={section.title} type={sType} defaultOpen={false}>
+                            <FallbackContent raw={section.raw} sectionIndex={idx} updateSection={updateSection} />
                         </SectionCard>
                     );
                 })}
             </div>
 
-            <div className="pt-3 border-t border-gray-100">
+            {/* Sticky recompile button */}
+            <div className="pt-3 border-t border-gray-100 shrink-0 mt-2">
                 <button
                     onClick={onRecompile}
                     disabled={isCompiling}
                     className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${isCompiling
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-brand text-white hover:bg-brand-hover shadow-lg shadow-brand/10 active:scale-[0.98]'
+                        : 'bg-brand-primary text-white hover:bg-brand-hover shadow-lg shadow-brand-primary/10 active:scale-[0.98]'
                         }`}
                 >
                     {isCompiling ? (
