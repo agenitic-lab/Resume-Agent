@@ -6,7 +6,6 @@ from typing import Optional, Dict, Tuple
 import jwt
 from config import settings
 
-# Configuration — use central settings (which calls load_dotenv() on import)
 JWT_SECRET = settings.JWT_SECRET_KEY
 JWT_ALGORITHM = settings.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
@@ -72,7 +71,7 @@ def decode_access_token(token: str) -> Optional[Dict]:
 
     except jwt.InvalidTokenError:
         return None
-    
+
     except Exception:
         return None
 
@@ -96,7 +95,7 @@ def decode_refresh_token(token: str) -> Optional[Dict]:
 
     except jwt.InvalidTokenError:
         return None
-    
+
     except Exception:
         return None
 

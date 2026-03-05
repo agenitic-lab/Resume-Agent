@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 const MAX_JDS = 20;
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim() || 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').trim();
 
 // ─── Category accent colours ───────────────────────────────────────────────
 const CATEGORY_COLORS = {
@@ -76,7 +76,7 @@ export default function MissingSkills() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/pdf/extract`, { method: 'POST', body: formData });
+      const res = await fetch(`${API_BASE_URL}/api/pdf/extract`, { method: 'POST', body: formData, credentials: 'include' });
       if (!res.ok) throw new Error('PDF extraction failed');
       const data = await res.json();
       setResumeText(data.text || '');

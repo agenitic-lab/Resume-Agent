@@ -50,7 +50,7 @@ export function isAuthenticated() {
     return _isAuthenticated;
 }
 
-// Guard against multiple concurrent auth redirects (e.g. pending API calls after logout)
+// Guard against multiple concurrent auth redirects
 let _isRedirecting = false;
 // Track if we're currently refreshing to prevent multiple refresh calls
 let _isRefreshing = false;
@@ -95,11 +95,12 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
     const config = {
         ...options,
         headers,
-        credentials: 'include', // Send cookies with requests
+        credentials: 'include',
     };
 
     try {
-        const response = await fetch(url, config);
+        let response = await fetch(url, config);
+
         let data = null;
         if (response.status !== 204) {
             const contentType = response.headers.get('content-type') || '';
@@ -131,7 +132,6 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
                     _isRedirecting = true;
                     setAuthenticated(false);
                     window.location.href = '/login?expired=true';
-                    // Return a never-resolving promise so .then() chains don't fire
                     return new Promise(() => { });
                 }
                 // No active session — throw so callers can handle it gracefully
@@ -198,7 +198,6 @@ export async function deleteRun(runId) {
     const result = await apiRequest(`/api/agent/runs/${runId}`, {
         method: 'DELETE',
     });
-    // Clear runs cache after deletion
     clearRunsCache();
     return result;
 }
@@ -384,11 +383,33 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include', // Send cookies
+            credentials: 'include',
             body: JSON.stringify(body),
         });
     } catch {
         throw new Error('Cannot connect to backend. Ensure API server is running.');
+    }
+
+    // Handle 401 — try refresh and retry once
+    if (response.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+            const retryBody = { job_description: jobDescription, resume };
+            if (inputType) retryBody.input_type = inputType;
+
+            try {
+                response = await fetch(`${API_URL}/api/agent/run/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(retryBody),
+                });
+            } catch {
+                throw new Error('Cannot connect to backend. Ensure API server is running.');
+            }
+        }
     }
 
     if (!response.ok) {
@@ -492,11 +513,30 @@ export async function compileLatex(latexCode) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include', // Send cookies
+            credentials: 'include',
             body: JSON.stringify({ latex_code: latexCode }),
         });
     } catch {
         throw new Error('Cannot connect to backend compile service. Restart backend and try again.');
+    }
+
+    // Handle 401 — try refresh and retry once
+    if (response.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+            try {
+                response = await fetch(`${API_URL}/api/latex/compile`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ latex_code: latexCode }),
+                });
+            } catch {
+                throw new Error('Cannot connect to backend compile service. Restart backend and try again.');
+            }
+        }
     }
 
     if (!response.ok) {
@@ -543,7 +583,7 @@ export async function optimizeResumeBuilder(resumeData, selectedRecommendations)
 
 export async function getResumePreview(resumeId, templateName) {
     const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
-        credentials: 'include', // Send cookies
+        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -555,7 +595,7 @@ export async function getResumePreview(resumeId, templateName) {
 
 export async function downloadResume(resumeId, templateName) {
     const response = await fetch(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
-        credentials: 'include', // Send cookies
+        credentials: 'include',
     });
 
     if (!response.ok) {

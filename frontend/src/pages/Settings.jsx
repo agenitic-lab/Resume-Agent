@@ -63,8 +63,8 @@ export default function Settings() {
     setShowLogoutDialog(true);
   }
 
-  function confirmSignOut() {
-    logout();
+  async function confirmSignOut() {
+    await logout();
     toast.success('Logged out successfully');
     navigate('/login', { replace: true });
   }

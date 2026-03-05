@@ -23,9 +23,6 @@ export default function ProtectedRoute({ children }) {
                 .finally(() => {
                     setLoading(false);
                 });
-        } else {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(false); // If user is already cached, no need to load
         }
     }, [user]);
 

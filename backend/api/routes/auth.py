@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import Optional
 
 from database.connection import get_db
 from database.models.user import User
@@ -32,11 +33,11 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         "secure": settings.COOKIE_SECURE,
         "samesite": settings.COOKIE_SAMESITE,
     }
-    
+
     # Add domain if specified (for cross-subdomain)
     if settings.COOKIE_DOMAIN:
         cookie_kwargs["domain"] = settings.COOKIE_DOMAIN
-    
+
     # Set access token cookie (short-lived)
     response.set_cookie(
         key="access_token",
@@ -45,7 +46,7 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str) 
         path="/",
         **cookie_kwargs
     )
-    
+
     # Set refresh token cookie (long-lived, restricted path)
     response.set_cookie(
         key="refresh_token",
@@ -63,10 +64,10 @@ def clear_auth_cookies(response: Response) -> None:
         "secure": settings.COOKIE_SECURE,
         "samesite": settings.COOKIE_SAMESITE,
     }
-    
+
     if settings.COOKIE_DOMAIN:
         cookie_kwargs["domain"] = settings.COOKIE_DOMAIN
-    
+
     response.delete_cookie(key="access_token", path="/", **cookie_kwargs)
     response.delete_cookie(key="refresh_token", path="/api/auth", **cookie_kwargs)
 
@@ -89,8 +90,8 @@ def clear_auth_cookies(response: Response) -> None:
     }
 )
 def google_auth(
-    response: Response,
     data: GoogleLoginRequest,
+    response: Response,
     db: Session = Depends(get_db)
 ) -> AuthResponse:
     logger.info("Google OAuth authentication attempt")
@@ -175,10 +176,10 @@ def google_auth(
             email=user.email
         )
         refresh_token, _ = create_refresh_token(user_id=str(user.id))
-        
+
         # Set tokens in secure HttpOnly cookies
         set_auth_cookies(response, access_token, refresh_token)
-        
+
         logger.info(f"Google authentication successful for user: {user.id}")
 
     except Exception as e:
@@ -285,17 +286,17 @@ def refresh_token(
 ) -> AuthResponse:
     """Refresh the access token using the refresh token from cookies."""
     refresh_token = request.cookies.get("refresh_token")
-    
+
     if not refresh_token:
         logger.warning("Refresh attempt without refresh token cookie")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No refresh token provided"
         )
-    
+
     # Decode and validate refresh token
     payload = decode_refresh_token(refresh_token)
-    
+
     if not payload:
         logger.warning("Refresh attempt with invalid/expired refresh token")
         clear_auth_cookies(response)
@@ -303,7 +304,7 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token. Please sign in again."
         )
-    
+
     user_id = payload.get("sub")
     if not user_id:
         logger.warning("Refresh token missing user ID")
@@ -312,7 +313,7 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
         )
-    
+
     # Get user from database
     try:
         user_uuid = uuid.UUID(user_id)
@@ -324,7 +325,7 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
         )
-    
+
     if not user:
         logger.warning(f"Refresh token for non-existent user: {user_id}")
         clear_auth_cookies(response)
@@ -332,7 +333,7 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
-    
+
     if user.is_blocked:
         logger.warning(f"Blocked user attempted token refresh: {user.email}")
         clear_auth_cookies(response)
@@ -340,14 +341,14 @@ def refresh_token(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Your account has been blocked. Please contact support."
         )
-    
+
     # Generate new access token (keep existing refresh token)
     try:
         new_access_token, _ = create_access_token(
             user_id=str(user.id),
             email=user.email
         )
-        
+
         # Set new access token cookie
         cookie_kwargs = {
             "httponly": True,
@@ -356,7 +357,7 @@ def refresh_token(
         }
         if settings.COOKIE_DOMAIN:
             cookie_kwargs["domain"] = settings.COOKIE_DOMAIN
-            
+
         response.set_cookie(
             key="access_token",
             value=new_access_token,
@@ -364,16 +365,16 @@ def refresh_token(
             path="/",
             **cookie_kwargs
         )
-        
+
         logger.info(f"Token refreshed for user: {user.id}")
-        
+
     except Exception as e:
         logger.error(f"Token refresh failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to refresh token"
         )
-    
+
     return AuthResponse(
         success=True,
         message="Token refreshed successfully",

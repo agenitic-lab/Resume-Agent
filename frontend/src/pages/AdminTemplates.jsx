@@ -39,7 +39,7 @@ function PreviewModal({ templateId, templateName, onClose }) {
             try {
                 const url = getTemplatePreviewUrl(templateId);
                 const response = await fetch(url, {
-                    credentials: 'include', // Send cookies
+                    credentials: 'include',
                 });
                 if (!response.ok) throw new Error('Failed to load preview');
                 const blob = await response.blob();

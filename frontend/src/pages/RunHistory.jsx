@@ -63,7 +63,11 @@ export default function RunHistory() {
             .finally(() => setLoadingResumes(false));
 
         getUserRuns(100)
-            .then(setHistoryItems)
+            .then(runs => setHistoryItems(runs.filter(r =>
+                r.status !== 'rejected_poor_fit' &&
+                r.status !== 'failed' &&
+                r.ats_score_after > 0
+            )))
             .catch(err => console.error("Failed to fetch optimization history:", err))
             .finally(() => setLoadingRuns(false));
 
