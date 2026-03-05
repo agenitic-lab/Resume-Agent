@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getAdminSupportTickets, markAdminSupportTicketRead, deleteAdminSupportTicket, replyAdminSupportTicket } from '../services/api';
-import toast from 'react-hot-toast';
 
 export default function AdminSupport() {
     const [tickets, setTickets] = useState([]);
