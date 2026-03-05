@@ -16,28 +16,55 @@ def _parse_recipients(value: str) -> List[str]:
 
 
 def _open_smtp_connection():
-    if settings.SMTP_PORT == 465:
-        server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=20)
-        server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        return server
-
-    server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=20)
-    server.ehlo()
-    server.starttls()
-    server.ehlo()
-    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-    return server
+    try:
+        logger.info(f"Attempting SMTP connection to {settings.SMTP_HOST}:{settings.SMTP_PORT}")
+        logger.info(f"Using account: {settings.SMTP_USER}")
+        
+        if settings.SMTP_PORT == 465:
+            logger.info("Using SMTP_SSL (port 465)")
+            server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=20)
+            logger.info("SSL connection established, attempting login...")
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            logger.info("SMTP_SSL login successful")
+            return server
+        else:
+            logger.info(f"Using SMTP (port {settings.SMTP_PORT}) with STARTTLS")
+            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=20)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            logger.info("TLS connection established, attempting login...")
+            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            logger.info("SMTP login successful")
+            return server
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication Error: {e}")
+        logger.error(f"Error code: {e.smtp_code}, Message: {e.smtp_error}")
+        raise
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP Error: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Connection Error: {type(e).__name__}: {e}")
+        raise
 
 def send_support_email(name: str, email: str, subject: str, message: str) -> bool:
     """
     Sends a support ticket email using SMTP.
     Returns True if successful, False otherwise.
     """
+    logger.info(f"=== Starting email send process ===")
+    logger.info(f"Recipient: {email}, Subject: {subject}")
+    
     if not settings.SMTP_HOST or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.warning("SMTP configuration is missing. Cannot send support email.")
+        logger.error("SMTP configuration is missing:")
+        logger.error(f"  SMTP_HOST: {settings.SMTP_HOST}")
+        logger.error(f"  SMTP_USER: {settings.SMTP_USER}")
+        logger.error(f"  SMTP_PASSWORD: {'SET' if settings.SMTP_PASSWORD else 'NOT SET'}")
         return False
 
     recipients = _parse_recipients(settings.SUPPORT_EMAIL) or [settings.SMTP_USER]
+    logger.info(f"Support email recipients: {recipients}")
 
     try:
         msg = MIMEMultipart("alternative")
@@ -100,15 +127,25 @@ def send_support_email(name: str, email: str, subject: str, message: str) -> boo
         user_ack.attach(MIMEText(ack_text, "plain", "utf-8"))
         user_ack.attach(MIMEText(ack_html, "html", "utf-8"))
 
+        logger.info("Messages created, attempting SMTP connection...")
         server = _open_smtp_connection()
         try:
+            logger.info(f"Sending support ticket to {recipients}")
             server.sendmail(settings.SMTP_USER, recipients, msg.as_string())
+            logger.info("Support ticket email sent successfully")
+            
+            logger.info(f"Sending confirmation to user {email}")
             server.sendmail(settings.SMTP_USER, [email], user_ack.as_string())
+            logger.info("User confirmation email sent successfully")
         finally:
             server.quit()
+            logger.info("SMTP connection closed")
 
-        logger.info(f"Support email sent successfully for subject: {subject}")
+        logger.info(f"Support email process completed successfully for subject: {subject}")
         return True
     except Exception as e:
-        logger.exception(f"Failed to send support email: {e}")
+        logger.error(f"=== FAILED TO SEND EMAIL ===")
+        logger.error(f"Exception type: {type(e).__name__}")
+        logger.error(f"Exception message: {e}")
+        logger.exception(f"Full traceback:")
         return False

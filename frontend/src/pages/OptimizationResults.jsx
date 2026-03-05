@@ -320,7 +320,7 @@ export default function OptimizationResults() {
                                         "Look for roles that emphasize your current strengths"
                                     ].map((sug, i) => (
                                         <li key={i} className="flex items-start gap-4">
-                                            <div className="w-5 h-5 bg-brand/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <div className="w-5 h-5 bg-brand/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                                                 <div className="w-1.5 h-1.5 bg-brand rounded-full" />
                                             </div>
                                             <span className="text-secondary text-sm font-medium">{sug}</span>
@@ -372,7 +372,7 @@ export default function OptimizationResults() {
                 {/* Warning Banner */}
                 {!warningDismissed && (
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-8 flex items-start gap-4">
-                        <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center shrink-0">
                             <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
@@ -385,7 +385,7 @@ export default function OptimizationResults() {
                         </div>
                         <button
                             onClick={() => setWarningDismissed(true)}
-                            className="text-gray-500 hover:text-primary transition-colors flex-shrink-0 mt-1"
+                            className="text-gray-500 hover:text-primary transition-colors shrink-0"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -452,7 +452,7 @@ export default function OptimizationResults() {
                                                 {score}
                                             </div>
                                             {index < resultsData.scoreProgression.length - 1 && (
-                                                <svg className="w-5 h-5 text-border-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-5 h-5 text-border-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                 </svg>
                                             )}
@@ -544,7 +544,7 @@ export default function OptimizationResults() {
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.strongSections?.map((section) => (
                                             <li key={section} className="text-secondary text-sm font-medium flex items-center gap-4">
-                                                <div className="w-4 h-[2px] bg-brand/30" />
+                                                <div className="w-4 h-0.5 bg-brand/30" />
                                                 {section}
                                             </li>
                                         ))}
@@ -556,7 +556,7 @@ export default function OptimizationResults() {
                                     <ul className="space-y-4">
                                         {resultsData.resumeAnalysis.weakSections?.map((section) => (
                                             <li key={section} className="text-secondary text-sm font-medium flex items-center gap-4">
-                                                <div className="w-4 h-[2px] bg-red-500/20" />
+                                                <div className="w-4 h-0.5g-red-500/20" />
                                                 {section}
                                             </li>
                                         ))}
@@ -574,7 +574,7 @@ export default function OptimizationResults() {
                                 {resultsData.changes.map((change) => (
                                     <div key={change.id} className="bg-secondary rounded-3xl p-6 md:p-8 border border-gray-100 group transition-all hover:bg-surface hover:shadow-xl hover:shadow-black/10">
                                         <div className="flex items-start gap-4 md:gap-6">
-                                            <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform mt-0.5">
+                                            <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center shrink-0p-hover:scale-110 transition-transform mt-0.5">
                                                 <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                 </svg>
@@ -600,7 +600,7 @@ export default function OptimizationResults() {
 
                                 {latexCompilationStatus === 'failed' && (
                                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 mb-6 flex items-start gap-4">
-                                        <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center shrink-0">
                                             <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                             </svg>
@@ -625,7 +625,7 @@ export default function OptimizationResults() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     {/* LaTeX Editor */}
-                                    <div className="lg:h-[800px]">
+                                    <div className="lg:h-200">
                                         <VisualResumeEditor
                                             latexCode={latexCode}
                                             onChange={setLatexCode}
@@ -639,7 +639,7 @@ export default function OptimizationResults() {
                                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 italic">Visual Preview</label>
                                         </div>
 
-                                        <div className="relative h-[500px] md:h-[800px] bg-white border border-gray-200 rounded-xl shadow-sm">
+                                        <div className="relative h-125 md:h-200 bg-white border border-gray-200 rounded-xl shadow-sm">
                                             {compiledPdfUrl ? (
                                                 <PdfViewer
                                                     url={compiledPdfUrl}
@@ -748,7 +748,7 @@ export default function OptimizationResults() {
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-16">
                     <button
                         onClick={() => navigate('/new-optimization')}
-                        className="px-8 py-4 bg-brand text-white rounded-[2rem] font-semibold text-sm tracking-wide shadow-2xl shadow-brand/10 hover:bg-brand-hover transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
+                        className="px-8 py-4 bg-brand text-white rounded-4xl font-semibold text-sm tracking-wide shadow-2xl shadow-brand/10 hover:bg-brand-hover transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4"
                     >
                         <span>New Optimization</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -757,7 +757,7 @@ export default function OptimizationResults() {
                     </button>
                     <button
                         onClick={() => navigate('/history')}
-                        className="px-8 py-4 bg-secondary border border-gray-100 text-gray-500 hover:text-primary rounded-[2rem] font-medium text-sm shadow-xl shadow-black/5 transition-all hover:bg-surface active:scale-95 flex items-center justify-center"
+                        className="px-8 py-4 bg-secondary border border-gray-100 text-gray-500 hover:text-primary rounded-4xl font-medium text-sm shadow-xl shadow-black/5 transition-all hover:bg-surface active:scale-95 flex items-center justify-center"
                     >
                         Return to History
                     </button>

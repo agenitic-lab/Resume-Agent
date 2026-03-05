@@ -200,7 +200,7 @@ export default function MissingSkills() {
         {/* API key warning */}
         {hasApiKey === false && (
           <div className="mb-6 flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-5 py-4">
-            <svg className="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
             <p className="text-yellow-700 text-xs font-bold">
@@ -214,7 +214,7 @@ export default function MissingSkills() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
 
           {/* ── Left panel: Resume ─────────────────────────────────────────── */}
-          <div className="bg-surface border border-gray-100 rounded-[2rem] p-6 relative overflow-hidden">
+          <div className="bg-surface border border-gray-100 rounded-4xl p-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-0.5 bg-brand/30" />
 
             <div className="flex items-center justify-between mb-4">
@@ -289,7 +289,7 @@ export default function MissingSkills() {
           </div>
 
           {/* ── Right panel: Job Descriptions ──────────────────────────────── */}
-          <div className="bg-surface border border-gray-100 rounded-[2rem] p-6 relative overflow-hidden flex flex-col">
+          <div className="bg-surface border border-gray-100 rounded-4xl p-6 relative overflow-hidden flex flex-col">
             <div className="absolute top-0 left-0 w-full h-0.5 bg-brand/30" />
 
             <div className="flex items-center justify-between mb-4">
@@ -314,7 +314,7 @@ export default function MissingSkills() {
               </button>
             </div>
 
-            <div className="flex-1 space-y-3 overflow-y-auto max-h-[520px] pr-1 scrollbar-thin">
+            <div className="flex-1 space-y-3 overflow-y-auto max-h-130 pr-1 scrollbar-thin">
               {jobDescriptions.map((jd, idx) => (
                 <div key={idx} className="group relative bg-secondary border border-gray-100 rounded-xl overflow-hidden focus-within:border-brand/40 transition-colors">
                   {/* JD header bar */}
@@ -416,7 +416,7 @@ export default function MissingSkills() {
             {/* Rate-limit / warning banner */}
             {result.rate_limit_hit && result.rate_limit_type === 'daily' && (
               <div className="flex gap-3 bg-red-500/10 border border-red-500/25 rounded-2xl px-5 py-4">
-                <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
                 </svg>
                 <div>
@@ -433,7 +433,7 @@ export default function MissingSkills() {
 
             {result.rate_limit_hit && result.rate_limit_type === 'tpm' && (
               <div className="flex gap-3 bg-yellow-500/10 border border-yellow-500/25 rounded-2xl px-5 py-4">
-                <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 </svg>
                 <div>
@@ -449,7 +449,7 @@ export default function MissingSkills() {
 
             {!result.rate_limit_hit && result.warning && (
               <div className="flex gap-3 bg-blue-500/10 border border-blue-500/25 rounded-2xl px-5 py-4">
-                <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-blue-300/80 text-xs">{result.warning}</p>
@@ -457,7 +457,7 @@ export default function MissingSkills() {
             )}
 
             {/* Summary bar */}
-            <div className="bg-surface border border-gray-100 rounded-[2rem] p-6 relative overflow-hidden">
+            <div className="bg-surface border border-gray-100 rounded-4xl p-6 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-0.5 bg-brand/30" />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
@@ -499,7 +499,7 @@ export default function MissingSkills() {
             </div>
 
             {result.total_missing === 0 ? (
-              <div className="bg-surface border border-green-500/20 rounded-[2rem] p-10 text-center">
+              <div className="bg-surface border border-green-500/20 rounded-4xl p-10 text-center">
                 <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -516,7 +516,7 @@ export default function MissingSkills() {
                     <div key={cat.category} className={`${colors.bg} border ${colors.border} rounded-[1.5rem] p-5 relative overflow-hidden`}>
                       {/* Category header */}
                       <div className="flex items-center gap-2 mb-4">
-                        <div className={`w-2 h-2 rounded-full ${colors.dot} flex-shrink-0`} />
+                        <div className={`w-2 h-2 rounded-full ${colors.dot} shrink-0`} />
                         <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
                           {cat.category}
                         </h3>

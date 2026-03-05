@@ -67,7 +67,8 @@ function AppContent() {
     location.pathname.startsWith('/templates') ||
     location.pathname.startsWith('/settings') ||
     location.pathname.startsWith('/resume-builder') ||
-    location.pathname.startsWith('/missing-skills');
+    location.pathname.startsWith('/missing-skills') ||
+    location.pathname.startsWith('/support');
 
   const showNavbar = !isDashboardRoute;
 
@@ -109,7 +110,7 @@ function AppContent() {
       {/* Admin maintenance indicator — fixed so it sits on top */}
       {maintenance && isAdmin && (
         <>
-          <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-white text-center text-xs font-semibold py-1.5 flex items-center justify-center gap-2">
+          <div className="fixed top-0 left-0 right-0 z-9999 bg-amber-500 text-white text-center text-xs font-semibold py-1.5 flex items-center justify-center gap-2">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse inline-block" />
             Maintenance Mode is ACTIVE — users are seeing the maintenance page
           </div>
@@ -141,7 +142,7 @@ function AppContent() {
         <Route path="/settings" element={<ProtectedRoute><DashboardLayout><Settings /></DashboardLayout></ProtectedRoute>} />
         <Route path="/resume-builder" element={<ProtectedRoute><DashboardLayout><ResumeBuilder /></DashboardLayout></ProtectedRoute>} />
         <Route path="/missing-skills" element={<ProtectedRoute><DashboardLayout><MissingSkills /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/support" element={<Support />} />
+        <Route path="/support" element={<ProtectedRoute><DashboardLayout><Support /></DashboardLayout></ProtectedRoute>} />
         <Route path="/maintenance" element={<Maintenance />} />
 
         <Route path="*" element={<NotFound />} />

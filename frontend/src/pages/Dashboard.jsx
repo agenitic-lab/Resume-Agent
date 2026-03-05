@@ -102,7 +102,7 @@ export default function Dashboard() {
         <div className="absolute top-0 left-0 w-full h-1 bg-brand/10" />
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8">
-            <div className="w-16 h-16 bg-brand rounded-2xl flex flex-shrink-0 items-center justify-center shadow-lg shadow-brand/10">
+            <div className="w-16 h-16 bg-brand rounded-2xl flex shrink-0 items-center justify-center shadow-lg shadow-brand/10">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -130,7 +130,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-surface border border-gray-100 rounded-[2rem] p-5 md:p-8 shadow-lg shadow-black/5 flex flex-col justify-between">
+            <div key={i} className="bg-surface border border-gray-100 rounded-4xl p-5 md:p-8 shadow-lg shadow-black/5 flex flex-col justify-between">
               <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
                 <Skeleton className="w-12 h-12 rounded-xl shrink-0" />
                 <Skeleton className="h-4 w-24" />
@@ -315,7 +315,7 @@ export default function Dashboard() {
 
 function StatCard({ icon, title, value, highlight }) {
   return (
-    <div className="bg-surface border border-gray-200 rounded-[2rem] p-5 md:p-8 hover:border-brand-primary/30 transition-all shadow-lg shadow-black/5 group flex flex-col justify-between overflow-hidden">
+    <div className="bg-surface border border-gray-200 rounded-4xl p-5 md:p-8 hover:border-brand-primary/30 transition-all shadow-lg shadow-black/5 group flex flex-col justify-between overflow-hidden">
       <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 min-w-0">
         <div className="p-3 bg-secondary rounded-xl group-hover:bg-brand/5 transition-colors shrink-0">
           {icon}
