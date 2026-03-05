@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -21,9 +21,9 @@ class Run(Base):
     __tablename__ = "runs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
 
-    status = Column(Enum(RunStatus, values_callable=lambda x: [e.value for e in x]), default=RunStatus.PENDING, nullable=False)
+    status = Column(Enum(RunStatus, values_callable=lambda x: [e.value for e in x]), default=RunStatus.PENDING, nullable=False, index=True)
 
     # Inputs
     job_description = Column(Text, nullable=True)

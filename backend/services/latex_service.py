@@ -105,25 +105,43 @@ def validate_latex_code(latex_code: str) -> tuple[bool, str]:
     # Quick validation before sending to compiler - catches common mistakes
     if not latex_code or not latex_code.strip():
         return False, "LaTeX code is empty"
-    
+
     if "\\documentclass" not in latex_code:
         return False, "Missing \\documentclass declaration"
-    
+
     if "\\begin{document}" not in latex_code:
         return False, "Missing \\begin{document}"
-    
+
     if "\\end{document}" not in latex_code:
         return False, "Missing \\end{document}"
-    
+
+    # Security: block dangerous LaTeX commands that could read/write files or
+    # execute shell commands on the compilation server.
+    import re
+    dangerous_patterns = [
+        (r'\\write18\b', '\\write18 (shell escape)'),
+        (r'\\immediate\\write18\b', '\\immediate\\write18 (shell escape)'),
+        (r'\\input\s*\{[^}]*\.\.|/etc/|/proc/', '\\input with path traversal'),
+        (r'\\include\s*\{[^}]*\.\.|/etc/|/proc/', '\\include with path traversal'),
+        (r'\\openout\b', '\\openout (file write)'),
+        (r'\\openin\b', '\\openin (file read)'),
+        (r'\\catcode\b', '\\catcode (category code manipulation)'),
+        (r'\\csname\s+.*end\s*\\endcsname', '\\csname escape'),
+    ]
+
+    for pattern, desc in dangerous_patterns:
+        if re.search(pattern, latex_code):
+            return False, f"Potentially dangerous command detected: {desc}"
+
     # Check for balanced braces (basic check — allow small mismatch from escapes)
     open_braces = latex_code.count("{")
     close_braces = latex_code.count("}")
     brace_diff = abs(open_braces - close_braces)
     if brace_diff > 5:
         return False, f"Unbalanced braces: {open_braces} opening, {close_braces} closing (diff={brace_diff})"
-    
+
     # Check for common problematic patterns
     if "\\includegraphics" in latex_code and "graphicx" not in latex_code:
         return False, "Using \\includegraphics without graphicx package"
-    
+
     return True, ""

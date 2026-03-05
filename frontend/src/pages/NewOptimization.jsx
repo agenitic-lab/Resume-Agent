@@ -255,11 +255,6 @@ export default function NewOptimization() {
                     setLiveStatusLogs(prev => prev.map(item => ({ ...item, status: 'OK' })));
                 }
             }, inputType);
-            console.log('Optimization response:', {
-                final_status: data.final_status,
-                fit_decision: data.fit_decision,
-                has_modified_resume: !!data.modified_resume
-            });
 
             // Check if optimization was rejected due to poor fit
             if (data.final_status === 'rejected_poor_fit' || data.fit_decision === 'poor_fit') {

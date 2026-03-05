@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -35,8 +35,13 @@ def create_support_ticket(
         status="open"
     )
     db.add(db_ticket)
-    db.commit()
-    db.refresh(db_ticket)
+    try:
+        db.commit()
+        db.refresh(db_ticket)
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to create support ticket")
+        raise HTTPException(status_code=500, detail="Failed to submit support ticket. Please try again.")
 
     # 2. Send Email (non-blocking - ticket saved regardless)
     try:

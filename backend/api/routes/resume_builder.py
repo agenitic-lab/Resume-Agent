@@ -12,6 +12,9 @@ from services.ai_resume_generator import generate_ats_bullets, generate_ats_summ
 from core.security import decrypt_api_key
 from pydantic import BaseModel
 from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/resume", tags=["Resume Builder"])
 
@@ -143,7 +146,8 @@ def preview_resume(
             raise HTTPException(status_code=400, detail="Invalid template selected.")
         
     except Exception as e:
-         raise HTTPException(status_code=500, detail=f"Template rendering failed: {str(e)}")
+         logger.exception("Template rendering failed for resume %s", resume_id)
+         raise HTTPException(status_code=500, detail="Template rendering failed. Please try again.")
 
 
 @router.get("/source/{resume_id}/{template_name}")
@@ -179,7 +183,8 @@ def get_resume_source(
             raise HTTPException(status_code=400, detail="Invalid template selected.")
             
     except Exception as e:
-         raise HTTPException(status_code=500, detail=f"Failed to generate source code: {str(e)}")
+         logger.exception("Failed to generate source code for resume %s", resume_id)
+         raise HTTPException(status_code=500, detail="Failed to generate source code. Please try again.")
 
 
 @router.get("/download/{resume_id}/{template_name}")
@@ -220,7 +225,8 @@ def download_resume(
             headers={"Content-Disposition": "attachment; filename=resume.pdf"}
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+        logger.exception("PDF generation failed for resume %s", resume_id)
+        raise HTTPException(status_code=500, detail="PDF generation failed. Please try again.")
 
 class BulletGenerationRequest(BaseModel):
     role: str

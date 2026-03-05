@@ -93,9 +93,14 @@ def update_user_role(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
+
     user.role = role_data.role
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update role for user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to update user role")
     return {"message": "Role updated successfully", "role": user.role}
 
 @router.put("/users/{user_id}/block")
@@ -111,10 +116,15 @@ def update_user_block(
     
     if str(current_admin.id) == str(user_id):
         raise HTTPException(status_code=400, detail="Cannot block your own account")
-        
+
     user.is_blocked = block_data.is_blocked
-    db.commit()
-    
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update block status for user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to update block status")
+
     status_msg = "blocked" if user.is_blocked else "unblocked"
     return {"message": f"User {status_msg} successfully", "is_blocked": user.is_blocked}
 
@@ -130,7 +140,12 @@ def update_user_test_status(
         raise HTTPException(status_code=404, detail="User not found")
 
     user.is_test_user = data.is_test_user
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update test user status for user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to update test user status")
 
     status_msg = "enabled" if user.is_test_user else "disabled"
     return {"message": f"Test user access {status_msg}", "is_test_user": user.is_test_user}
@@ -149,9 +164,14 @@ def delete_user(
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
         
     # Optional: Delete associated runs/data directly
-    db.query(Run).filter(Run.user_id == user.id).delete()
-    db.delete(user)
-    db.commit()
+    try:
+        db.query(Run).filter(Run.user_id == user.id).delete()
+        db.delete(user)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to delete user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to delete user")
     return {"message": "User deleted successfully"}
 
 @router.get("/metrics")
@@ -160,32 +180,37 @@ def get_admin_metrics(
     db: Session = Depends(get_db)
 ):
     from datetime import datetime, timedelta, timezone
-    
-    total_users = db.query(User).count()
-    total_admins = db.query(User).filter(User.role == 'admin').count()
-    total_blocked_users = db.query(User).filter(User.is_blocked == True).count()
-    total_runs = db.query(Run).count()
-    
-    # New users in the last 30 days
+
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-    new_users = db.query(User).filter(User.created_at >= thirty_days_ago).count()
-    
-    failed_runs = db.query(Run).filter(Run.status == 'failed').count()
-    
-    # recent activity for charts (last 100 runs)
-    recent_runs = db.query(Run).order_by(desc(Run.created_at)).limit(100).all()
+
+    # Single query for all user-related counts
+    user_stats = db.query(
+        func.count(User.id).label('total'),
+        func.count(User.id).filter(User.role == 'admin').label('admins'),
+        func.count(User.id).filter(User.is_blocked == True).label('blocked'),
+        func.count(User.id).filter(User.created_at >= thirty_days_ago).label('new_30d'),
+    ).first()
+
+    # Single query for run-related counts
+    run_stats = db.query(
+        func.count(Run.id).label('total'),
+        func.count(Run.id).filter(Run.status == 'failed').label('failed'),
+    ).first()
+
+    # recent activity for charts (last 100 runs) - only fetch needed columns
+    recent_runs = db.query(Run.created_at, Run.status).order_by(desc(Run.created_at)).limit(100).all()
     recent_activity = [
         {"created_at": r.created_at.isoformat() if r.created_at else None, "status": r.status.value if hasattr(r.status, 'value') else str(r.status)}
         for r in recent_runs
     ]
-    
+
     return {
-        "total_users": total_users,
-        "total_admins": total_admins,
-        "total_blocked_users": total_blocked_users,
-        "new_users_30d": new_users,
-        "total_resumes_generated": total_runs,
-        "failed_runs": failed_runs,
+        "total_users": user_stats.total,
+        "total_admins": user_stats.admins,
+        "total_blocked_users": user_stats.blocked,
+        "new_users_30d": user_stats.new_30d,
+        "total_resumes_generated": run_stats.total,
+        "failed_runs": run_stats.failed,
         "recent_activity": recent_activity
     }
 
@@ -692,6 +717,11 @@ def update_support_ticket_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
         
     ticket.status = update_data.status
-    db.commit()
-    db.refresh(ticket)
+    try:
+        db.commit()
+        db.refresh(ticket)
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update support ticket %s", ticket_id)
+        raise HTTPException(status_code=500, detail="Failed to update ticket status")
     return ticket

@@ -1,6 +1,7 @@
 
 # Resume optimization API endpoints
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
@@ -12,6 +13,8 @@ import asyncio
 import io
 from datetime import datetime
 from queue import Queue, Empty
+
+logger = logging.getLogger(__name__)
 
 from database.connection import get_db
 from database.models import User
@@ -27,7 +30,7 @@ try:
     from agent.workflow import run_optimization, run_optimization_with_events
 except ImportError as e:
     # Fallback for testing/development if workflow not found
-    print(f"Warning: Could not import run_optimization from agent.workflow: {e}")
+    logger.warning("Could not import run_optimization from agent.workflow: %s", e)
     def run_optimization(**kwargs):
         raise NotImplementedError("Workflow module not available")
     def run_optimization_with_events(**kwargs):
@@ -372,14 +375,16 @@ def get_template_preview(template_id: str):
     try:
         pdf_bytes = compile_latex(full_latex)
     except LaTeXCompilationError as e:
+        logger.error("Failed to compile template preview for %s: %s", template_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to compile template preview: {str(e)}",
+            detail="Failed to compile template preview. Please try again.",
         )
     except Exception as e:
+        logger.exception("Unexpected error generating template preview for %s", template_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error generating preview: {str(e)}",
+            detail="Unexpected error generating preview. Please try again.",
         )
 
     return Response(
@@ -424,7 +429,7 @@ def run_agent_workflow(
         else:
             template_id, custom_latex = _resolve_template(current_user)
         
-        print(f"Starting optimization run: {run_id} for user {current_user.id}")
+        logger.info("Starting optimization run: %s for user %s", run_id, current_user.id)
         
         # Run the agent workflow
         result = run_optimization(
@@ -437,7 +442,7 @@ def run_agent_workflow(
             custom_template_latex=custom_latex,
         )
         
-        print(f"Agent completed: {result['final_status']}")
+        logger.info("Agent completed: %s", result['final_status'])
         
         # Save to database (AG-37)
         # Store all results in result_json JSONB field
@@ -483,11 +488,10 @@ def run_agent_workflow(
         
     except Exception as e:
         # Log error and return user-friendly message
-        print(f"Agent error: {str(e)}")
-        # In a real app, we might want to log this to Sentry or similar
+        logger.exception("Agent optimization error for user %s", current_user.id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Optimization failed: {str(e)}"
+            detail="Optimization failed. Please try again or check your API key."
         )
 
 
@@ -670,7 +674,8 @@ def run_agent_workflow_stream(
             }
             yield f"event: completed\ndata: {json.dumps(final_data, default=str)}\n\n"
         except Exception as e:
-            error_payload = json.dumps({"message": f"Failed to save results: {str(e)}"})
+            logger.exception("Failed to save optimization results for user %s", current_user.id)
+            error_payload = json.dumps({"message": "Failed to save results. Please try again."})
             yield f"event: error\ndata: {error_payload}\n\n"
 
     return StreamingResponse(
