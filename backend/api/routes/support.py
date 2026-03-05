@@ -38,16 +38,19 @@ def create_support_ticket(
     db.commit()
     db.refresh(db_ticket)
 
-    # 2. Send Email
-    email_sent = send_support_email(
-        name=db_ticket.name,
-        email=db_ticket.email,
-        subject=db_ticket.subject,
-        message=db_ticket.message
-    )
-
-    if not email_sent:
-        logger.error(f"Ticket {db_ticket.id} created, but failed to send email notification.")
+    # 2. Send Email (non-blocking - ticket saved regardless)
+    try:
+        email_sent = send_support_email(
+            name=db_ticket.name,
+            email=db_ticket.email,
+            subject=db_ticket.subject,
+            message=db_ticket.message
+        )
+        if not email_sent:
+            logger.warning(f"Ticket {db_ticket.id} created, but email notification failed (SMTP issue)")
+    except Exception as e:
+        logger.warning(f"Ticket {db_ticket.id} created, but email error: {str(e)}")
+        email_sent = False
 
     return {
         "id": db_ticket.id,

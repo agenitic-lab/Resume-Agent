@@ -96,12 +96,12 @@ export default function Settings() {
           {loading ? (
             <div className="space-y-3">
               <div className="flex items-center gap-4 p-6 bg-secondary border border-gray-100 rounded-3xl">
-                <Skeleton className="w-10 h-10 rounded-xl flex-shrink-0" />
+                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-3 w-48" />
                 </div>
-                <Skeleton className="h-8 w-20 rounded-xl flex-shrink-0" />
+                <Skeleton className="h-8 w-20 rounded-xl shrink-0" />
               </div>
               <div className="flex gap-3">
                 <Skeleton className="h-10 flex-1 rounded-2xl" />
@@ -110,7 +110,7 @@ export default function Settings() {
           ) : hasApiKey ? (
             <div className="space-y-6">
               <div className="flex items-center gap-4 p-6 bg-secondary border border-gray-100 rounded-3xl">
-                <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
@@ -201,7 +201,7 @@ export default function Settings() {
 
       <ConfirmDialog
         isOpen={showLogoutDialog}
-        onClose={() => setShowLogoutDialog(false)}
+        onCancel={() => setShowLogoutDialog(false)}
         onConfirm={confirmSignOut}
         title="Sign Out"
         message="Are you sure you want to sign out?"
