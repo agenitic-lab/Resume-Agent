@@ -110,6 +110,28 @@ def ensure_user_oauth_columns():
             conn.execute(text(stmt))
 
 
+def ensure_support_ticket_columns():
+    """Ensure support_tickets columns exist (is_read for read/unread feature, is_replied for reply tracking)."""
+    inspector = inspect(engine)
+    if "support_tickets" not in inspector.get_table_names():
+        return
+
+    existing = {col["name"] for col in inspector.get_columns("support_tickets")}
+    statements = []
+
+    if "is_read" not in existing:
+        statements.append("ALTER TABLE support_tickets ADD COLUMN is_read BOOLEAN DEFAULT FALSE NOT NULL")
+    if "is_replied" not in existing:
+        statements.append("ALTER TABLE support_tickets ADD COLUMN is_replied BOOLEAN DEFAULT FALSE NOT NULL")
+
+    if not statements:
+        return
+
+    with engine.begin() as conn:
+        for stmt in statements:
+            conn.execute(text(stmt))
+
+
 def ensure_runtime_schema():
     # Import models lazily to avoid circular import at module load time.
     from database.models.user import User
@@ -136,3 +158,6 @@ def ensure_runtime_schema():
 
     # Ensure OAuth columns exist (google_id, auth_provider, etc.).
     ensure_user_oauth_columns()
+
+    # Ensure support ticket columns exist.
+    ensure_support_ticket_columns()

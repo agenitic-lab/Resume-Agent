@@ -149,3 +149,62 @@ def send_support_email(name: str, email: str, subject: str, message: str) -> boo
         logger.error(f"Exception message: {e}")
         logger.exception(f"Full traceback:")
         return False
+
+
+def send_support_reply(ticket_subject: str, user_email: str, user_name: str, reply_message: str) -> bool:
+    """
+    Sends a reply to a support ticket via email.
+    Returns True if successful, False otherwise.
+    """
+    logger.info(f"=== Starting support reply send process ===")
+    logger.info(f"Replying to: {user_email}, Subject: {ticket_subject}")
+    
+    if not settings.SMTP_HOST or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        logger.error("SMTP configuration is missing")
+        return False
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Re: {ticket_subject}"
+        msg["From"] = settings.SMTP_USER
+        msg["To"] = user_email
+
+        # Create plain-text and HTML versions
+        text = f"Hi {user_name},\n\n{reply_message}\n\nBest regards,\nResiko Support"
+        
+        safe_message = escape(reply_message).replace("\n", "<br>")
+        html = f"""\
+        <html>
+          <body>
+            <p>Hi {escape(user_name)},</p>
+            <p>{safe_message}</p>
+            <hr>
+            <p>Best regards,<br><strong>Resiko Support</strong></p>
+          </body>
+        </html>
+        """
+
+        part1 = MIMEText(text, "plain", "utf-8")
+        part2 = MIMEText(html, "html", "utf-8")
+
+        msg.attach(part1)
+        msg.attach(part2)
+
+        logger.info("Reply message created, attempting SMTP connection...")
+        server = _open_smtp_connection()
+        try:
+            logger.info(f"Sending reply to {user_email}")
+            server.sendmail(settings.SMTP_USER, [user_email], msg.as_string())
+            logger.info("Reply email sent successfully")
+        finally:
+            server.quit()
+            logger.info("SMTP connection closed")
+
+        logger.info(f"Support reply sent successfully")
+        return True
+    except Exception as e:
+        logger.error(f"=== FAILED TO SEND REPLY ===")
+        logger.error(f"Exception type: {type(e).__name__}")
+        logger.error(f"Exception message: {e}")
+        logger.exception(f"Full traceback:")
+        return False
