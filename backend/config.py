@@ -22,7 +22,13 @@ class Settings:
         "your-secret-key-here-change-in-production"
     )
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    
+    # Cookie settings for secure token storage
+    COOKIE_DOMAIN: str = os.getenv("COOKIE_DOMAIN", "")  # e.g., ".resiko.app" for subdomains
+    COOKIE_SECURE: bool = os.getenv("COOKIE_SECURE", "true").lower() == "true"  # HTTPS only in production
+    COOKIE_SAMESITE: str = os.getenv("COOKIE_SAMESITE", "lax")  # "lax", "strict", or "none"
     
     ENCRYPTION_KEY: Optional[str] = os.getenv("ENCRYPTION_KEY")
     if not ENCRYPTION_KEY:

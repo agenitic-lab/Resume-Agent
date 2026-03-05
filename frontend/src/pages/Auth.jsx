@@ -4,24 +4,31 @@ import { Helmet } from 'react-helmet-async';
 import { motion as Motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
-import { googleAuth, isAuthenticated, getCachedCurrentUser, removeToken } from '../services/api';
+import { googleAuth, isAuthenticated, getCachedCurrentUser, logout, initializeAuth } from '../services/api';
 
 export default function Auth() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [checkingAuth, setCheckingAuth] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
 
     useEffect(() => {
-        if (isAuthenticated()) {
-            const cached = getCachedCurrentUser();
-            if (cached) {
-                const dest = cached.role === 'admin' ? '/admin/dashboard' : '/dashboard';
-                navigate(dest, { replace: true });
-            } else {
-                removeToken();
+        // Check if user is already authenticated via cookies
+        async function checkAuth() {
+            try {
+                const user = await initializeAuth();
+                if (user) {
+                    const dest = user.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+                    navigate(dest, { replace: true });
+                }
+            } catch (e) {
+                // Not authenticated - stay on login page
+            } finally {
+                setCheckingAuth(false);
             }
         }
+        checkAuth();
     }, [navigate]);
 
     useEffect(() => {
@@ -48,6 +55,15 @@ export default function Auth() {
             setLoading(false);
         }
     };
+
+    // Show loading while checking authentication
+    if (checkingAuth) {
+        return (
+            <div className="min-h-screen bg-primary flex items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-brand border-t-transparent rounded-full"></div>
+            </div>
+        );
+    }
 
     return (
         <>

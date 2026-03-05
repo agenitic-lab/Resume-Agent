@@ -36,28 +36,55 @@ function clearSessionCaches() {
     clearRunsCache();
 }
 
-// Token management
-export function setToken(token) {
-    localStorage.setItem('token', token);
-}
+// Authentication state management (tokens are stored in HttpOnly cookies by the server)
+let _isAuthenticated = false;
 
-export function getToken() {
-    return localStorage.getItem('token');
-}
-
-export function removeToken() {
-    localStorage.removeItem('token');
+export function setAuthenticated(isAuth) {
+    _isAuthenticated = isAuth;
+    if (!isAuth) {
+        clearSessionCaches();
+    }
 }
 
 export function isAuthenticated() {
-    return !!getToken();
+    return _isAuthenticated;
 }
 
 // Guard against multiple concurrent auth redirects (e.g. pending API calls after logout)
 let _isRedirecting = false;
+// Track if we're currently refreshing to prevent multiple refresh calls
+let _isRefreshing = false;
+let _refreshPromise = null;
 
-// Generic API request helper
-async function apiRequest(endpoint, options = {}) {
+// Try to refresh the access token
+async function tryRefreshToken() {
+    if (_isRefreshing && _refreshPromise) {
+        return _refreshPromise;
+    }
+    
+    _isRefreshing = true;
+    _refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+    })
+        .then(response => {
+            if (response.ok) {
+                _isAuthenticated = true;
+                return true;
+            }
+            return false;
+        })
+        .catch(() => false)
+        .finally(() => {
+            _isRefreshing = false;
+            _refreshPromise = null;
+        });
+    
+    return _refreshPromise;
+}
+
+// Generic API request helper with automatic token refresh
+async function apiRequest(endpoint, options = {}, _retried = false) {
     const url = `${API_URL}${endpoint}`;
 
     const headers = {
@@ -65,14 +92,10 @@ async function apiRequest(endpoint, options = {}) {
         ...options.headers,
     };
 
-    const token = getToken();
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const config = {
         ...options,
         headers,
+        credentials: 'include', // Send cookies with requests
     };
 
     try {
@@ -91,20 +114,27 @@ async function apiRequest(endpoint, options = {}) {
             // Handle unauthorized/forbidden globally (e.g., expired token)
             // Skip global redirect for auth endpoints — let caller handle those errors
             const isAuthEndpoint = endpoint.startsWith('/api/auth/');
+            
+            // If 401 and not an auth endpoint and we haven't retried, try refreshing
+            if (response.status === 401 && !isAuthEndpoint && !_retried && _isAuthenticated) {
+                const refreshed = await tryRefreshToken();
+                if (refreshed) {
+                    // Retry the original request
+                    return apiRequest(endpoint, options, true);
+                }
+            }
+            
             if ((response.status === 401 || response.status === 403) && !isAuthEndpoint) {
-                const hadToken = !!getToken();
-                if (!_isRedirecting && hadToken) {
-                    // Only treat as "session expired" when there was an active token.
-                    // If there was no token, the caller just made an unauthenticated request —
-                    // redirecting would cause an infinite loop on public routes.
+                const wasAuthenticated = _isAuthenticated;
+                if (!_isRedirecting && wasAuthenticated) {
+                    // Only treat as "session expired" when there was an active session.
                     _isRedirecting = true;
-                    removeToken();
-                    clearSessionCaches();
+                    setAuthenticated(false);
                     window.location.href = '/login?expired=true';
                     // Return a never-resolving promise so .then() chains don't fire
                     return new Promise(() => { });
                 }
-                // No active token — throw so callers can handle it gracefully
+                // No active session — throw so callers can handle it gracefully
                 throw new Error('Unauthorized');
             }
 
@@ -137,9 +167,13 @@ export async function googleAuth(credential) {
         body: JSON.stringify({ credential }),
     });
 
-    // Store token on successful authentication
-    if (data.access_token) {
-        setToken(data.access_token);
+    // Mark as authenticated on successful login (tokens are in HttpOnly cookies)
+    if (data.success) {
+        setAuthenticated(true);
+        // Cache user data
+        if (data.user) {
+            setEntry(apiCache.currentUser, data.user, CACHE_TTL_MS.currentUser);
+        }
     }
 
     return data;
@@ -170,8 +204,51 @@ export async function deleteRun(runId) {
 }
 
 export async function logout() {
-    removeToken();
-    clearSessionCaches();
+    try {
+        // Call server to clear HttpOnly cookies
+        await apiRequest('/api/auth/logout', {
+            method: 'POST',
+        });
+    } catch (error) {
+        // Continue with local cleanup even if server call fails
+        console.warn('Logout API call failed:', error);
+    }
+    setAuthenticated(false);
+}
+
+export async function refreshToken() {
+    try {
+        const data = await apiRequest('/api/auth/refresh', {
+            method: 'POST',
+        });
+        if (data.success) {
+            setAuthenticated(true);
+            if (data.user) {
+                setEntry(apiCache.currentUser, data.user, CACHE_TTL_MS.currentUser);
+            }
+        }
+        return data;
+    } catch (error) {
+        // Refresh failed - user needs to re-login
+        setAuthenticated(false);
+        throw error;
+    }
+}
+
+// Initialize authentication state by checking if we have a valid session
+export async function initializeAuth() {
+    try {
+        const user = await apiRequest('/api/auth/me');
+        if (user && user.id) {
+            setAuthenticated(true);
+            setEntry(apiCache.currentUser, user, CACHE_TTL_MS.currentUser);
+            return user;
+        }
+    } catch (error) {
+        // Not authenticated or session expired
+        setAuthenticated(false);
+    }
+    return null;
 }
 
 export async function getCurrentUser(options = {}) {
@@ -297,7 +374,6 @@ export async function getRun(runId) {
 }
 
 export async function optimizeResumeStream(jobDescription, resume, onEvent, inputType = null) {
-    const token = getToken();
     let response;
     try {
         const body = { job_description: jobDescription, resume };
@@ -307,8 +383,8 @@ export async function optimizeResumeStream(jobDescription, resume, onEvent, inpu
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            credentials: 'include', // Send cookies
             body: JSON.stringify(body),
         });
     } catch {
@@ -409,15 +485,14 @@ export async function clearRunHistory() {
 }
 
 export async function compileLatex(latexCode) {
-    const token = getToken();
     let response;
     try {
         response = await fetch(`${API_URL}/api/latex/compile`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            credentials: 'include', // Send cookies
             body: JSON.stringify({ latex_code: latexCode }),
         });
     } catch {
@@ -467,11 +542,8 @@ export async function optimizeResumeBuilder(resumeData, selectedRecommendations)
 }
 
 export async function getResumePreview(resumeId, templateName) {
-    const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/preview/${resumeId}/${templateName}`, {
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: 'include', // Send cookies
     });
 
     if (!response.ok) {
@@ -482,11 +554,8 @@ export async function getResumePreview(resumeId, templateName) {
 }
 
 export async function downloadResume(resumeId, templateName) {
-    const token = getToken();
     const response = await fetch(`${API_URL}/api/resume/download/${resumeId}/${templateName}`, {
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        credentials: 'include', // Send cookies
     });
 
     if (!response.ok) {
