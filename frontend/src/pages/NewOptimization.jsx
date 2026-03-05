@@ -30,8 +30,6 @@ export default function NewOptimization() {
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [liveStatusLogs, setLiveStatusLogs] = useState([]);
-    const [errorDialog, setErrorDialog] = useState(null); // { title, message, type: 'poor_fit' | 'error' }
-    const [optimizationError, setOptimizationError] = useState(null);
 
     // check API key + template on mount
     useEffect(() => {
@@ -398,11 +396,6 @@ export default function NewOptimization() {
                 });
                 setHasApiKey(false); // Update state to show warning banner
             } else {
-                setErrorDialog({
-                    title: 'Optimization Failed',
-                    message: errorMsg,
-                    type: 'error'
-                });
                 setToast({ message: `Optimization failed: ${errorMsg}`, type: 'error' });
             }
 
