@@ -248,6 +248,10 @@ def send_welcome_email(name: str, email: str) -> bool:
 
         html_body = f"""\
         <html>
+          <head>
+            <meta name="color-scheme" content="light only">
+            <meta name="supported-color-schemes" content="light only">
+          </head>
           <body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial, Helvetica, sans-serif;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9; padding:40px 0;">
               <tr>
@@ -256,7 +260,7 @@ def send_welcome_email(name: str, email: str) -> bool:
                     <!-- Header with logo -->
                     <tr>
                       <td align="center" style="background-color:#ffffff; padding:32px 40px; border-bottom:2px solid #e2e8f0;">
-                        <img src="cid:resiko_logo" alt="Resiko" width="160" style="display:block;" />
+                        <img src="cid:resiko_logo" alt="Resiko" width="160" style="display:block; background-color:#ffffff; padding:8px 16px; border-radius:8px;" />
                       </td>
                     </tr>
                     <!-- Body -->
@@ -298,7 +302,7 @@ def send_welcome_email(name: str, email: str) -> bool:
                     <tr>
                       <td align="center" style="background-color:#f8fafc; padding:20px 40px; border-top:1px solid #e2e8f0;">
                         <p style="color:#94a3b8; font-size:13px; margin:0;">
-                          &copy; 2025 Resiko. All rights reserved.
+                          &copy; 2026 Resiko. All rights reserved.
                         </p>
                       </td>
                     </tr>
