@@ -19,6 +19,7 @@ from auth.jwt import (
 from auth.google_oauth import verify_google_token
 from auth.dependencies import get_current_user
 from config import settings
+from services.email import send_welcome_email
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,16 @@ def google_auth(
                     db.commit()
                     db.refresh(user)
                     logger.info(f"Google user created successfully: {user.id}")
+
+                    # Send welcome email (non-blocking — signup succeeds regardless)
+                    try:
+                        send_welcome_email(
+                            name=user.full_name or "there",
+                            email=user.email
+                        )
+                    except Exception as e:
+                        logger.warning(f"Welcome email failed for {user.email}: {e}")
+
                 except IntegrityError:
                     db.rollback()
                     logger.error(f"Failed to create Google user - integrity error: {google_user.email}")
