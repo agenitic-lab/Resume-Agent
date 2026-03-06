@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }) {
                         logout();
                     }
                 })
-                .catch(_e => {
+                .catch(() => {
                     if (retryCount < 1) {
                         // Network error — retry once before logging out
                         setRetryCount(c => c + 1);

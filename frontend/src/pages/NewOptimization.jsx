@@ -30,6 +30,8 @@ export default function NewOptimization() {
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [liveStatusLogs, setLiveStatusLogs] = useState([]);
+    const [optimizationError, setOptimizationError] = useState(null);
+    const [errorDialog, setErrorDialog] = useState(null);
 
     // check API key + template on mount
     useEffect(() => {
