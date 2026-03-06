@@ -17,6 +17,8 @@ class SupportTicketResponse(BaseModel):
     subject: str
     message: str
     status: str
+    is_read: bool = False
+    is_replied: bool = False
     email_sent: Optional[bool] = None
     created_at: datetime
     updated_at: datetime
@@ -26,3 +28,9 @@ class SupportTicketResponse(BaseModel):
 
 class SupportTicketUpdate(BaseModel):
     status: str = Field(..., pattern="^(open|in_progress|closed)$")
+
+class SupportTicketMarkRead(BaseModel):
+    is_read: bool
+
+class SupportTicketReply(BaseModel):
+    reply_message: str = Field(..., min_length=5, max_length=5000)

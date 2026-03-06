@@ -10,7 +10,7 @@ from database.models.run import Run
 from database.models.resume import Resume
 from database.models import MissingSkillsRun
 from database.models.support import SupportTicket
-from schemas.support import SupportTicketResponse, SupportTicketUpdate
+from schemas.support import SupportTicketResponse, SupportTicketUpdate, SupportTicketMarkRead, SupportTicketReply
 from auth.dependencies import get_current_admin
 from schemas.auth import UserResponse, PaginatedUserResponse
 from sqlalchemy import or_, func, literal_column, cast, String, union_all, desc
@@ -686,17 +686,122 @@ def set_maintenance_mode(
 
 # ── Support Tickets ──────────────────────────────────────────────────────────
 
-@router.get("/support", response_model=List[SupportTicketResponse])
-def get_all_support_tickets(
-    status: str = None,
+@router.get("/support/unread/count")
+def get_unread_support_count(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """List all support tickets with optional status filter."""
+    """Get count of unread support tickets."""
+    unread_count = db.query(SupportTicket).filter(SupportTicket.is_read == False).count()
+    return {"unread_count": unread_count}
+
+@router.get("/support", response_model=List[SupportTicketResponse])
+def get_all_support_tickets(
+    status: str = None,
+    limit: int = 100,
+    skip: int = 0,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """List all support tickets with optional status filter and pagination.
+    
+    Args:
+        status: Filter by ticket status (open, in_progress, closed, or 'all')
+        limit: Maximum number of tickets to return (default 100, max 500)
+        skip: Number of tickets to skip for pagination (default 0)
+    """
+    # Cap the limit to prevent loading too much data at once
+    limit = min(limit, 500)
+    
     query = db.query(SupportTicket).order_by(desc(SupportTicket.created_at))
     if status and status != 'all':
         query = query.filter(SupportTicket.status == status)
-    return query.all()
+    
+    # Apply pagination
+    return query.offset(skip).limit(limit).all()
+
+@router.patch("/support/{ticket_id}/read", response_model=SupportTicketResponse)
+def mark_support_ticket_read(
+    ticket_id: str,
+    mark_data: SupportTicketMarkRead,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Mark support ticket as read or unread."""
+    import uuid
+    try:
+        parsed_uuid = uuid.UUID(ticket_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid ticket ID format")
+        
+    ticket = db.query(SupportTicket).filter(SupportTicket.id == parsed_uuid).first()
+    if not ticket:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
+        
+    ticket.is_read = mark_data.is_read
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+@router.delete("/support/{ticket_id}")
+def delete_support_ticket(
+    ticket_id: str,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Delete a support ticket."""
+    import uuid
+    try:
+        parsed_uuid = uuid.UUID(ticket_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid ticket ID format")
+        
+    ticket = db.query(SupportTicket).filter(SupportTicket.id == parsed_uuid).first()
+    if not ticket:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
+        
+    db.delete(ticket)
+    db.commit()
+    return {"message": "Support ticket deleted successfully"}
+
+@router.post("/support/{ticket_id}/reply")
+def reply_support_ticket(
+    ticket_id: str,
+    reply_data: SupportTicketReply,
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Send a reply to a support ticket via email."""
+    import uuid
+    from services.email import send_support_reply
+    
+    try:
+        parsed_uuid = uuid.UUID(ticket_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid ticket ID format")
+        
+    ticket = db.query(SupportTicket).filter(SupportTicket.id == parsed_uuid).first()
+    if not ticket:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
+    
+    # Send reply email
+    email_sent = send_support_reply(
+        ticket_subject=ticket.subject,
+        user_email=ticket.email,
+        user_name=ticket.name,
+        reply_message=reply_data.reply_message
+    )
+    
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Failed to send reply email")
+    
+    # Mark ticket as read and replied after replying
+    ticket.is_read = True
+    ticket.is_replied = True
+    db.commit()
+    db.refresh(ticket)
+    
+    return {"message": "Reply sent successfully", "ticket": ticket}
 
 @router.patch("/support/{ticket_id}", response_model=SupportTicketResponse)
 def update_support_ticket_status(

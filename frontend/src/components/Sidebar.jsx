@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { getCurrentUser, logout } from '../services/api';
+import { getCurrentUser, logout, getAdminUnreadSupportCount } from '../services/api';
 import ConfirmDialog from './ConfirmDialog';
 
 export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } }) {
@@ -9,17 +9,48 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
                 const userData = await getCurrentUser();
                 setUser(userData);
+                
+                // Fetch unread count if user is admin
+                if (userData?.role === 'admin') {
+                    try {
+                        const countData = await getAdminUnreadSupportCount();
+                        setUnreadCount(countData.unread_count || 0);
+                    } catch (error) {
+                        console.error("Failed to fetch unread count:", error);
+                    }
+                }
             } catch (error) {
                 console.error("Failed to fetch user in sidebar:", error);
             }
         };
         fetchUser();
+        
+        // Listen for immediate updates from AdminSupport page
+        const handleSupportTicketsUpdate = async () => {
+            try {
+                const countData = await getAdminUnreadSupportCount();
+                setUnreadCount(countData.unread_count || 0);
+            } catch (error) {
+                console.error("Failed to refresh unread count:", error);
+            }
+        };
+        
+        window.addEventListener('supportTicketsUpdated', handleSupportTicketsUpdate);
+        
+        // Also refresh unread count every 30 seconds as fallback
+        const interval = setInterval(fetchUser, 30000);
+        
+        return () => {
+            window.removeEventListener('supportTicketsUpdated', handleSupportTicketsUpdate);
+            clearInterval(interval);
+        };
     }, []);
 
     const handleLogout = async () => {
@@ -195,9 +226,16 @@ export default function Sidebar({ mobileOpen = false, setMobileOpen = () => { } 
                         >
                             {item.icon}
                             <span className="text-sm font-medium">{item.name}</span>
-                            {isActive(item.path) && (
-                                <div className="ml-auto w-2 h-2 bg-brand rounded-full shadow-[0_0_8px_rgba(255,75,114,0.4)]" />
-                            )}
+                            <div className="ml-auto flex items-center gap-2">
+                                {item.path === '/admin/support' && unreadCount > 0 && (
+                                    <span className="bg-brand text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(255,75,114,0.4)]">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                                {isActive(item.path) && (
+                                    <div className="w-2 h-2 bg-brand rounded-full shadow-[0_0_8px_rgba(255,75,114,0.4)]" />
+                                )}
+                            </div>
                         </Link>
                     ))}
 
