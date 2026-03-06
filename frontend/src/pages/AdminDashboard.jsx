@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 export default function AdminDashboard({ children }) {
     const [maintenance, setMaintenance] = useState(false);
     const [toggling, setToggling] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     useEffect(() => {
         getMaintenanceStatus()
@@ -13,6 +14,7 @@ export default function AdminDashboard({ children }) {
     }, []);
 
     const handleToggle = async () => {
+        setShowConfirm(false);
         setToggling(true);
         try {
             const next = !maintenance;
@@ -33,7 +35,7 @@ export default function AdminDashboard({ children }) {
 
                 {/* Maintenance Toggle */}
                 <button
-                    onClick={handleToggle}
+                    onClick={() => setShowConfirm(true)}
                     disabled={toggling}
                     className={`relative inline-flex items-center gap-2.5 px-4 py-2 rounded-lg text-sm font-semibold border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
                         ${maintenance
@@ -71,6 +73,49 @@ export default function AdminDashboard({ children }) {
                     {children}
                 </div>
             </div>
+
+            {/* Maintenance Mode Confirmation Modal */}
+            {showConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowConfirm(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`p-2 rounded-full ${maintenance ? 'bg-green-100' : 'bg-amber-100'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${maintenance ? 'text-green-600' : 'text-amber-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                {maintenance ? 'Disable Maintenance Mode?' : 'Enable Maintenance Mode?'}
+                            </h3>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-6">
+                            {maintenance
+                                ? 'The site will become accessible to all users again. Make sure all updates and fixes are complete before disabling.'
+                                : 'All users will be redirected to a maintenance page and won\'t be able to access the site. Only admins and test users will retain access.'}
+                        </p>
+
+                        <div className="flex items-center justify-end gap-3">
+                            <button
+                                onClick={() => setShowConfirm(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleToggle}
+                                className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+                                    maintenance
+                                        ? 'bg-green-600 hover:bg-green-700'
+                                        : 'bg-amber-600 hover:bg-amber-700'
+                                }`}
+                            >
+                                {maintenance ? 'Yes, Disable' : 'Yes, Enable'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

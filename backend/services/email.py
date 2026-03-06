@@ -255,7 +255,7 @@ def send_welcome_email(name: str, email: str) -> bool:
                   <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                     <!-- Header with logo -->
                     <tr>
-                      <td align="center" style="background-color:#0f172a; padding:32px 40px;">
+                      <td align="center" style="background-color:#ffffff; padding:32px 40px; border-bottom:2px solid #e2e8f0;">
                         <img src="cid:resiko_logo" alt="Resiko" width="160" style="display:block;" />
                       </td>
                     </tr>
