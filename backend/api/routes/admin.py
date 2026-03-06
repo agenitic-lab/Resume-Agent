@@ -93,9 +93,14 @@ def update_user_role(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
+
     user.role = role_data.role
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update role for user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to update user role")
     return {"message": "Role updated successfully", "role": user.role}
 
 @router.put("/users/{user_id}/block")
@@ -111,10 +116,15 @@ def update_user_block(
     
     if str(current_admin.id) == str(user_id):
         raise HTTPException(status_code=400, detail="Cannot block your own account")
-        
+
     user.is_blocked = block_data.is_blocked
-    db.commit()
-    
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update block status for user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to update block status")
+
     status_msg = "blocked" if user.is_blocked else "unblocked"
     return {"message": f"User {status_msg} successfully", "is_blocked": user.is_blocked}
 
@@ -130,7 +140,12 @@ def update_user_test_status(
         raise HTTPException(status_code=404, detail="User not found")
 
     user.is_test_user = data.is_test_user
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update test user status for user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to update test user status")
 
     status_msg = "enabled" if user.is_test_user else "disabled"
     return {"message": f"Test user access {status_msg}", "is_test_user": user.is_test_user}
@@ -149,9 +164,14 @@ def delete_user(
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
         
     # Optional: Delete associated runs/data directly
-    db.query(Run).filter(Run.user_id == user.id).delete()
-    db.delete(user)
-    db.commit()
+    try:
+        db.query(Run).filter(Run.user_id == user.id).delete()
+        db.delete(user)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to delete user %s", user_id)
+        raise HTTPException(status_code=500, detail="Failed to delete user")
     return {"message": "User deleted successfully"}
 
 @router.get("/metrics")
@@ -160,32 +180,37 @@ def get_admin_metrics(
     db: Session = Depends(get_db)
 ):
     from datetime import datetime, timedelta, timezone
-    
-    total_users = db.query(User).count()
-    total_admins = db.query(User).filter(User.role == 'admin').count()
-    total_blocked_users = db.query(User).filter(User.is_blocked == True).count()
-    total_runs = db.query(Run).count()
-    
-    # New users in the last 30 days
+
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-    new_users = db.query(User).filter(User.created_at >= thirty_days_ago).count()
-    
-    failed_runs = db.query(Run).filter(Run.status == 'failed').count()
-    
-    # recent activity for charts (last 100 runs)
-    recent_runs = db.query(Run).order_by(desc(Run.created_at)).limit(100).all()
+
+    # Single query for all user-related counts
+    user_stats = db.query(
+        func.count(User.id).label('total'),
+        func.count(User.id).filter(User.role == 'admin').label('admins'),
+        func.count(User.id).filter(User.is_blocked == True).label('blocked'),
+        func.count(User.id).filter(User.created_at >= thirty_days_ago).label('new_30d'),
+    ).first()
+
+    # Single query for run-related counts
+    run_stats = db.query(
+        func.count(Run.id).label('total'),
+        func.count(Run.id).filter(Run.status == 'failed').label('failed'),
+    ).first()
+
+    # recent activity for charts (last 100 runs) - only fetch needed columns
+    recent_runs = db.query(Run.created_at, Run.status).order_by(desc(Run.created_at)).limit(100).all()
     recent_activity = [
         {"created_at": r.created_at.isoformat() if r.created_at else None, "status": r.status.value if hasattr(r.status, 'value') else str(r.status)}
         for r in recent_runs
     ]
-    
+
     return {
-        "total_users": total_users,
-        "total_admins": total_admins,
-        "total_blocked_users": total_blocked_users,
-        "new_users_30d": new_users,
-        "total_resumes_generated": total_runs,
-        "failed_runs": failed_runs,
+        "total_users": user_stats.total,
+        "total_admins": user_stats.admins,
+        "total_blocked_users": user_stats.blocked,
+        "new_users_30d": user_stats.new_30d,
+        "total_resumes_generated": run_stats.total,
+        "failed_runs": run_stats.failed,
         "recent_activity": recent_activity
     }
 
@@ -478,21 +503,45 @@ from pydantic import BaseModel
 from typing import List
 import json
 
-ADMIN_TEMPLATES_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "admin_templates.json")
+from database.models.system_setting import SystemSetting
 
-def load_admin_templates():
-    if not os.path.exists(ADMIN_TEMPLATES_FILE):
-        return {}
-    try:
-        with open(ADMIN_TEMPLATES_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return {}
 
-def save_admin_templates(templates_dict):
-    os.makedirs(os.path.dirname(ADMIN_TEMPLATES_FILE), exist_ok=True)
-    with open(ADMIN_TEMPLATES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(templates_dict, f, indent=2)
+# ── DB-backed settings helpers ───────────────────────────────────────────────
+
+def _get_setting(db: Session, key: str, default=None):
+    """Read a JSON value from the system_settings table."""
+    row = db.query(SystemSetting).filter(SystemSetting.key == key).first()
+    return row.value if row else default
+
+
+def _set_setting(db: Session, key: str, value):
+    """Write a JSON value to the system_settings table (upsert)."""
+    row = db.query(SystemSetting).filter(SystemSetting.key == key).first()
+    if row:
+        row.value = value
+    else:
+        row = SystemSetting(key=key, value=value)
+        db.add(row)
+    db.commit()
+
+
+def _load_admin_templates(db: Session) -> dict:
+    return _get_setting(db, "admin_templates", {})
+
+
+def _save_admin_templates(db: Session, templates_dict: dict):
+    _set_setting(db, "admin_templates", templates_dict)
+
+
+def _load_deleted_templates(db: Session) -> list:
+    return _get_setting(db, "deleted_templates", [])
+
+
+def _save_deleted_templates(db: Session, deleted: list):
+    _set_setting(db, "deleted_templates", deleted)
+
+
+# ── Admin Templates ──────────────────────────────────────────────────────────
 
 class AdminTemplateUpdate(BaseModel):
     name: str = None
@@ -502,10 +551,11 @@ class AdminTemplateUpdate(BaseModel):
 
 @router.get("/templates")
 def get_admin_templates(
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
 ):
     """List all created admin custom templates."""
-    return load_admin_templates()
+    return _load_admin_templates(db)
 
 @router.get("/templates/{template_id}")
 def get_admin_template_content(
@@ -517,21 +567,29 @@ def get_admin_template_content(
     combined = get_combined_templates()
     if template_id not in combined:
         raise HTTPException(status_code=404, detail="Template not found")
-        
-    return {"id": template_id, "content": combined[template_id].get("preamble", ""), "name": combined[template_id].get("name", template_id)}
+
+    tpl = combined[template_id]
+    return {
+        "id": template_id,
+        "content": tpl.get("preamble", ""),
+        "name": tpl.get("name", template_id),
+        "description": tpl.get("description", ""),
+        "tags": tpl.get("tags", []),
+    }
 
 @router.put("/templates/{template_id}")
 def update_admin_template(
     template_id: str,
     update_data: AdminTemplateUpdate,
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
 ):
     """Update or create an admin custom LaTeX template."""
-    templates = load_admin_templates()
-    
+    templates = _load_admin_templates(db)
+
     # Preserve existing metadata if updating
     existing = templates.get(template_id, {})
-    
+
     templates[template_id] = {
         "id": template_id,
         "name": update_data.name or existing.get("name", template_id),
@@ -543,96 +601,73 @@ def update_admin_template(
         "is_admin_custom": True,
         "preamble": update_data.preamble
     }
-    
-    save_admin_templates(templates)
+
+    _save_admin_templates(db, templates)
     return {"message": "Template saved successfully", "id": template_id}
 
 @router.delete("/templates/{template_id}")
 def delete_admin_template(
     template_id: str,
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
 ):
     """Delete an admin custom template or built-in template."""
-    from services.latex_templates import get_combined_templates, load_deleted_templates, DELETED_TEMPLATES_FILE
-    import json
-    import os
-    
+    from services.latex_templates import get_combined_templates
+
     combined = get_combined_templates()
     if template_id not in combined:
         raise HTTPException(status_code=404, detail="Template not found")
-        
-    templates = load_admin_templates()
+
+    templates = _load_admin_templates(db)
     if template_id in templates:
         del templates[template_id]
-        save_admin_templates(templates)
+        _save_admin_templates(db, templates)
     else:
-        deleted = load_deleted_templates()
+        deleted = _load_deleted_templates(db)
         if template_id not in deleted:
             deleted.append(template_id)
-            os.makedirs(os.path.dirname(DELETED_TEMPLATES_FILE), exist_ok=True)
-            with open(DELETED_TEMPLATES_FILE, 'w', encoding='utf-8') as f:
-                json.dump(deleted, f)
-                
+            _save_deleted_templates(db, deleted)
+
     return {"message": "Template deleted successfully"}
 
 
 # ── Global Default Template ──────────────────────────────────────────────────
-
-DEFAULT_TEMPLATE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "default_template.json")
 
 class DefaultTemplateUpdate(BaseModel):
     template_id: str
 
 @router.get("/default-template")
 def get_default_template(
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
 ):
-    try:
-        with open(DEFAULT_TEMPLATE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {"template_id": None}
+    return _get_setting(db, "default_template", {"template_id": None})
 
 @router.put("/default-template")
 def set_default_template(
     body: DefaultTemplateUpdate,
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
 ):
     from services.latex_templates import get_combined_templates
     combined = get_combined_templates()
     if body.template_id not in combined:
         raise HTTPException(status_code=404, detail="Template not found in available templates")
 
-    os.makedirs(os.path.dirname(DEFAULT_TEMPLATE_FILE), exist_ok=True)
-    with open(DEFAULT_TEMPLATE_FILE, "w", encoding="utf-8") as f:
-        json.dump({"template_id": body.template_id}, f, indent=2)
-
+    _set_setting(db, "default_template", {"template_id": body.template_id})
     return {"message": "Default template updated", "template_id": body.template_id}
 
 
 # ── Maintenance Mode ──────────────────────────────────────────────────────────
 
-MAINTENANCE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "maintenance.json")
-
-def _load_maintenance() -> dict:
-    if not os.path.exists(MAINTENANCE_FILE):
-        return {"active": False}
-    try:
-        with open(MAINTENANCE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {"active": False}
-
-def _save_maintenance(data: dict):
-    os.makedirs(os.path.dirname(MAINTENANCE_FILE), exist_ok=True)
-    with open(MAINTENANCE_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f)
+def _load_maintenance(db: Session) -> dict:
+    return _get_setting(db, "maintenance", {"active": False})
 
 # Public — no auth required so the frontend can always check
 @router.get("/maintenance-status")
-def get_maintenance_status():
+def get_maintenance_status(db: Session = Depends(get_db)):
     """Return current maintenance mode status (public endpoint)."""
-    return _load_maintenance()
+    return _load_maintenance(db)
 
 class MaintenanceUpdate(BaseModel):
     active: bool
@@ -641,9 +676,10 @@ class MaintenanceUpdate(BaseModel):
 def set_maintenance_mode(
     body: MaintenanceUpdate,
     current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
 ):
     """Enable or disable maintenance mode (admin only)."""
-    _save_maintenance({"active": body.active})
+    _set_setting(db, "maintenance", {"active": body.active})
     state = "enabled" if body.active else "disabled"
     return {"message": f"Maintenance mode {state}", "active": body.active}
 
@@ -786,6 +822,11 @@ def update_support_ticket_status(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Support ticket not found")
         
     ticket.status = update_data.status
-    db.commit()
-    db.refresh(ticket)
+    try:
+        db.commit()
+        db.refresh(ticket)
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to update support ticket %s", ticket_id)
+        raise HTTPException(status_code=500, detail="Failed to update ticket status")
     return ticket

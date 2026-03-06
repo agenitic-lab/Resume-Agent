@@ -30,8 +30,8 @@ export default function NewOptimization() {
     const [coverLetterCopied, setCoverLetterCopied] = useState(false);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [liveStatusLogs, setLiveStatusLogs] = useState([]);
-    const [errorDialog, setErrorDialog] = useState(null); // { title, message, type: 'poor_fit' | 'error' }
     const [optimizationError, setOptimizationError] = useState(null);
+    const [errorDialog, setErrorDialog] = useState(null);
 
     // check API key + template on mount
     useEffect(() => {
@@ -257,11 +257,6 @@ export default function NewOptimization() {
                     setLiveStatusLogs(prev => prev.map(item => ({ ...item, status: 'OK' })));
                 }
             }, inputType);
-            console.log('Optimization response:', {
-                final_status: data.final_status,
-                fit_decision: data.fit_decision,
-                has_modified_resume: !!data.modified_resume
-            });
 
             // Check if optimization was rejected due to poor fit
             if (data.final_status === 'rejected_poor_fit' || data.fit_decision === 'poor_fit') {
@@ -398,11 +393,6 @@ export default function NewOptimization() {
                 });
                 setHasApiKey(false); // Update state to show warning banner
             } else {
-                setErrorDialog({
-                    title: 'Optimization Failed',
-                    message: errorMsg,
-                    type: 'error'
-                });
                 setToast({ message: `Optimization failed: ${errorMsg}`, type: 'error' });
             }
 

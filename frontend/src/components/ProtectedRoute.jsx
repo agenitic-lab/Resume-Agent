@@ -7,24 +7,37 @@ export default function ProtectedRoute({ children }) {
 
     const [user, setUser] = useState(getCachedCurrentUser());
     const [loading, setLoading] = useState(!user);
+    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
         if (!user) {
-            // Try to get current user (will work if cookies are valid)
             initializeAuth()
                 .then(userData => {
-                    setUser(userData);
+                    if (userData) {
+                        setUser(userData);
+                    } else if (retryCount < 1) {
+                        // Server returned ok but no user; retry once
+                        setRetryCount(c => c + 1);
+                    } else {
+                        // Genuinely not authenticated
+                        logout();
+                    }
                 })
-                .catch(_e => {
-                    console.error('Failed to fetch user in ProtectedRoute', _e);
-                    // Session invalid - logout will clear state
-                    logout();
+                .catch(() => {
+                    if (retryCount < 1) {
+                        // Network error — retry once before logging out
+                        setRetryCount(c => c + 1);
+                    } else {
+                        // Persistent failure — clear session
+                        logout();
+                    }
                 })
                 .finally(() => {
                     setLoading(false);
                 });
         }
-    }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [retryCount]);
 
     // Show loading while checking authentication
     if (loading) {

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Text, DateTime
+from sqlalchemy import Column, String, Boolean, ForeignKey, Text, DateTime
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 import uuid
@@ -8,7 +8,7 @@ class Resume(Base):
     __tablename__ = "resumes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     field = Column(String, nullable=False)
     experience_level = Column(String)
     contact = Column(JSONB, nullable=False)

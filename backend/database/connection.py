@@ -13,6 +13,10 @@ if not DATABASE_URL:
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20,
+    pool_recycle=1800,
+    pool_timeout=30,
     echo=False,
     connect_args={"connect_timeout": 10},
 )
@@ -110,6 +114,37 @@ def ensure_user_oauth_columns():
             conn.execute(text(stmt))
 
 
+def ensure_role_column_defaults():
+    """Add server-side DEFAULT to role and is_blocked columns if missing.
+
+    The original create_all() only set Python-side defaults, leaving no
+    protection at the database level.  This ensures the DB itself enforces
+    'user' as the default role so that no code-path can accidentally leave
+    the column empty.
+    """
+    try:
+        with engine.begin() as conn:
+            # Add server-side DEFAULT 'user' for the role column
+            conn.execute(text(
+                "ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user'"
+            ))
+            # Add server-side DEFAULT false for is_blocked
+            conn.execute(text(
+                "ALTER TABLE users ALTER COLUMN is_blocked SET DEFAULT false"
+            ))
+            # Fix any NULL roles that might exist
+            conn.execute(text(
+                "UPDATE users SET role = 'user' WHERE role IS NULL"
+            ))
+            # Fix any NULL is_blocked that might exist
+            conn.execute(text(
+                "UPDATE users SET is_blocked = false WHERE is_blocked IS NULL"
+            ))
+    except Exception:
+        # Column or table may not exist yet on first run; safe to ignore
+        pass
+
+
 def ensure_support_ticket_columns():
     """Ensure support_tickets columns exist (is_read for read/unread feature, is_replied for reply tracking)."""
     inspector = inspect(engine)
@@ -139,6 +174,7 @@ def ensure_runtime_schema():
     from database.models.missing_skills_run import MissingSkillsRun
     from database.models.resume import Resume, ResumeTemplate
     from database.models.support import SupportTicket
+    from database.models.system_setting import SystemSetting
 
     # Ensure core tables exist (safe with checkfirst behavior).
     Base.metadata.create_all(bind=engine, tables=[
@@ -148,6 +184,7 @@ def ensure_runtime_schema():
         Resume.__table__,
         ResumeTemplate.__table__,
         SupportTicket.__table__,
+        SystemSetting.__table__,
     ])
 
     # Ensure incremental user columns exist for BYOK.
@@ -158,6 +195,9 @@ def ensure_runtime_schema():
 
     # Ensure OAuth columns exist (google_id, auth_provider, etc.).
     ensure_user_oauth_columns()
+
+    # Ensure role and is_blocked have server-side defaults.
+    ensure_role_column_defaults()
 
     # Ensure support ticket columns exist.
     ensure_support_ticket_columns()

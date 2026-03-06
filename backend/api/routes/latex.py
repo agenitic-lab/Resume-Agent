@@ -83,15 +83,15 @@ async def compile_latex_endpoint(request: CompileRequest):
         )
         
     except LaTeXCompilationError as e:
-        logger.error(f"LaTeX compilation failed: {e}")
+        logger.error("LaTeX compilation failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail="LaTeX compilation failed. Please check your code and try again."
         )
-        
+
     except Exception as e:
         logger.exception("Unexpected error during LaTeX compilation")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Compilation failed: {str(e)}"
+            detail="Compilation failed unexpectedly. Please try again."
         )

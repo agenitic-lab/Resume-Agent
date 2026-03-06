@@ -6,7 +6,7 @@ from api.routes.auth import router as auth_router
 from api.routes.user import router as user_router
 from api.routes.admin import router as admin_router
 from database.connection import ensure_runtime_schema
-from config import settings
+from config import settings, validate_settings
 
 try:
     from api.routes.pdf import router as pdf_router
@@ -44,8 +44,8 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 from auth.dependencies import AuthenticationError
@@ -108,6 +108,12 @@ app.include_router(support_router)
 @app.on_event("startup")
 def startup():
     import threading
+
+    # Validate critical config (JWT secret, DB URL, encryption key)
+    try:
+        validate_settings()
+    except ValueError as exc:
+        logger.error("Configuration validation failed: %s", exc)
 
     def _migrate():
         try:

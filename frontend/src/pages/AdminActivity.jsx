@@ -73,9 +73,7 @@ export default function AdminActivity() {
         setDetailModalOpen(true);
         setDetailLoading(true);
         try {
-            console.log("Fetching details for:", log.type, log.id);
             const details = await getAdminActivityLogDetails(log.type, log.id);
-            console.log("Received details JSON:", details);
             setSelectedLogDetail(prev => ({ ...prev, data: details }));
         } catch (error) {
             console.error("View Details API Error:", error);

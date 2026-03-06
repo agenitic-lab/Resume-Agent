@@ -12,7 +12,7 @@ class MissingSkillsRun(Base):
     __tablename__ = "missing_skills_runs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
 
     # Display info
     resume_snippet = Column(Text, nullable=True)       # first ~200 chars
