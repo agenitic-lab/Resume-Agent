@@ -301,6 +301,32 @@ export default function Templates() {
                     <p className="text-gray-500 text-sm">Choose a default template for your optimized resumes. Click any template to preview. You can also add up to {MAX_CUSTOM} custom LaTeX templates.</p>
                 </div>
 
+                {/* How to choose a template — guide */}
+                <div className="bg-surface border border-gray-200 rounded-2xl p-5 mb-8 shadow-sm">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">How to set up your template</h3>
+                    <ol className="space-y-3 text-sm">
+                        <li className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                            <span className="text-gray-600 leading-relaxed">
+                                <strong>Browse templates below</strong> — each template has a different style. Click on the preview area to see a compiled PDF sample.
+                            </span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                            <span className="text-gray-600 leading-relaxed">
+                                <strong>Click &quot;Set as Default&quot;</strong> on the template you like. This template will be used every time you optimize a resume.
+                            </span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                            <span className="text-gray-600 leading-relaxed">
+                                <strong>That&#39;s it!</strong> Head back to{' '}
+                                <strong>New Optimization</strong> to start building your ATS-optimized resume. You can change your template any time.
+                            </span>
+                        </li>
+                    </ol>
+                </div>
+
                 {/* Current Selection Banner */}
                 {!loading && currentPref && (
                     <div className="bg-surface border border-brand-primary/20 rounded-2xl p-5 mb-8 flex items-center justify-between shadow-sm">

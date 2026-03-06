@@ -4,6 +4,7 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Toast from '../components/Toast';
 import PdfViewer from '../components/PdfViewer';
 import VisualResumeEditor from '../components/VisualResumeEditor';
+import { Skeleton } from '../components/ui/skeleton';
 import { optimizeResumeStream, getApiKeyStatus, getTemplatePreference } from '../services/api';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
@@ -33,25 +34,28 @@ export default function NewOptimization() {
     const [optimizationError, setOptimizationError] = useState(null);
     const [errorDialog, setErrorDialog] = useState(null);
 
-    // check API key + template on mount
+    // check API key + template on mount and when returning from settings/templates
     useEffect(() => {
         async function checkPrerequisites() {
             try {
                 const status = await getApiKeyStatus();
                 setHasApiKey(status.has_api_key);
-            } catch (error) {
-                console.error('Failed to check API key status:', error);
+            } catch {
                 setHasApiKey(false);
             }
             try {
                 const pref = await getTemplatePreference();
                 setHasTemplate(!!(pref && pref.template_id));
-            } catch (error) {
-                console.error('Failed to check template preference:', error);
+            } catch {
                 setHasTemplate(false);
             }
         }
         checkPrerequisites();
+
+        // Re-check when user returns from another tab/page (e.g. settings)
+        function onFocus() { checkPrerequisites(); }
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
     }, []);
 
     // reset to step 1 if user refreshes mid-optimization (skip while API call is in-flight)
@@ -411,55 +415,145 @@ export default function NewOptimization() {
 
     return (
         <div className="min-h-screen bg-primary text-primary p-4 md:p-8">
-            {/* Compact prerequisites bar — shown only when something is missing */}
-            {(hasApiKey === false || hasTemplate === false) && (
-                <div className="max-w-7xl mx-auto mb-6">
-                    <div className="bg-surface border border-gray-200 rounded-2xl px-4 py-3 shadow-sm flex flex-wrap items-center gap-2">
-                        {/* Label */}
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mr-1 shrink-0">
-                            Setup required
-                        </span>
-
-                        {/* API Key chip */}
-                        {hasApiKey === false && (
-                            <button
-                                onClick={() => navigate('/settings')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-100 active:scale-95 transition-all"
-                            >
-                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                </svg>
-                                Groq API Key
-                                <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                        )}
-
-                        {/* Template chip */}
-                        {hasTemplate === false && (
-                            <button
-                                onClick={() => navigate('/templates')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 active:scale-95 transition-all"
-                            >
-                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Resume Template
-                                <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                        )}
-
-                        <span className="text-[10px] text-gray-400 ml-auto hidden sm:block">
-                            Both required to run optimization
-                        </span>
+            {/* ── Blocking prerequisite gate ─── */}
+            {(hasApiKey === null || hasTemplate === null) ? (
+                /* Loading prerequisites — skeleton shimmer */
+                <div className="max-w-2xl mx-auto mt-12 md:mt-20">
+                    <div className="text-center mb-10">
+                        <Skeleton className="w-16 h-16 rounded-2xl mx-auto mb-5" />
+                        <Skeleton className="h-8 w-64 mx-auto mb-3 rounded-xl" />
+                        <Skeleton className="h-4 w-80 mx-auto rounded-lg" />
+                    </div>
+                    <div className="space-y-4 mb-10">
+                        <div className="bg-surface border border-gray-200 rounded-2xl p-6">
+                            <div className="flex items-start gap-4">
+                                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton className="h-4 w-40" />
+                                    <Skeleton className="h-3 w-full" />
+                                    <Skeleton className="h-3 w-3/4" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-surface border border-gray-200 rounded-2xl p-6">
+                            <div className="flex items-start gap-4">
+                                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <Skeleton className="h-4 w-48" />
+                                    <Skeleton className="h-3 w-full" />
+                                    <Skeleton className="h-3 w-2/3" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )}
+            ) : (hasApiKey === false || hasTemplate === false) ? (
+                /* Missing prerequisites — full blocking screen */
+                <div className="max-w-2xl mx-auto mt-12 md:mt-20">
+                    <div className="text-center mb-10">
+                        <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                            <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-primary mb-3 tracking-tight">Setup Required</h1>
+                        <p className="text-gray-500 text-sm leading-relaxed max-w-md mx-auto">
+                            Before you can optimize your resume, please complete the following setup steps. This only needs to be done once.
+                        </p>
+                    </div>
 
-            {/* Step Indicator - Technical Version */}
+                    <div className="space-y-4 mb-10">
+                        {/* API Key card */}
+                        <div className={`bg-surface border rounded-2xl p-6 transition-all ${hasApiKey ? 'border-green-200' : 'border-red-200 shadow-sm'}`}>
+                            <div className="flex items-start gap-4">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasApiKey ? 'bg-green-100' : 'bg-red-100'}`}>
+                                    {hasApiKey ? (
+                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-sm font-bold text-primary">Step 1: Groq API Key</h3>
+                                        {hasApiKey ? (
+                                            <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full">Done</span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 bg-red-50 text-red-500 text-[10px] font-bold rounded-full">Required</span>
+                                        )}
+                                    </div>
+                                    <p className="text-gray-500 text-xs leading-relaxed mb-3">
+                                        A free Groq API key is needed to power the AI optimization engine. You can get one in under a minute.
+                                    </p>
+                                    {!hasApiKey && (
+                                        <button
+                                            onClick={() => navigate('/settings')}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white rounded-xl text-xs font-semibold hover:bg-brand-hover transition-all active:scale-95 shadow-lg shadow-brand-primary/10"
+                                        >
+                                            Set Up API Key
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Template card */}
+                        <div className={`bg-surface border rounded-2xl p-6 transition-all ${hasTemplate ? 'border-green-200' : 'border-amber-200 shadow-sm'}`}>
+                            <div className="flex items-start gap-4">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${hasTemplate ? 'bg-green-100' : 'bg-amber-100'}`}>
+                                    {hasTemplate ? (
+                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-sm font-bold text-primary">Step 2: Choose a Resume Template</h3>
+                                        {hasTemplate ? (
+                                            <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full">Done</span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-full">Required</span>
+                                        )}
+                                    </div>
+                                    <p className="text-gray-500 text-xs leading-relaxed mb-3">
+                                        Select a default LaTeX template that will be used to format your optimized resume.
+                                    </p>
+                                    {!hasTemplate && (
+                                        <button
+                                            onClick={() => navigate('/templates')}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white rounded-xl text-xs font-semibold hover:bg-brand-hover transition-all active:scale-95 shadow-lg shadow-brand-primary/10"
+                                        >
+                                            Choose Template
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* All set indicator (shouldn't normally appear since we'd fall through, but handles edge cases) */}
+                    <p className="text-center text-xs text-gray-400">
+                        Complete both steps above to start optimizing your resume.
+                    </p>
+                </div>
+            ) : (
+            /* ── Main optimization wizard (prerequisites satisfied) ─── */
+            <>
             <div className="max-w-7xl mx-auto mb-16 relative">
                 <div className="flex items-center justify-between px-4">
                     {steps.map((step, index) => (
@@ -855,23 +949,6 @@ export default function NewOptimization() {
                                     </div>
 
                                     <div className="flex flex-col gap-4 pt-10 border-t border-white/5">
-                                        {/* Blocking prerequisites hint */}
-                                        {(hasApiKey === false || hasTemplate === false) && (
-                                            <div className="flex flex-wrap items-center gap-2 justify-end">
-                                                <span className="text-[10px] text-gray-400 font-semibold">Still needed:</span>
-                                                {hasApiKey === false && (
-                                                    <button onClick={() => navigate('/settings')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold hover:bg-red-100 transition-all">
-                                                        API Key <span className="opacity-60">→</span>
-                                                    </button>
-                                                )}
-                                                {hasTemplate === false && (
-                                                    <button onClick={() => navigate('/templates')} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold hover:bg-amber-100 transition-all">
-                                                        Template <span className="opacity-60">→</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-
                                         <div className="flex justify-between">
                                             <button
                                                 onClick={handleBack}
@@ -1464,6 +1541,8 @@ export default function NewOptimization() {
                     </div>
                 )}
             </div>
+            </>
+            )}
         </div>
     );
 }

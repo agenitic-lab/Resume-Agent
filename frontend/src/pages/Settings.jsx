@@ -80,7 +80,7 @@ export default function Settings() {
         <div className="bg-surface border border-gray-200 rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-black/5 mb-8 overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-brand/20" />
           <h2 className="text-lg font-semibold text-primary mb-4">Groq API Key</h2>
-          <p className="text-secondary text-sm leading-relaxed mb-8 font-medium">
+          <p className="text-secondary text-sm leading-relaxed mb-6 font-medium">
             This system utilizes Groq's API for AI resume optimization. Secure your free API key from{' '}
             <a
               href="https://console.groq.com/keys"
@@ -92,6 +92,41 @@ export default function Settings() {
             </a>
             . Resume optimization requires a valid API key.
           </p>
+
+          {/* Step-by-step guide */}
+          <div className="bg-secondary rounded-2xl border border-gray-100 p-5 mb-8">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">How to get your free API key</h3>
+            <ol className="space-y-3 text-sm">
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                <span className="text-gray-600 leading-relaxed">
+                  Visit{' '}
+                  <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="text-brand font-semibold hover:underline">
+                    console.groq.com/keys
+                  </a>
+                  {' '}and sign up for a free account (or log in if you already have one).
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                <span className="text-gray-600 leading-relaxed">
+                  Click <strong>&quot;Create API Key&quot;</strong> and give it any name (e.g. &quot;resiko&quot;).
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                <span className="text-gray-600 leading-relaxed">
+                  Copy the key that starts with <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">gsk_...</code>
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-6 h-6 bg-brand/10 text-brand rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
+                <span className="text-gray-600 leading-relaxed">
+                  Paste it into the field below and click <strong>&quot;Save Key&quot;</strong>. Your key is stored securely and encrypted.
+                </span>
+              </li>
+            </ol>
+          </div>
 
           {loading ? (
             <div className="space-y-3">
