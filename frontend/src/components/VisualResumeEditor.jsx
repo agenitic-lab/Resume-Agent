@@ -15,11 +15,15 @@ function splitPreambleAndBody(latex) {
 
 function extractSections(body) {
     const sections = [];
-    const sectionRegex = /\\(?:section|cvsection)\{([^}]*)\}/g;
+    // Match any section-like command: \section, \section*, \cvsection, \subsection, \ressection, etc.
+    const sectionRegex = /\\(?:\w*[Ss]ection\w*)\*?\s*(?:\[[^\]]*\])?\{([^}]*)\}/g;
     const matches = [...body.matchAll(sectionRegex)];
 
     const headerEnd = matches.length > 0 ? matches[0].index : body.length;
-    sections.push({ type: 'header', raw: body.substring(0, headerEnd) });
+    const headerRaw = body.substring(0, headerEnd);
+    if (headerRaw.trim()) {
+        sections.push({ type: 'header', raw: headerRaw });
+    }
 
     for (let i = 0; i < matches.length; i++) {
         const start = matches[i].index;
@@ -31,6 +35,12 @@ function extractSections(body) {
         const raw = body.substring(start, end);
         sections.push({ type: 'section', title: sectionTitle, raw });
     }
+
+    // If no sections found at all, treat the entire body as one editable block
+    if (sections.length === 0 && body.trim()) {
+        sections.push({ type: 'header', raw: body });
+    }
+
     return sections;
 }
 
@@ -77,25 +87,51 @@ function stripLatex(text) {
 
 function parseHeader(raw) {
     const fields = {};
-    const nameMatch = raw.match(/\\(?:Huge|Large|LARGE)\s*(?:\\scshape\s*)?(?:\\mdseries\s*)?(?:\\bfseries\s*)?([^}\\]+)/);
-    if (nameMatch) fields.name = nameMatch[1].trim();
 
-    const phoneMatch = raw.match(/\\faPhone[*]?\s*(?:\\?\s*)([+\d\s().-]+)/);
-    if (phoneMatch) fields.phone = phoneMatch[1].trim();
-
-    const emailMatch = raw.match(/\\faEnvelope[*]?\s*(?:\\?\s*)(?:\\underline\{)?([^}\\,\s]+@[^}\\,\s]+)/);
-    if (emailMatch) fields.email = emailMatch[1].trim();
-    if (!emailMatch) {
-        const emailAlt = raw.match(/\\href\{mailto:([^}]*)\}/);
-        if (emailAlt) fields.email = emailAlt[1].trim();
+    // Name: try multiple patterns (common resume templates)
+    const namePatterns = [
+        /\\(?:Huge|Large|LARGE)\s*(?:\\scshape\s*)?(?:\\mdseries\s*)?(?:\\bfseries\s*)?([^}\\]+)/,
+        /\\name\{([^}]+)\}/,
+        /\\begin\{center\}[^]*?\\(?:Huge|Large|LARGE|huge)\s*(?:\\textbf\{)?([A-Z][A-Za-z .-]+)/,
+        /\\centerline\{\\(?:Huge|Large|huge)\s*(?:\\textbf\{)?([A-Z][A-Za-z .-]+)/,
+    ];
+    for (const pattern of namePatterns) {
+        const m = raw.match(pattern);
+        if (m) { fields.name = m[1].replace(/[{}]/g, '').trim(); break; }
     }
 
-    const locationMatch = raw.match(/\\small\s+([A-Z][^\\]+?)\s*\\\\/);
-    if (locationMatch) {
-        fields.location = locationMatch[1].trim();
-    } else {
-        const locAlt = raw.match(/\{([A-Za-z][A-Za-z ,]+(?:,\s*[A-Z]{2,}))\}/);
-        if (locAlt) fields.location = locAlt[1].trim();
+    // Phone
+    const phonePatterns = [
+        /\\faPhone[*]?\s*(?:\\?\s*)([+\d\s().-]+)/,
+        /\\phone\{([^}]+)\}/,
+        /(?:Phone|Tel|Mobile)[:\s]*([+\d\s().-]{7,})/i,
+    ];
+    for (const pattern of phonePatterns) {
+        const m = raw.match(pattern);
+        if (m) { fields.phone = m[1].trim(); break; }
+    }
+
+    // Email
+    const emailPatterns = [
+        /\\faEnvelope[*]?\s*(?:\\?\s*)(?:\\underline\{)?([^}\\,\s]+@[^}\\,\s]+)/,
+        /\\href\{mailto:([^}]*)\}/,
+        /\\email\{([^}]+)\}/,
+        /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/,
+    ];
+    for (const pattern of emailPatterns) {
+        const m = raw.match(pattern);
+        if (m) { fields.email = m[1].trim(); break; }
+    }
+
+    // Location
+    const locationPatterns = [
+        /\\small\s+([A-Z][^\\]+?)\s*\\\\/,
+        /\\address\{([^}]+)\}/,
+        /\{([A-Za-z][A-Za-z ,]+(?:,\s*[A-Z]{2,}))\}/,
+    ];
+    for (const pattern of locationPatterns) {
+        const m = raw.match(pattern);
+        if (m) { fields.location = m[1].trim(); break; }
     }
 
     const linkedinMatch = raw.match(/\\href\{(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([^}]*)\}/);
@@ -456,35 +492,60 @@ function FieldInput({ label, value, onChange, multiline = false, placeholder, ro
 }
 
 function FallbackContent({ raw, sectionIndex, updateSection }) {
+    const [showSource, setShowSource] = useState(false);
     const textContent = useMemo(() => stripLatex(raw), [raw]);
-    if (!textContent) return <p className="text-xs text-gray-400 italic">No editable content detected in this section.</p>;
+
+    // If stripped content is empty, always show raw LaTeX source
+    const effectiveShowSource = showSource || !textContent;
+
     return (
-        <FieldInput
-            label="Content"
-            value={textContent}
-            multiline
-            rows={4}
-            placeholder="Section content"
-            onChange={v => {
-                // Smart replace: find old text in raw LaTeX and replace
-                const oldText = textContent;
-                const lines = oldText.split('\n');
-                const newLines = v.split('\n');
-                let updated = raw;
-                for (let i = 0; i < Math.min(lines.length, newLines.length); i++) {
-                    if (lines[i] !== newLines[i] && lines[i].trim()) {
-                        updated = updated.replace(lines[i].trim(), newLines[i].trim());
-                    }
-                }
-                updateSection(sectionIndex, updated);
-            }}
-        />
+        <div className="space-y-2">
+            {textContent && (
+                <button
+                    onClick={() => setShowSource(!showSource)}
+                    className="text-[9px] font-bold text-gray-400 uppercase tracking-widest hover:text-brand-primary transition-colors"
+                >
+                    {showSource ? 'Visual View' : 'Edit Source'}
+                </button>
+            )}
+            {effectiveShowSource ? (
+                <FieldInput
+                    label="LaTeX Source"
+                    value={raw}
+                    multiline
+                    rows={Math.min(12, Math.max(4, raw.split('\n').length))}
+                    placeholder="LaTeX source code"
+                    onChange={v => updateSection(sectionIndex, v)}
+                />
+            ) : (
+                <FieldInput
+                    label="Content"
+                    value={textContent}
+                    multiline
+                    rows={4}
+                    placeholder="Section content"
+                    onChange={v => {
+                        const oldText = textContent;
+                        const lines = oldText.split('\n');
+                        const newLines = v.split('\n');
+                        let updated = raw;
+                        for (let i = 0; i < Math.min(lines.length, newLines.length); i++) {
+                            if (lines[i] !== newLines[i] && lines[i].trim()) {
+                                updated = updated.replace(lines[i].trim(), newLines[i].trim());
+                            }
+                        }
+                        updateSection(sectionIndex, updated);
+                    }}
+                />
+            )}
+        </div>
     );
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function VisualResumeEditor({ latexCode, onChange, onRecompile, isCompiling }) {
+    const [viewMode, setViewMode] = useState('visual'); // 'visual' | 'source'
     const { preamble, body, suffix } = useMemo(() => splitPreambleAndBody(latexCode), [latexCode]);
     const sections = useMemo(() => extractSections(body), [body]);
 
@@ -502,9 +563,30 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between px-1 mb-3 shrink-0">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Visual Editor</span>
+                <div className="flex items-center gap-2">
+                    {/* Mode toggle */}
+                    <div className="flex bg-gray-100 rounded-lg p-0.5">
+                        <button
+                            onClick={() => setViewMode('visual')}
+                            className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all ${
+                                viewMode === 'visual'
+                                    ? 'bg-white text-brand-primary shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                        >
+                            Visual
+                        </button>
+                        <button
+                            onClick={() => setViewMode('source')}
+                            className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all ${
+                                viewMode === 'source'
+                                    ? 'bg-white text-brand-primary shadow-sm'
+                                    : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                        >
+                            Source
+                        </button>
+                    </div>
                 </div>
                 <button
                     onClick={handleCopy}
@@ -517,9 +599,20 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                 </button>
             </div>
 
-            {/* Scrollable section list */}
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-0">
-                {sections.map((section, idx) => {
+            {/* Source mode — full LaTeX editor (Overleaf-style fallback) */}
+            {viewMode === 'source' ? (
+                <div className="flex-1 flex flex-col min-h-0">
+                    <textarea
+                        value={latexCode}
+                        onChange={e => onChange(e.target.value)}
+                        className="flex-1 w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 font-mono leading-relaxed focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/40 outline-none transition-all resize-none min-h-0"
+                        spellCheck={false}
+                    />
+                </div>
+            ) : (
+                /* Visual mode — structured editor */
+                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-0">
+                    {sections.map((section, idx) => {
                     if (section.type === 'header') {
                         const fields = parseHeader(section.raw);
                         const hasFields = Object.keys(fields).length > 0;
@@ -704,7 +797,8 @@ export default function VisualResumeEditor({ latexCode, onChange, onRecompile, i
                         </SectionCard>
                     );
                 })}
-            </div>
+                </div>
+            )}
 
             {/* Sticky recompile button */}
             <div className="pt-3 border-t border-gray-100 shrink-0 mt-2">
