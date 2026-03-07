@@ -442,6 +442,42 @@ def get_template_preamble(template_id: str) -> str | None:
     return None
 
 
+def _build_macro_arg_warnings(preamble: str) -> str:
+    """Build macro argument count warnings only for custom macros present in the preamble.
+
+    This avoids confusing the LLM with instructions about macros that don't
+    exist in standard-LaTeX templates (like the user's examples that only use
+    \\section, \\textbf, \\begin{itemize}, etc.).
+    """
+    macro_docs = {
+        "\\resumeSubheading": (
+            "- \\resumeSubheading ALWAYS takes EXACTLY 4 brace-group arguments: {{#1}}{{#2}}{{#3}}{{#4}}\n"
+            "  Example: \\resumeSubheading{{Job Title}}{{City, State}}{{Company Name}}{{Start -- End}}\n"
+            "  NEVER pass only 3 arguments. If a field is unknown, use an empty {{}}."
+        ),
+        "\\resumeProject": (
+            "- \\resumeProject ALWAYS takes EXACTLY 4 brace-group arguments: {{#1}}{{#2}}{{#3}}{{#4}}\n"
+            "  Example: \\resumeProject{{Project Name}}{{Tech Stack}}{{Year}}{{}}\n"
+            "  NEVER pass only 3 arguments. If a field is unknown, use an empty {{}}."
+        ),
+        "\\resumeItem": (
+            "- \\resumeItem takes 1 argument: \\resumeItem{{text}}"
+        ),
+        "\\resumePOR": (
+            "- \\resumePOR ALWAYS takes EXACTLY 3 brace-group arguments: {{#1}}{{#2}}{{#3}}"
+        ),
+    }
+    lines = []
+    for macro, doc in macro_docs.items():
+        # Check if the preamble defines this macro (\\newcommand{\\resumeSubheading} etc.)
+        if f"\\newcommand{{{macro}}}" in preamble or f"\\renewcommand{{{macro}}}" in preamble:
+            lines.append(doc)
+
+    if not lines:
+        return ""
+    return "\n\nMACRO ARGUMENT COUNTS (CRITICAL — violating this crashes the compiler):\n" + "\n".join(lines)
+
+
 def get_template_style_instructions(template_id: str, custom_latex: str = None) -> str:
     """
     Generate LLM instructions describing the template style to follow.
@@ -466,15 +502,23 @@ Custom Template Preamble (for reference — DO NOT output this, just use its mac
 IMPORTANT: Only generate the document body content. Use the macros from the preamble above.
 """
 
-    template = TEMPLATES.get(template_id)
+    template = get_combined_templates().get(template_id)
     if not template:
         return ""
 
-    example_body = TEMPLATE_EXAMPLE_BODIES.get(template_id, "")
+    preamble = template.get('preamble', '')
 
-    return f"""
+    # Look for an example body: first in the hardcoded dict (built-in templates),
+    # then in the template's own data (admin-created templates with full document).
+    example_body = TEMPLATE_EXAMPLE_BODIES.get(template_id, "")
+    if not example_body:
+        example_body = template.get("example_body", "")
+
+    # No example body at all — give a generic preamble-reference instruction
+    if not example_body:
+        return f"""
 TEMPLATE STYLE INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
-You MUST produce a resume body that looks IDENTICAL in structure to the "{template['name']}" template.
+You MUST produce a resume body that uses the macros/commands defined in the "{template.get('name', template_id)}" template.
 
 The preamble will be added automatically. Do NOT output any preamble, \\documentclass,
 \\usepackage, \\newcommand, \\begin{{document}}, or \\end{{document}}.
@@ -482,7 +526,38 @@ Output ONLY the body content between \\begin{{document}} and \\end{{document}}.
 
 Below is the preamble (for reference only — so you know which macros are available):
 === AVAILABLE MACROS (DO NOT OUTPUT — FOR REFERENCE ONLY) ===
-{template['preamble']}
+{preamble}
+=== END REFERENCE ===
+
+STRICT RULES:
+1. Do NOT output any preamble lines. The preamble is added automatically.
+2. Use the macros defined in the preamble above for all formatting.
+3. Do NOT invent your own macros or use generic LaTeX instead of the template macros.
+4. Only output the document body content.
+"""
+
+    # Has an example body — give detailed structure-following instructions
+    macro_warnings = _build_macro_arg_warnings(preamble)
+
+    # Detect section command used in the example body
+    if '\\cvsection{' in example_body:
+        section_cmd = '\\cvsection{}'
+    elif '\\section*{' in example_body:
+        section_cmd = '\\section*{}'
+    else:
+        section_cmd = '\\section{}'
+
+    return f"""
+TEMPLATE STYLE INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+You MUST produce a resume body that looks IDENTICAL in structure to the "{template.get('name', template_id)}" template.
+
+The preamble will be added automatically. Do NOT output any preamble, \\documentclass,
+\\usepackage, \\newcommand, \\begin{{document}}, or \\end{{document}}.
+Output ONLY the body content between \\begin{{document}} and \\end{{document}}.
+
+Below is the preamble (for reference only — so you know which macros are available):
+=== AVAILABLE MACROS (DO NOT OUTPUT — FOR REFERENCE ONLY) ===
+{preamble}
 === END REFERENCE ===
 
 === EXAMPLE DOCUMENT BODY (FOLLOW THIS STRUCTURE EXACTLY) ===
@@ -492,27 +567,17 @@ Below is the preamble (for reference only — so you know which macros are avail
 STRICT RULES:
 1. Do NOT output any preamble lines. The preamble is added automatically.
 2. Your output MUST follow the EXACT SAME structure as the example body above:
-   - Use the SAME header format (centered vs tabularx, icons, underlines).
-   - Use the SAME section command (\\section{{}} or \\cvsection{{}}) as shown in the example.
+   - Use the SAME header format (centered, tabularx, contact separator style, etc.).
+   - Use the SAME section command ({section_cmd}) as shown in the example.
    - Use ALL CAPS section names if the example uses ALL CAPS.
-   - Use the SAME macro calls (\\resumeSubheading, \\resumeItem, \\resumeProject, etc.)
-     with the SAME number of arguments as shown in the example.
+   - Use the SAME macro calls with the SAME number of arguments as shown in the example.
    - Use the SAME list start/end commands as the example.
-   - Preserve the SAME spacing commands (\\vspace) as shown.
-3. Do NOT invent your own macros or use generic LaTeX instead of the template macros.
-4. Do NOT use \\section{{}} if the example uses \\cvsection{{}}.
-5. Do NOT use \\resumeProjectHeading if the example uses \\resumeProject.
-6. Only replace the CONTENT (names, dates, descriptions) — keep the STRUCTURE identical.
-
-MACRO ARGUMENT COUNTS (CRITICAL — violating this crashes the compiler):
-- \\resumeSubheading ALWAYS takes EXACTLY 4 brace-group arguments: {{#1}}{{#2}}{{#3}}{{#4}}
-  Example: \\resumeSubheading{{Job Title}}{{City, State}}{{Company Name}}{{Start -- End}}
-  NEVER pass only 3 arguments. If a field is unknown, use an empty {{}}.
-- \\resumeProject ALWAYS takes EXACTLY 4 brace-group arguments: {{#1}}{{#2}}{{#3}}{{#4}}
-  Example: \\resumeProject{{Project Name}}{{Tech Stack}}{{Year}}{{}}
-  NEVER pass only 3 arguments. If a field is unknown, use an empty {{}}.
-- \\resumeItem takes 1 argument: \\resumeItem{{text}}
-  Inside sb2nov, you may also use plain \\item {{text}} in project/experience lists.
+   - Preserve the SAME spacing commands (\\vspace, \\hfill, \\\\, etc.) as shown.
+   - Use the SAME entry format for experience/projects (e.g. \\textbf{{Title}} \\hfill \\textit{{Date}}).
+3. Do NOT invent your own macros or use generic LaTeX instead of the template's commands.
+4. Do NOT use {section_cmd.replace('*', '')} if the example uses {section_cmd}.
+5. Only replace the CONTENT (names, dates, descriptions) — keep the STRUCTURE identical.
+6. Maintain the SAME visual hierarchy: bold titles, italic dates, separator characters.{macro_warnings}
 """
 
 

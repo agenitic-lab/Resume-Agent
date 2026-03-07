@@ -239,7 +239,14 @@ def modify_resume(state: Dict) -> Dict:
     if "improvement_plan" not in state:
         raise ValueError("improvement_plan missing from state")
 
-    original_resume = state["original_resume"]
+    # On iteration 2+, optimize from the previous iteration's output,
+    # not the original plain-text resume. This enables true iterative improvement.
+    iteration = state.get("iteration_count", 0)
+    if iteration > 0 and state.get("modified_resume"):
+        resume_to_optimize = state["modified_resume"]
+    else:
+        resume_to_optimize = state["original_resume"]
+
     plan = state["improvement_plan"]
     job_requirements = state.get("job_requirements", {})
     iteration = state.get("iteration_count", 0)
@@ -287,16 +294,15 @@ def modify_resume(state: Dict) -> Dict:
             else:
                 actual_preamble = custom_latex
 
-        default_design = f"""4. FOLLOW THE TEMPLATE EXACTLY: You MUST use the exact macros, section commands,
+        default_design = f"""4. FOLLOW THE TEMPLATE EXACTLY: You MUST use the exact commands, section formatting,
    header format, and document structure specified in the TEMPLATE STYLE INSTRUCTIONS below.
    - Do NOT output any preamble, \\documentclass, \\usepackage, or \\newcommand lines.
    - Do NOT output \\begin{{document}} or \\end{{document}}.
-   - Output ONLY the document body content using the template's macros.
-   - Do NOT use generic LaTeX. Use ONLY the macros defined in the template.
-   - Do NOT use \\section{{}} if the template example uses \\cvsection{{}}.
-   - Do NOT use \\resumeProjectHeading if the template example uses \\resumeProject.
-   - Do NOT invent your own formatting. Copy the EXACT structure from the example body.
-   - The template's visual design (icons, gray boxes, font sizes) MUST appear in your output.
+   - Output ONLY the document body content using the template's commands.
+   - Copy the EXACT structure from the example body if one is provided.
+   - Replicate the same section commands (\\section{{}}, \\section*{{}}, \\cvsection{{}}, etc.) as shown.
+   - Replicate the same entry formatting (bold titles, italic dates, \\hfill, \\textbf, etc.) as shown.
+   - The template's visual design and layout MUST appear in your output.
 5. Output ONLY the document body (the content that goes between \\begin{{document}} and \\end{{document}}).
    The preamble will be added automatically. Do NOT include any preamble or document wrapper.
 
@@ -416,7 +422,7 @@ CRITICAL RULES (MUST FOLLOW IN ORDER OF PRIORITY):
 
 Original Resume:
 ---
-{original_resume}
+{resume_to_optimize}
 ---
 
 Job Requirements:
@@ -435,7 +441,8 @@ Return ONLY the complete LaTeX code. No explanations, no markdown code blocks, n
     response = client.chat.completions.create(
         model=settings.MODIFICATION_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.3
+        temperature=0.3,
+        max_tokens=settings.MAX_TOKENS,
     )
 
     raw_output = response.choices[0].message.content.strip()

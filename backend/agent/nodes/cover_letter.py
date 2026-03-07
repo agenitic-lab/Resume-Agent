@@ -1,22 +1,27 @@
+import logging
 from .llm_client import build_groq_client
+from .scoring import _strip_latex
 from config import settings
-from langchain_core.messages import SystemMessage, HumanMessage
+
+logger = logging.getLogger(__name__)
 
 
 def generate_cover_letter(state):
     """Generate personalized cover letter from FINAL optimized resume and job description.
-    
+
     This node runs ONLY after the resume optimization loop has finished.
     It does NOT affect the resume scoring or iteration logic.
     """
-    print("---GENERATING COVER LETTER---")
-    
+    logger.info("Generating cover letter")
+
     client = build_groq_client(state)
-    
-    # Use the 'modified_resume' if it exists (successful optimization), 
-    # otherwise fall back to 'original_resume' (if fit check failed early)
-    final_resume = state.get('modified_resume') or state['original_resume']
-    
+
+    # Use the 'modified_resume' if it exists (successful optimization),
+    # otherwise fall back to 'original_resume' (if fit check failed early).
+    # Strip LaTeX so the LLM sees clean text for name/contact extraction.
+    raw_resume = state.get('modified_resume') or state['original_resume']
+    final_resume = _strip_latex(raw_resume)
+
     prompt = f"""You are an expert career coach. Write a professional cover letter in standard business letter format.
 
 JOB DESCRIPTION:
@@ -69,18 +74,17 @@ REQUIREMENTS:
 - Use bullet points (•) for the 3 strengths
 
 Write the cover letter now:"""
-    
+
     try:
         response = client.chat.completions.create(
-            model=settings.MODIFICATION_MODEL,  # Use same model as resume modification
+            model=settings.MODIFICATION_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3  # Slightly creative but still professional
+            temperature=0.3,
+            max_tokens=settings.MAX_TOKENS,
         )
         cover_letter_text = response.choices[0].message.content
-    except Exception as e:
-        print(f"Error generating cover letter: {e}")
+    except Exception:
+        logger.exception("Error generating cover letter")
         cover_letter_text = None
-    
-    # Return ONLY the update to the state. 
-    # This does NOT affect 'ats_score' or 'fit_decision'.
+
     return {"cover_letter": cover_letter_text}

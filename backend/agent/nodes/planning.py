@@ -27,12 +27,16 @@ def _safe_json_load(content: str) -> Dict:
 
 def plan_improvements(state: Dict) -> Dict:
     # Create improvement plan by comparing job requirements with resume gaps
-    
+
     # Make sure we have the data we need
     required_fields = ["job_requirements", "resume_analysis", "ats_score_before"]
     for field in required_fields:
         if field not in state or state[field] is None:
             raise ValueError(f"Missing required state field: {field}")
+
+    # On iteration 2+, use the latest score (ats_score_after from previous rescore),
+    # not the original baseline. This lets the LLM plan based on the real current state.
+    current_score = state.get("ats_score_after") or state["ats_score_before"]
 
     client = build_groq_client(state)
 
@@ -48,7 +52,7 @@ Job Requirements:
 Resume Analysis:
 {json.dumps(state["resume_analysis"], indent=2)}
 
-Current ATS Score: {state["ats_score_before"]}
+Current ATS Score: {current_score}
 
 Create a resume improvement plan with the following JSON structure:
 
@@ -90,7 +94,8 @@ Rules:
     response = client.chat.completions.create(
         model=settings.PLANNING_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=settings.DEFAULT_TEMPERATURE
+        temperature=settings.DEFAULT_TEMPERATURE,
+        max_tokens=settings.MAX_TOKENS,
     )
 
     plan = _safe_json_load(response.choices[0].message.content)
