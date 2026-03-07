@@ -341,11 +341,17 @@ def get_admin_activity_details(
         run = db.query(Run).filter(Run.id == parsed_uuid).first()
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
+        # Strip sensitive keys (e.g. user API keys) that may exist in older rows
+        _SENSITIVE_KEYS = {"user_llm_api_key"}
+        sanitized_result = (
+            {k: v for k, v in run.result_json.items() if k not in _SENSITIVE_KEYS}
+            if run.result_json else None
+        )
         return {
             "job_description": run.job_description,
             "original_resume_text": run.original_resume_text,
             "optimized_resume_path": run.optimized_resume_path,
-            "result_data": run.result_json,
+            "result_data": sanitized_result,
             "cover_letter": run.result_json.get("cover_letter", "") if run.result_json else ""
         }
     elif activity_type == "resume_creation":
