@@ -183,7 +183,7 @@ export default function AdminTemplates() {
         setFormName('');
         setFormDescription('');
         setFormTags('');
-        setFormLatex('% Paste your LaTeX preamble here\n\\documentclass[a4paper,11pt]{article}\n\\usepackage[empty]{fullpage}\n% ... custom styles');
+        setFormLatex('% Paste your complete LaTeX resume template here\n% Include the full document from \\documentclass to \\end{document}\n% The system will auto-split it into preamble (styling) and body (structure reference)\n\n\\documentclass[10pt,a4paper]{article}\n\n\\usepackage[a4paper,margin=1.6cm]{geometry}\n\\usepackage[T1]{fontenc}\n\\usepackage[utf8]{inputenc}\n\\usepackage{lmodern}\n\\usepackage{titlesec}\n\\usepackage{enumitem}\n\\usepackage{hyperref}\n\n\\pagestyle{empty}\n\n\\begin{document}\n\n% Your resume body structure goes here...\n\n\\end{document}');
         setShowForm(true);
     };
 
@@ -206,7 +206,7 @@ export default function AdminTemplates() {
 
     const handleSave = async () => {
         if (!formLatex.trim()) {
-            toast.error('Template preamble cannot be empty');
+            toast.error('Template LaTeX code cannot be empty');
             return;
         }
 
@@ -295,8 +295,11 @@ export default function AdminTemplates() {
                     </div>
 
                     <div className="mb-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">LaTeX Preamble</label>
-                        <p className="text-xs text-gray-500 mb-2">Define your document class, packages, and custom commands. Do NOT include \begin{`{document}`} or \end{`{document}`}.</p>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">LaTeX Template Code</label>
+                        <p className="text-xs text-gray-500 mb-2">
+                            Paste a complete LaTeX resume document (from <code className="bg-gray-100 px-1 rounded">\documentclass</code> to <code className="bg-gray-100 px-1 rounded">\end{'{document}'}</code>).
+                            The system will automatically separate the styling (preamble) from the body structure. The body serves as a reference so the AI replicates the exact layout for new resumes.
+                        </p>
                     </div>
 
                     <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden h-[350px] sm:h-[600px] flex p-2">

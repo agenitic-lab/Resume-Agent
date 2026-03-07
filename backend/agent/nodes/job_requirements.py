@@ -1,14 +1,31 @@
+import logging
 from typing import Dict
 import json
 from .llm_client import build_groq_client
 from config import settings
 
+logger = logging.getLogger(__name__)
+
+
+def _safe_parse_json(content: str, fallback: Dict) -> Dict:
+    """Parse JSON from LLM response, handling markdown code blocks and errors."""
+    if "```json" in content:
+        content = content.split("```json")[1].split("```")[0].strip()
+    elif "```" in content:
+        content = content.split("```")[1].split("```")[0].strip()
+
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        logger.warning("Failed to parse LLM JSON in extract_job_requirements, using fallback")
+        return fallback
+
 
 def extract_job_requirements(state: Dict) -> Dict:
     client = build_groq_client(state)
-    
+
     job_description = state["job_description"]
-    
+
     prompt = f"""Extract structured requirements from this job description:
 
 {job_description}
@@ -25,19 +42,20 @@ Return ONLY valid JSON, no other text."""
     response = client.chat.completions.create(
         model=settings.JOB_REQUIREMENTS_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0
+        temperature=0,
+        max_tokens=settings.MAX_TOKENS,
     )
-    
+
     content = response.choices[0].message.content
-    
-    # Extract JSON from response (handle markdown code blocks)
-    if "```json" in content:
-        content = content.split("```json")[1].split("```")[0].strip()
-    elif "```" in content:
-        content = content.split("```")[1].split("```")[0].strip()
-    
-    requirements = json.loads(content)
-    
+
+    requirements = _safe_parse_json(content, {
+        "job_title": "Unknown",
+        "required_skills": [],
+        "preferred_skills": [],
+        "experience_years": None,
+        "key_keywords": [],
+    })
+
     decision = {
         "node": "extract_requirements",
         "action": "extracted_job_requirements",
@@ -48,7 +66,7 @@ Return ONLY valid JSON, no other text."""
         "skills_count": len(requirements.get("required_skills", [])),
         "keywords_count": len(requirements.get("key_keywords", [])),
     }
-    
+
     return {
         "job_requirements": requirements,
         "decision_log": state.get("decision_log", []) + [decision],

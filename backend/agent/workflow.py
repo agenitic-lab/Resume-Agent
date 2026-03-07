@@ -1,10 +1,13 @@
 # Resume optimization workflow using LangGraph
 # Checks if resume fits the job, then iteratively improves it until target score reached
 
+import logging
 import uuid
 from typing import Callable, Dict, Any, Optional
 from langgraph.graph import StateGraph, END
 from config import settings
+
+logger = logging.getLogger(__name__)
 
 from .state import ResumeAgentState, create_initial_state
 
@@ -63,20 +66,18 @@ def create_agent_workflow():
 
     graph.add_edge("extract_requirements", "analyze_resume")
     graph.add_edge("analyze_resume", "check_fit")
-    graph.add_edge("check_fit", "score_initial")
 
-    # After initial scoring, route based on fit decision
-    # If poor fit, we can still generate a cover letter (optional)
-    # Or skip directly to END if you don't want letters for poor fits
+    # Route immediately after fit check — poor fits skip scoring + optimization
     graph.add_conditional_edges(
-        "score_initial",
+        "check_fit",
         _route_after_fit,
         {
-            "stop": "generate_cover_letter",  # Poor fit -> still generate letter
-            "proceed": "plan_improvements",    # Good fit -> optimize resume
+            "stop": "generate_cover_letter",  # Poor fit -> generate letter only
+            "proceed": "score_initial",        # Good/partial fit -> score then optimize
         },
     )
 
+    graph.add_edge("score_initial", "plan_improvements")
     graph.add_edge("plan_improvements", "modify_resume")
     graph.add_edge("modify_resume", "score_modified")
 
@@ -128,43 +129,45 @@ def run_optimization_with_events(
     if event_callback:
         event_callback("run_started", {"run_id": run_id})
 
-    # Use LangGraph's stream API to execute the workflow and get updates
-    final_state = None
-    
+    # Stream the workflow execution.
+    # LangGraph's default stream yields partial updates per node.
+    # We accumulate them into a running snapshot for event callbacks,
+    # but always use invoke() to get the authoritative full final state.
+    accumulated_state = dict(initial_state)
+
     try:
-        # Stream through the workflow execution
         for event in agent_app.stream(initial_state):
-            # LangGraph stream returns dict with node name as key
-            for node_name, updated_state in event.items():
+            for node_name, node_output in event.items():
+                # Merge this node's partial output into our running snapshot
+                accumulated_state.update(node_output)
+
                 if event_callback:
                     event_callback("node_started", {"node": node_name})
-                
-                final_state = updated_state
-                
-                if event_callback:
                     event_callback(
                         "node_completed",
                         {
                             "node": node_name,
-                            "iteration_count": int(updated_state.get("iteration_count", 0)),
-                            "fit_decision": updated_state.get("fit_decision"),
-                            "ats_score_before": updated_state.get("ats_score_before"),
-                            "ats_score_after": updated_state.get("ats_score_after"),
-                            "improvement_delta": updated_state.get("improvement_delta"),
+                            "iteration_count": int(accumulated_state.get("iteration_count", 0)),
+                            "fit_decision": accumulated_state.get("fit_decision"),
+                            "ats_score_before": accumulated_state.get("ats_score_before"),
+                            "ats_score_after": accumulated_state.get("ats_score_after"),
+                            "improvement_delta": accumulated_state.get("improvement_delta"),
                         },
                     )
-        
-        # If no events occurred, run invoke as fallback
-        if final_state is None:
-            final_state = agent_app.invoke(initial_state)
-    
-    except Exception as e:
-        # If streaming fails, fall back to invoke
+
+        # After streaming completes, the accumulated state has all fields
+        final_state = accumulated_state
+
+    except Exception:
+        # If streaming fails entirely, fall back to invoke
+        logger.exception("Streaming failed, falling back to invoke")
         final_state = agent_app.invoke(initial_state)
-    
-    # Set final status
+
+    # Set final status based on outcome
     if final_state.get("fit_decision") == "poor_fit":
         final_state["final_status"] = "rejected_poor_fit"
+    elif not final_state.get("modified_resume"):
+        final_state["final_status"] = "failed_no_output"
     else:
         final_state["final_status"] = "completed"
     final_state["status"] = final_state["final_status"]

@@ -547,7 +547,35 @@ class AdminTemplateUpdate(BaseModel):
     name: str = None
     description: str = None
     tags: List[str] = None
-    preamble: str
+    preamble: str  # Accepts full LaTeX document OR preamble-only
+
+
+def _split_latex_document(full_latex: str) -> tuple:
+    """Split a full LaTeX document into (preamble, example_body).
+
+    If the string contains \\begin{document}...\\end{document}, everything
+    before \\begin{document} is the preamble and everything between
+    \\begin{document} and \\end{document} is the example body.
+
+    If there is no \\begin{document}, the whole string is treated as a
+    preamble-only template (backward compatible).
+    """
+    import re
+    begin_match = re.search(r'\\begin\{document\}', full_latex)
+    if not begin_match:
+        # No document body — treat as preamble-only
+        return full_latex.strip(), None
+
+    preamble = full_latex[:begin_match.start()].strip()
+    body_start = begin_match.end()
+
+    end_match = re.search(r'\\end\{document\}', full_latex[body_start:])
+    if end_match:
+        example_body = full_latex[body_start:body_start + end_match.start()].strip()
+    else:
+        example_body = full_latex[body_start:].strip()
+
+    return preamble, example_body if example_body else None
 
 @router.get("/templates")
 def get_admin_templates(
@@ -562,16 +590,29 @@ def get_admin_template_content(
     template_id: str,
     current_admin: User = Depends(get_current_admin)
 ):
-    """Get content of an admin custom template."""
+    """Get content of an admin custom template.
+
+    Returns the full LaTeX document (preamble + body recombined) so the
+    admin can edit it as a single piece of code in the editor.
+    """
     from services.latex_templates import get_combined_templates
     combined = get_combined_templates()
     if template_id not in combined:
         raise HTTPException(status_code=404, detail="Template not found")
 
     tpl = combined[template_id]
+
+    # Recombine preamble + example_body into a full document for editing
+    preamble = tpl.get("preamble", "")
+    example_body = tpl.get("example_body", "")
+    if example_body:
+        content = preamble + "\n\n\\begin{document}\n\n" + example_body + "\n\n\\end{document}\n"
+    else:
+        content = preamble
+
     return {
         "id": template_id,
-        "content": tpl.get("preamble", ""),
+        "content": content,
         "name": tpl.get("name", template_id),
         "description": tpl.get("description", ""),
         "tags": tpl.get("tags", []),
@@ -584,23 +625,43 @@ def update_admin_template(
     current_admin: User = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    """Update or create an admin custom LaTeX template."""
+    """Update or create an admin custom LaTeX template.
+
+    The admin may paste either:
+      - A full LaTeX document (\\documentclass ... \\end{document})
+      - A preamble-only snippet (packages + custom commands, no body)
+
+    If a full document is provided the backend auto-splits it into the
+    preamble (styling/packages) and an example body (structure reference
+    that the LLM uses to replicate the layout for new resumes).
+    """
     templates = _load_admin_templates(db)
 
     # Preserve existing metadata if updating
     existing = templates.get(template_id, {})
 
-    templates[template_id] = {
+    # Auto-split full document into preamble + example body
+    preamble, example_body = _split_latex_document(update_data.preamble)
+
+    template_data = {
         "id": template_id,
         "name": update_data.name or existing.get("name", template_id),
         "description": update_data.description or existing.get("description", "Admin Custom Template"),
         "author": existing.get("author", "Admin"),
         "source": "System (Admin Built-in)",
-        "preview_color": existing.get("preview_color", "#805AD5"), # brand color
+        "preview_color": existing.get("preview_color", "#805AD5"),  # brand color
         "tags": update_data.tags if update_data.tags is not None else existing.get("tags", ["admin-custom"]),
         "is_admin_custom": True,
-        "preamble": update_data.preamble
+        "preamble": preamble,
     }
+
+    if example_body:
+        template_data["example_body"] = example_body
+    elif existing.get("example_body") and "\\begin{document}" not in update_data.preamble:
+        # Preserve existing example_body when admin edits only the preamble
+        template_data["example_body"] = existing["example_body"]
+
+    templates[template_id] = template_data
 
     _save_admin_templates(db, templates)
     return {"message": "Template saved successfully", "id": template_id}

@@ -22,7 +22,7 @@ from database.models.run import ResumeRun
 from auth.dependencies import get_current_user
 from schemas.agent import OptimizeRequest, OptimizeResponse, RunListItem, RunDetailResponse
 from core.security import decrypt_api_key
-from services.latex_templates import get_all_templates, get_template_preamble
+from services.latex_templates import get_all_templates, get_template_preamble, get_combined_templates
 from services.latex_service import compile_latex, LaTeXCompilationError
 
 # Import agent workflow using proper package path
@@ -37,6 +37,14 @@ except ImportError as e:
         raise NotImplementedError("Workflow module not available")
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
+
+# Keys that must never be persisted in result_json
+_SENSITIVE_STATE_KEYS = {"user_llm_api_key"}
+
+
+def _sanitize_result_for_storage(result: dict) -> dict:
+    """Return a copy of the agent result with sensitive fields removed."""
+    return {k: v for k, v in result.items() if k not in _SENSITIVE_STATE_KEYS}
 
 
 import os as _os
@@ -368,8 +376,20 @@ def get_template_preview(template_id: str):
             detail=f"Template '{template_id}' not found",
         )
 
-    # Use template-specific sample body (falls back to clean_modern)
-    sample_body = SAMPLE_BODIES.get(template_id, SAMPLE_BODIES["clean_modern"])
+    # Use template-specific sample body.
+    # Priority: hardcoded SAMPLE_BODIES > admin template's own example_body > error
+    sample_body = SAMPLE_BODIES.get(template_id)
+    if not sample_body:
+        # Check for admin template with an example_body stored in DB
+        tpl = get_combined_templates().get(template_id, {})
+        tpl_example = tpl.get("example_body", "")
+        if tpl_example:
+            sample_body = "\\begin{document}\n" + tpl_example + "\n\\end{document}\n"
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No preview available for this template. Save it with a full LaTeX document (including body) to enable preview.",
+            )
     full_latex = preamble.strip() + "\n" + sample_body.strip() + "\n"
 
     try:
@@ -445,14 +465,14 @@ def run_agent_workflow(
         logger.info("Agent completed: %s", result['final_status'])
         
         # Save to database (AG-37)
-        # Store all results in result_json JSONB field
+        # Store all results in result_json JSONB field (sensitive fields stripped)
         db_run = ResumeRun(
             user_id=current_user.id,
             job_description=request.job_description,
             original_resume_text=request.resume,
             status=result.get("final_status", "completed"),
             cover_letter=result.get("cover_letter"),  # Save to dedicated column
-            result_json=result  # Store the entire result in JSONB
+            result_json=_sanitize_result_for_storage(result),
         )
         
         db.add(db_run)
@@ -639,7 +659,7 @@ def run_agent_workflow_stream(
                 original_resume_text=request.resume,
                 status=result.get("final_status", "completed"),
                 cover_letter=result.get("cover_letter"),
-                result_json=result,
+                result_json=_sanitize_result_for_storage(result),
             )
             db.add(db_run)
             db.commit()
