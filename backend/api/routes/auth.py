@@ -7,7 +7,7 @@ from typing import Optional
 
 from database.connection import get_db
 from database.models.user import User
-from schemas.auth import AuthResponse, UserResponse, ErrorResponse
+from schemas.auth import AuthResponse, AuthCheckResponse, UserResponse, ErrorResponse
 from schemas.google import GoogleLoginRequest
 from auth.jwt import (
     create_access_token,
@@ -17,7 +17,7 @@ from auth.jwt import (
     REFRESH_TOKEN_EXPIRE_DAYS,
 )
 from auth.google_oauth import verify_google_token
-from auth.dependencies import get_current_user
+from auth.dependencies import get_current_user, get_current_user_optional
 from config import settings
 from services.email import send_welcome_email
 
@@ -245,31 +245,32 @@ def get_current_user_profile(
 
 @router.get(
     "/check",
-    response_model=UserResponse,
+    response_model=AuthCheckResponse,
     status_code=status.HTTP_200_OK,
     summary="Check current user silently",
-    description="Same as /me pattern but suppresses backend logs when unauthenticated.",
+    description="Returns 200 with authenticated=false when logged out (no 401), so browsers and monitors do not flag a normal state as an error.",
     responses={
         200: {
-            "description": "User profile",
-            "model": UserResponse
+            "description": "Session state and optional user profile",
+            "model": AuthCheckResponse
         },
-        401: {
-            "description": "Not authenticated",
-            "model": ErrorResponse
-        }
     }
 )
 def check_current_user_profile(
-    current_user: User = Depends(get_current_user)
-) -> UserResponse:
-    return UserResponse(
-        id=str(current_user.id),
-        email=current_user.email,
-        created_at=current_user.created_at,
-        full_name=current_user.full_name,
-        profile_picture=current_user.profile_picture,
-        role=current_user.role
+    user: Optional[User] = Depends(get_current_user_optional)
+) -> AuthCheckResponse:
+    if not user:
+        return AuthCheckResponse(authenticated=False, user=None)
+    return AuthCheckResponse(
+        authenticated=True,
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            created_at=user.created_at,
+            full_name=user.full_name,
+            profile_picture=user.profile_picture,
+            role=user.role
+        )
     )
 
 

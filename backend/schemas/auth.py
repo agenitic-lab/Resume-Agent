@@ -119,6 +119,19 @@ class LoginResponse(BaseModel):
     )
 
 
+class AuthCheckResponse(BaseModel):
+    """Session probe: always 200 so clients do not treat logged-out users as HTTP errors."""
+
+    authenticated: bool = Field(
+        ...,
+        description="Whether a valid session (access token) is present",
+    )
+    user: Optional[UserResponse] = Field(
+        None,
+        description="Current user when authenticated; omitted or null when not",
+    )
+
+
 class AuthResponse(BaseModel):
     """Secure authentication response - tokens are set in HttpOnly cookies, not in response body."""
     

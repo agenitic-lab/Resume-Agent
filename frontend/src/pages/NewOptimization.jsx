@@ -5,9 +5,7 @@ import Toast from '../components/Toast';
 import PdfViewer from '../components/PdfViewer';
 import VisualResumeEditor from '../components/VisualResumeEditor';
 import { Skeleton } from '../components/ui/skeleton';
-import { optimizeResumeStream, getApiKeyStatus, getTemplatePreference } from '../services/api';
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
+import { API_URL, optimizeResumeStream, getApiKeyStatus, getTemplatePreference } from '../services/api';
 
 export default function NewOptimization() {
     const navigate = useNavigate();
@@ -103,7 +101,7 @@ export default function NewOptimization() {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/pdf/extract`, {
+            const response = await fetch(`${API_URL}/api/pdf/extract`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
@@ -146,7 +144,7 @@ export default function NewOptimization() {
     const handleCompileLatex = async () => {
         setIsCompiling(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
+            const response = await fetch(`${API_URL}/api/latex/compile`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -351,7 +349,7 @@ export default function NewOptimization() {
                     // Compile the optimized LaTeX
                     setIsCompiling(true);
                     try {
-                        const response = await fetch(`${API_BASE_URL}/api/latex/compile`, {
+                        const response = await fetch(`${API_URL}/api/latex/compile`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
