@@ -71,6 +71,7 @@ export default function Auth() {
                 <title>Sign In — Resiko | AI Resume Optimizer</title>
                 <meta name="description" content="Sign in to Resiko with your Google account. Optimize your resume with AI, check ATS scores, and build professional resumes." />
                 <link rel="canonical" href="https://resiko.app/login" />
+                <meta httpEquiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
             </Helmet>
             <div className="min-h-screen bg-primary flex flex-col pt-16 sm:pt-20 overflow-x-hidden">
                 <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
@@ -104,8 +105,8 @@ export default function Auth() {
                                     <GoogleLogin
                                         onSuccess={handleGoogleSuccess}
                                         onError={() => {
-                                            toast.error('Google sign-in failed. Please check your popup blocker and try again.');
-                                            setError('Google sign-in failed. If a popup was blocked, please allow popups for this site.');
+                                            toast.error('Google sign-in failed. Please try again or temporarily disable ad blockers for this site.');
+                                            setError('Google sign-in failed. Ad blockers sometimes block Google scripts; try again or allow this site.');
                                         }}
                                         ux_mode="popup"
                                         theme="outline"

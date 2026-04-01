@@ -1,4 +1,15 @@
-const API_URL = (import.meta.env.VITE_API_URL || '').trim();
+export const API_URL = (
+    import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ''
+).trim();
+
+let _warnedMissingApiUrl = false;
+function warnMissingApiUrl() {
+    if (typeof window === 'undefined' || _warnedMissingApiUrl || API_URL) return;
+    _warnedMissingApiUrl = true;
+    console.warn(
+        '[Resiko] VITE_API_URL is not set. API calls use the current page origin; set VITE_API_URL to your backend (e.g. https://backend.resiko.app) in production.'
+    );
+}
 const CACHE_TTL_MS = {
     apiKeyStatus: 2 * 60 * 1000,
     currentUser: 5 * 60 * 1000,
@@ -92,7 +103,8 @@ function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
 }
 
 // Generic API request helper with automatic token refresh
-async function apiRequest(endpoint, options = {}, _retried = false) {
+async function apiRequest(endpoint, options = {}, _retried = false, timeoutMs = 30000) {
+    warnMissingApiUrl();
     const url = `${API_URL}${endpoint}`;
 
     const headers = {
@@ -107,7 +119,7 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
     };
 
     try {
-        let response = await fetchWithTimeout(url, config);
+        let response = await fetchWithTimeout(url, config, timeoutMs);
 
         let data = null;
         if (response.status !== 204) {
@@ -130,7 +142,7 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
                 const refreshed = await tryRefreshToken();
                 if (refreshed) {
                     // Retry the original request
-                    return apiRequest(endpoint, options, true);
+                    return apiRequest(endpoint, options, true, timeoutMs);
                 }
             }
 
@@ -174,10 +186,15 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
 }
 
 export async function googleAuth(credential) {
-    const data = await apiRequest('/api/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ credential }),
-    });
+    const data = await apiRequest(
+        '/api/auth/google',
+        {
+            method: 'POST',
+            body: JSON.stringify({ credential }),
+        },
+        false,
+        90000
+    );
 
     // Mark as authenticated on successful login (tokens are in HttpOnly cookies)
     if (data.success) {
@@ -249,16 +266,17 @@ export async function refreshToken() {
 // Initialize authentication state by checking if we have a valid session
 export async function initializeAuth() {
     try {
-        const user = await apiRequest('/api/auth/check');
-        if (user && user.id) {
+        const data = await apiRequest('/api/auth/check');
+        if (data?.authenticated && data.user?.id) {
             setAuthenticated(true);
-            setEntry(apiCache.currentUser, user, CACHE_TTL_MS.currentUser);
-            return user;
+            setEntry(apiCache.currentUser, data.user, CACHE_TTL_MS.currentUser);
+            return data.user;
         }
     } catch {
-        // Not authenticated or session expired
+        // Network error or unexpected response
         setAuthenticated(false);
     }
+    setAuthenticated(false);
     return null;
 }
 

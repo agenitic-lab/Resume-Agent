@@ -8,8 +8,6 @@ import { Skeleton } from '../components/ui/skeleton';
 import PdfViewer from '../components/PdfViewer';
 import VisualResumeEditor from '../components/VisualResumeEditor';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim();
-
 // ─── Job Title Suggestions ─────────────────────────────────────────────────
 const JOB_TITLE_SUGGESTIONS = [
     // Tech
